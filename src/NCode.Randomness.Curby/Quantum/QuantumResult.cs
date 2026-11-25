@@ -10,55 +10,57 @@ namespace NCode.Randomness.Curby.Quantum;
 /// The three verified pulses of a complete CURBy-Q round and what they commit to: the Bell data hash, the seed that
 /// the Trevisan extractor takes, the hash of the extractor's parameters and the extracted randomness.
 /// </summary>
-/// <param name="round">The DIRNG round number.</param>
-/// <param name="request">The request pulse, which asks for the Bell experiment.</param>
-/// <param name="precommit">The precommit pulse, which commits to the Bell data and names the seed.</param>
-/// <param name="resultPulse">The randomness pulse.</param>
-/// <param name="dataHash">The SHA3-512 hash of the Bell data, in lowercase hexadecimal.</param>
-/// <param name="seedChain">The CID of the chain the seed pulse belongs to.</param>
-/// <param name="seedLength">The length of the seed in bits.</param>
-/// <param name="seedCount">The number of pulses after the first that mixes in the precommit that holds the seed.</param>
-/// <param name="paramsHash">The SHA3-512 hash of the extractor's parameters, in lowercase hexadecimal.</param>
-/// <param name="randomness">The extracted randomness.</param>
-/// <param name="timestamp">The time of the randomness pulse.</param>
-internal sealed class QuantumResult(
-    long round,
-    TwineSignedPulse request,
-    TwineSignedPulse precommit,
-    TwineSignedPulse resultPulse,
-    string dataHash,
-    Cid seedChain,
-    int seedLength,
-    int seedCount,
-    string paramsHash,
-    byte[] randomness,
-    DateTimeOffset timestamp
-)
+internal sealed class QuantumResult
 {
-    public long Round { get; } = round;
+    /// <summary>
+    /// Gets the request pulse, which asks for the Bell experiment.
+    /// </summary>
+    public required TwineSignedPulse Request { get; init; }
 
-    public TwineSignedPulse Request { get; } = request;
+    /// <summary>
+    /// Gets the precommit pulse, which commits to the Bell data and names the seed.
+    /// </summary>
+    public required TwineSignedPulse Precommit { get; init; }
 
-    public TwineSignedPulse Precommit { get; } = precommit;
+    /// <summary>
+    /// Gets the randomness pulse.
+    /// </summary>
+    public required TwineSignedPulse ResultPulse { get; init; }
 
-    public TwineSignedPulse ResultPulse { get; } = resultPulse;
+    /// <summary>
+    /// Gets the SHA3-512 hash of the Bell data, in lowercase hexadecimal.
+    /// </summary>
+    public required string DataHash { get; init; }
 
-    public string DataHash { get; } = dataHash;
-
-    public Cid SeedChain { get; } = seedChain;
+    /// <summary>
+    /// Gets the CID of the chain the seed pulse belongs to.
+    /// </summary>
+    public required Cid SeedChain { get; init; }
 
     /// <summary>
     /// Gets the length of the seed in bits.
     /// </summary>
-    public int SeedLength { get; } = seedLength;
+    public required int SeedLength { get; init; }
 
-    public int SeedCount { get; } = seedCount;
+    /// <summary>
+    /// Gets the number of pulses after the first that mixes in the precommit that holds the seed.
+    /// </summary>
+    public required int SeedCount { get; init; }
 
-    public string ParamsHash { get; } = paramsHash;
+    /// <summary>
+    /// Gets the SHA3-512 hash of the extractor's parameters, in lowercase hexadecimal.
+    /// </summary>
+    public required string ParamsHash { get; init; }
 
-    public byte[] Randomness { get; } = randomness;
+    /// <summary>
+    /// Gets the extracted randomness.
+    /// </summary>
+    public required byte[] Randomness { get; init; }
 
-    public DateTimeOffset Timestamp { get; } = timestamp;
+    /// <summary>
+    /// Gets the time of the randomness pulse.
+    /// </summary>
+    public required DateTimeOffset Timestamp { get; init; }
 
     /// <summary>
     /// Returns whether <paramref name="pulse"/>, a pulse of the Bell chain, is the response to this round's request:

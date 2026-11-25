@@ -91,7 +91,7 @@ internal sealed class QuantumRound
             return new QuantumRound(number, null, null);
         }
 
-        var result = ReadResult(number, pulses[0], pulses[1], pulses[2]);
+        var result = ReadResult(pulses);
         return new QuantumRound(number, null, result);
     }
 
@@ -128,13 +128,11 @@ internal sealed class QuantumRound
             || (stages[1] == ErrorStage && stages.Count == 2)
         );
 
-    private static QuantumResult ReadResult(
-        long number,
-        TwineSignedPulse request,
-        TwineSignedPulse precommit,
-        TwineSignedPulse result
-    )
+    private static QuantumResult ReadResult(List<TwineSignedPulse> pulses)
     {
+        var request = pulses[0];
+        var precommit = pulses[1];
+        var result = pulses[2];
         var dataHash = ReadHash(precommit.Payload, "dataHash", "precommit");
         var resultDataHash = ReadHash(result.Payload, "dataHash", "randomness pulse");
         if (!string.Equals(dataHash, resultDataHash, StringComparison.Ordinal))
@@ -200,19 +198,19 @@ internal sealed class QuantumRound
 
         var timestampText = result.Payload.Get<IpldString>("timestamp").Value;
         var timestamp = TwinePulse.ParseTimestamp(timestampText);
-        return new QuantumResult(
-            number,
-            request,
-            precommit,
-            result,
-            dataHash,
-            seedChain,
-            (int)seedLength,
-            (int)count,
-            paramsHash,
-            randomness,
-            timestamp
-        );
+        return new QuantumResult
+        {
+            Request = request,
+            Precommit = precommit,
+            ResultPulse = result,
+            DataHash = dataHash,
+            SeedChain = seedChain,
+            SeedLength = (int)seedLength,
+            SeedCount = (int)count,
+            ParamsHash = paramsHash,
+            Randomness = randomness,
+            Timestamp = timestamp,
+        };
     }
 
     private static string ReadHash(IpldMap payload, string field, string pulse)

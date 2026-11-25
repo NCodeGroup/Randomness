@@ -33,7 +33,6 @@ public class QuantumRoundTests
 
         Assert.Equal(CurbyQuantumFixtures.Round, round.Number);
         Assert.Null(round.ErrorReason);
-        Assert.Equal(CurbyQuantumFixtures.Round, result.Round);
         Assert.Equal(CurbyQuantumFixtures.RequestId, requestId);
         Assert.Equal(CurbyQuantumFixtures.PrecommitId, precommitId);
         Assert.Equal(CurbyQuantumFixtures.ResultId, resultId);
