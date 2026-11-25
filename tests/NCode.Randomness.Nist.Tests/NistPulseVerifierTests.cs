@@ -49,18 +49,21 @@ public class NistPulseVerifierTests
     [Fact]
     public void Verify_WithNistDocuments_ReturnsTheVerifiedPulse()
     {
-        var pulseDocument = Utf8(NistFixtures.Pulse(NistFixtures.LatestIndex));
-        var predecessor = Utf8(NistFixtures.Pulse(NistFixtures.LatestIndex - 1));
+        var pulseJson = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        var pulseDocument = Utf8(pulseJson);
+        var predecessorJson = NistFixtures.Pulse(NistFixtures.LatestIndex - 1);
+        var predecessor = Utf8(predecessorJson);
         var certificate = NistFixtures.Certificate("5b6386e6");
 
         var pulse = new NistPulseVerifier().Verify(pulseDocument, predecessor, certificate);
 
+        var randomness = Convert.ToHexString(pulse.Randomness);
         Assert.Equal(NistDefaults.BeaconName, pulse.Beacon);
         Assert.Equal("2", pulse.Chain);
         Assert.Equal(NistFixtures.LatestIndex, pulse.Round);
         Assert.Equal(NistFixtures.LatestOutput, pulse.Id);
         Assert.Equal(NistFixtures.LatestTimestamp, pulse.Timestamp);
-        Assert.Equal(NistFixtures.LatestOutput, Convert.ToHexString(pulse.Randomness));
+        Assert.Equal(NistFixtures.LatestOutput, randomness);
     }
 
     [Fact]
@@ -68,10 +71,12 @@ public class NistPulseVerifierTests
     {
         var pulseJson = NistFixtures.Pulse(1484769);
         var pulseDocument = Utf8(pulseJson);
-        var predecessor = Utf8(NistFixtures.Pulse(1484768));
+        var predecessorJson = NistFixtures.Pulse(1484768);
+        var predecessor = Utf8(predecessorJson);
         var certificate = NistFixtures.Certificate("528943a5");
         var predecessorCertificate = NistFixtures.Certificate("e692b0f6");
-        var expectedId = Convert.ToHexString(NistPulseBuilder.OutputOf(pulseJson));
+        var output = NistPulseBuilder.OutputOf(pulseJson);
+        var expectedId = Convert.ToHexString(output);
 
         var pulse = new NistPulseVerifier().Verify(
             pulseDocument,
@@ -88,8 +93,10 @@ public class NistPulseVerifierTests
     [Fact]
     public void Verify_AcrossACertificateRotationWithOneCertificate_IsInvalid()
     {
-        var pulseDocument = Utf8(NistFixtures.Pulse(1484769));
-        var predecessor = Utf8(NistFixtures.Pulse(1484768));
+        var pulseJson = NistFixtures.Pulse(1484769);
+        var pulseDocument = Utf8(pulseJson);
+        var predecessorJson = NistFixtures.Pulse(1484768);
+        var predecessor = Utf8(predecessorJson);
         var certificate = NistFixtures.Certificate("528943a5");
         var verifier = new NistPulseVerifier();
 
@@ -103,8 +110,10 @@ public class NistPulseVerifierTests
     [Fact]
     public void Verify_WhenPredecessorIsAnotherPulse_IsInvalid()
     {
-        var pulseDocument = Utf8(NistFixtures.Pulse(NistFixtures.LatestIndex));
-        var predecessor = Utf8(NistFixtures.Pulse(1484768));
+        var pulseJson = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        var pulseDocument = Utf8(pulseJson);
+        var predecessorJson = NistFixtures.Pulse(1484768);
+        var predecessor = Utf8(predecessorJson);
         var certificate = NistFixtures.Certificate("5b6386e6");
         var predecessorCertificate = NistFixtures.Certificate("e692b0f6");
         var verifier = new NistPulseVerifier();
@@ -165,7 +174,8 @@ public class NistPulseVerifierTests
             .Pulse(NistFixtures.LatestIndex)
             .Replace("35D0537D3F6495AF", "35D0537D3F6495AE", StringComparison.Ordinal);
         var pulseDocument = Utf8(tampered);
-        var predecessor = Utf8(NistFixtures.Pulse(NistFixtures.LatestIndex - 1));
+        var predecessorJson = NistFixtures.Pulse(NistFixtures.LatestIndex - 1);
+        var predecessor = Utf8(predecessorJson);
         var certificate = NistFixtures.Certificate("5b6386e6");
         var verifier = new NistPulseVerifier();
 
@@ -180,7 +190,8 @@ public class NistPulseVerifierTests
     public void Verify_WithMalformedJson_IsInvalid()
     {
         var pulseDocument = "{"u8.ToArray();
-        var predecessor = Utf8(NistFixtures.Pulse(NistFixtures.LatestIndex - 1));
+        var predecessorJson = NistFixtures.Pulse(NistFixtures.LatestIndex - 1);
+        var predecessor = Utf8(predecessorJson);
         var certificate = NistFixtures.Certificate("5b6386e6");
         var verifier = new NistPulseVerifier();
 
@@ -194,8 +205,10 @@ public class NistPulseVerifierTests
     [Fact]
     public void Verify_WithMalformedCertificate_IsInvalid()
     {
-        var pulseDocument = Utf8(NistFixtures.Pulse(NistFixtures.LatestIndex));
-        var predecessor = Utf8(NistFixtures.Pulse(NistFixtures.LatestIndex - 1));
+        var pulseJson = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        var pulseDocument = Utf8(pulseJson);
+        var predecessorJson = NistFixtures.Pulse(NistFixtures.LatestIndex - 1);
+        var predecessor = Utf8(predecessorJson);
         var certificate = "not a certificate"u8.ToArray();
         var verifier = new NistPulseVerifier();
 
@@ -213,7 +226,8 @@ public class NistPulseVerifierTests
         var first = NistPulseBuilder.For(100).Build(signer);
         var firstOutput = NistPulseBuilder.OutputOf(first);
         var second = (NistPulseBuilder.For(101) with { Previous = firstOutput }).Build(signer);
-        var expectedId = Convert.ToHexString(NistPulseBuilder.OutputOf(second));
+        var output = NistPulseBuilder.OutputOf(second);
+        var expectedId = Convert.ToHexString(output);
         var pulseDocument = Utf8(second);
         var predecessor = Utf8(first);
         var verifier = new NistPulseVerifier(NistDefaults.ChainIndex, [signer.IdHex]);

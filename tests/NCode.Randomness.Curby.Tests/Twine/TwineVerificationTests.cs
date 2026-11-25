@@ -130,7 +130,8 @@ public class TwineVerificationTests
     [Fact]
     public void Parse_WithCurbyPulseBytes_ReadsItsCid()
     {
-        var bytes = Encoding.UTF8.GetBytes(CurbyFixtures.Pulse(CurbyFixtures.LatestRound));
+        var json = CurbyFixtures.Pulse(CurbyFixtures.LatestRound);
+        var bytes = Encoding.UTF8.GetBytes(json);
 
         var document = TwineDocument.Parse(bytes);
 

@@ -18,16 +18,24 @@ public class CurbyQuantumRoundVerifierTests
         Assert.Contains(fragment, exception.Message, StringComparison.Ordinal);
     }
 
-    private static List<ReadOnlyMemory<byte>> CurbyQDocuments() =>
+    private static List<ReadOnlyMemory<byte>> CurbyQDocuments()
+    {
+        var bellResponse = CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex);
+        var firstSeed = CurbyQuantumFixtures.SeedPulse(CurbyQuantumFixtures.FirstSeedPulseIndex);
+        var secondSeed = CurbyQuantumFixtures.SeedPulse(CurbyQuantumFixtures.SecondSeedPulseIndex);
+        var thirdSeed = CurbyQuantumFixtures.SeedPulse(CurbyQuantumFixtures.ThirdSeedPulseIndex);
+
+        return
         [
             Utf8(CurbyQuantumFixtures.Chain),
             Utf8(CurbyQuantumFixtures.BellChain),
-            Utf8(CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex)),
+            Utf8(bellResponse),
             Utf8(CurbyQuantumFixtures.SeedChain),
-            Utf8(CurbyQuantumFixtures.SeedPulse(CurbyQuantumFixtures.FirstSeedPulseIndex)),
-            Utf8(CurbyQuantumFixtures.SeedPulse(CurbyQuantumFixtures.SecondSeedPulseIndex)),
-            Utf8(CurbyQuantumFixtures.SeedPulse(CurbyQuantumFixtures.ThirdSeedPulseIndex)),
+            Utf8(firstSeed),
+            Utf8(secondSeed),
+            Utf8(thirdSeed),
         ];
+    }
 
     private static List<ReadOnlyMemory<byte>> BuiltDocuments(
         QuantumRoundBuilder builder,
@@ -42,12 +50,14 @@ public class CurbyQuantumRoundVerifierTests
         ];
         foreach (var (json, _) in round.BellPulses)
         {
-            documents.Add(Utf8(json));
+            var document = Utf8(json);
+            documents.Add(document);
         }
 
         foreach (var (json, _) in round.SeedPulses)
         {
-            documents.Add(Utf8(json));
+            var document = Utf8(json);
+            documents.Add(document);
         }
 
         return documents;
@@ -122,7 +132,8 @@ public class CurbyQuantumRoundVerifierTests
         var round = Utf8(built.RoundJson);
         var parameters = Utf8(built.Parameters);
         var documents = BuiltDocuments(builder, built);
-        documents.Add(Utf8(CurbyQuantumFixtures.Chain));
+        var curbyQChain = Utf8(CurbyQuantumFixtures.Chain);
+        documents.Add(curbyQChain);
         var verifier = new CurbyQuantumRoundVerifier();
 
         var exception = Assert.Throws<BeaconException>(() =>

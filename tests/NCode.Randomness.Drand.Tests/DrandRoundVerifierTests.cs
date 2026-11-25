@@ -30,22 +30,22 @@ public class DrandRoundVerifierTests
 
         var pulse = new DrandRoundVerifier().Verify(round);
 
+        var randomness = Convert.ToHexStringLower(pulse.Randomness);
         Assert.Equal(DrandDefaults.BeaconName, pulse.Beacon);
         Assert.Equal(DrandDefaults.ChainHash, pulse.Chain);
         Assert.Equal(DrandFixtures.LatestRound, pulse.Round);
         Assert.Equal(signature, pulse.Id);
         Assert.Equal(DrandFixtures.LatestTimestamp, pulse.Timestamp);
-        Assert.Equal(DrandFixtures.LatestRandomness, Convert.ToHexStringLower(pulse.Randomness));
+        Assert.Equal(DrandFixtures.LatestRandomness, randomness);
     }
 
     [Fact]
     public void Verify_WithTamperedRound_IsInvalid()
     {
-        var round = Utf8(
-            DrandFixtures
-                .Round(DrandFixtures.LatestRound)
-                .Replace("\"round\":34271222", "\"round\":34271223", StringComparison.Ordinal)
-        );
+        var tampered = DrandFixtures
+            .Round(DrandFixtures.LatestRound)
+            .Replace("\"round\":34271222", "\"round\":34271223", StringComparison.Ordinal);
+        var round = Utf8(tampered);
         var verifier = new DrandRoundVerifier();
 
         var exception = Assert.Throws<BeaconException>(() => verifier.Verify(round));
@@ -56,7 +56,8 @@ public class DrandRoundVerifierTests
     [Fact]
     public void Verify_WhenTheRoundIsNotTheChains_IsInvalid()
     {
-        var round = Utf8(DrandTestChain.Json(5));
+        var json = DrandTestChain.Json(5);
+        var round = Utf8(json);
         var verifier = new DrandRoundVerifier();
 
         var exception = Assert.Throws<BeaconException>(() => verifier.Verify(round));
@@ -78,7 +79,8 @@ public class DrandRoundVerifierTests
     [Fact]
     public void Verify_WithAnotherPinnedChain_AcceptsItsRounds()
     {
-        var round = Utf8(DrandTestChain.Json(5));
+        var json = DrandTestChain.Json(5);
+        var round = Utf8(json);
 
         var pulse = new DrandRoundVerifier(DrandTestChain.Chain).Verify(round);
 
