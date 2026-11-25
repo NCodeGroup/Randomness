@@ -23,11 +23,11 @@ public class DrandLiveTests
         var pulse = await beacon.GetLatestPulseAsync(CancellationToken.None);
         var round = await beacon.GetPulseAsync(pulse.Round - 10, CancellationToken.None);
 
-        Assert.InRange(
-            DateTimeOffset.UtcNow - pulse.Timestamp,
-            TimeSpan.FromMinutes(-2),
-            TimeSpan.FromMinutes(5)
-        );
+        var age = DateTimeOffset.UtcNow - pulse.Timestamp;
+        var earliest = TimeSpan.FromMinutes(-2);
+        var latest = TimeSpan.FromMinutes(5);
+
+        Assert.InRange(age, earliest, latest);
         Assert.Equal(32, pulse.Randomness.Length);
         Assert.Equal(pulse.Round - 10, round.Round);
     }
@@ -42,10 +42,9 @@ public class DrandLiveTests
 
         var pulse = await beacon.GetPulseAsync(1000, CancellationToken.None);
 
-        Assert.Equal(
-            DrandFixtures.FirstRandomness,
-            Convert.ToHexStringLower(pulse.Randomness.ToArray())
-        );
+        var randomness = Convert.ToHexStringLower(pulse.Randomness.ToArray());
+
+        Assert.Equal(DrandFixtures.FirstRandomness, randomness);
     }
 
     [LiveFact]
@@ -62,7 +61,9 @@ public class DrandLiveTests
         var value = host.Services.GetRequiredService<ISecureRandom>().NextInteger(1, 7);
         await host.StopAsync();
 
-        Assert.Equal(BeaconHealth.Healthy, Assert.Single(status.Beacons).Health);
+        var onlyBeacon = Assert.Single(status.Beacons);
+
+        Assert.Equal(BeaconHealth.Healthy, onlyBeacon.Health);
         Assert.InRange(value, 1, 6);
     }
 }

@@ -12,9 +12,9 @@ public class NistBeaconOptionsValidatorTests
     [Fact]
     public void Validate_WithDefaults_Succeeds()
     {
-        Assert.True(
-            new NistBeaconOptionsValidator().Validate(null, new NistBeaconOptions()).Succeeded
-        );
+        var result = new NistBeaconOptionsValidator().Validate(null, new NistBeaconOptions());
+
+        Assert.True(result.Succeeded);
     }
 
     [Fact]
@@ -22,7 +22,9 @@ public class NistBeaconOptionsValidatorTests
     {
         var options = new NistBeaconOptions { CertificateIds = [.. NistDefaults.CertificateIds] };
 
-        Assert.True(new NistBeaconOptionsValidator().Validate(null, options).Succeeded);
+        var result = new NistBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
     }
 
     [Theory]
@@ -48,7 +50,9 @@ public class NistBeaconOptionsValidatorTests
     {
         var options = new NistBeaconOptions { BaseAddress = new Uri("beacon/", UriKind.Relative) };
 
-        Assert.True(new NistBeaconOptionsValidator().Validate(null, options).Failed);
+        var result = new NistBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Failed);
     }
 
     [Theory]
@@ -153,7 +157,9 @@ public class NistBeaconOptionsValidatorTests
 
         var result = new NistBeaconOptionsValidator().Validate(null, options);
 
-        Assert.Equal(4, result.Failures?.Count());
+        var failureCount = result.Failures?.Count();
+
+        Assert.Equal(4, failureCount);
     }
 
     #endregion

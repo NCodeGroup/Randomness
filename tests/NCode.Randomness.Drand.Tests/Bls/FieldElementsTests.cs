@@ -13,11 +13,11 @@ public class FieldElementsTests
     [Fact]
     public void Reduce_With64MaxBytes_ReturnsValueModuloP()
     {
-        var expected = FieldElements.FromInteger(
-            ((BigInteger.One << 512) - 1) % FieldElements.Modulus
-        );
+        var reduced = ((BigInteger.One << 512) - 1) % FieldElements.Modulus;
+        var expected = FieldElements.FromInteger(reduced);
+        var bytes = Enumerable.Repeat((byte)0xFF, 64).ToArray();
 
-        var actual = FieldElements.Reduce(Enumerable.Repeat((byte)0xFF, 64).ToArray());
+        var actual = FieldElements.Reduce(bytes);
 
         Assert.Equal(expected, actual);
     }
@@ -32,7 +32,9 @@ public class FieldElementsTests
     [InlineData(11, false)]
     public void IsSquare_WithValue_ReturnsExpected(int value, bool expected)
     {
-        var actual = FieldElements.IsSquare(FieldElements.FromInteger(value));
+        var element = FieldElements.FromInteger(value);
+
+        var actual = FieldElements.IsSquare(element);
 
         Assert.Equal(expected, actual);
     }
@@ -46,7 +48,9 @@ public class FieldElementsTests
     [InlineData(2, false)]
     public void Sign_WithValue_ReturnsExpected(int value, bool expected)
     {
-        var actual = FieldElements.Sign(FieldElements.FromInteger(value));
+        var element = FieldElements.FromInteger(value);
+
+        var actual = FieldElements.Sign(element);
 
         Assert.Equal(expected, actual);
     }

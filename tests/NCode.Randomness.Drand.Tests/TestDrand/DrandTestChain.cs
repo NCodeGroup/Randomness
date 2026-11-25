@@ -24,10 +24,13 @@ internal static class DrandTestChain
             DrandDefaults.Period
         );
 
-    public static byte[] Sign(long round) =>
-        new G1Affine(
-            G1HashToCurve.Hash(DrandRound.MessageOf(round), DrandRound.Domain) * SecretKey
-        ).ToCompressed();
+    public static byte[] Sign(long round)
+    {
+        var message = DrandRound.MessageOf(round);
+        var hashed = G1HashToCurve.Hash(message, DrandRound.Domain);
+        var point = new G1Affine(hashed * SecretKey);
+        return point.ToCompressed();
+    }
 
     public static string Json(long round)
     {

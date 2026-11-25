@@ -10,9 +10,9 @@ public class DrandBeaconOptionsValidatorTests
     [Fact]
     public void Validate_WithDefaults_Succeeds()
     {
-        Assert.True(
-            new DrandBeaconOptionsValidator().Validate(null, new DrandBeaconOptions()).Succeeded
-        );
+        var result = new DrandBeaconOptionsValidator().Validate(null, new DrandBeaconOptions());
+
+        Assert.True(result.Succeeded);
     }
 
     [Theory]
@@ -72,7 +72,9 @@ public class DrandBeaconOptionsValidatorTests
 
         var result = new DrandBeaconOptionsValidator().Validate(null, options);
 
-        Assert.Equal(2, result.Failures?.Count());
+        var failureCount = result.Failures?.Count();
+
+        Assert.Equal(2, failureCount);
     }
 
     #endregion

@@ -15,12 +15,17 @@ public class DrandChainTests
     public void Info_WithSavedDocument_MatchesConstants()
     {
         var info = JsonElement.Parse(DrandFixtures.Info);
+        var publicKey = info.GetProperty("public_key").GetString();
+        var hash = info.GetProperty("hash").GetString();
+        var period = info.GetProperty("period").GetInt32();
+        var genesisTime = info.GetProperty("genesis_time").GetInt64();
+        var scheme = info.GetProperty("schemeID").GetString();
 
-        Assert.Equal(DrandDefaults.PublicKey, info.GetProperty("public_key").GetString());
-        Assert.Equal(DrandDefaults.ChainHash, info.GetProperty("hash").GetString());
-        Assert.Equal(DrandDefaults.Period, info.GetProperty("period").GetInt32());
-        Assert.Equal(DrandDefaults.GenesisTime, info.GetProperty("genesis_time").GetInt64());
-        Assert.Equal("bls-unchained-g1-rfc9380", info.GetProperty("schemeID").GetString());
+        Assert.Equal(DrandDefaults.PublicKey, publicKey);
+        Assert.Equal(DrandDefaults.ChainHash, hash);
+        Assert.Equal(DrandDefaults.Period, period);
+        Assert.Equal(DrandDefaults.GenesisTime, genesisTime);
+        Assert.Equal("bls-unchained-g1-rfc9380", scheme);
     }
 
     #endregion

@@ -28,7 +28,8 @@ public sealed class NistApiTests : IDisposable
     [Fact]
     public async Task GetPulseAsync_WithJson_ReturnsTheDocument()
     {
-        Server.Serve(PulseRoute, NistFixtures.Pulse(NistFixtures.LatestIndex));
+        var json = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        Server.Serve(PulseRoute, json);
         var api = Create();
 
         var document = await api.GetPulseAsync(PulsePath, CancellationToken.None);
@@ -42,7 +43,8 @@ public sealed class NistApiTests : IDisposable
     [Fact]
     public async Task GetPulseAsync_WithDefaultOptions_RequestsTheDefaultPath()
     {
-        Server.Serve(PulseRoute, NistFixtures.Pulse(NistFixtures.LatestIndex));
+        var json = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        Server.Serve(PulseRoute, json);
         var api = Create();
 
         await api.GetPulseAsync(PulsePath, CancellationToken.None);

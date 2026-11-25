@@ -32,7 +32,8 @@ internal sealed class NistTestSigner : IDisposable
             notAfter ?? new DateTimeOffset(2027, 12, 31, 0, 0, 0, TimeSpan.Zero)
         );
         Der = certificate.RawData;
-        Pem = Encoding.ASCII.GetBytes(PemEncoding.WriteString("CERTIFICATE", Der));
+        var pem = PemEncoding.WriteString("CERTIFICATE", Der);
+        Pem = Encoding.ASCII.GetBytes(pem);
         Id = SHA512.HashData(Der);
     }
 

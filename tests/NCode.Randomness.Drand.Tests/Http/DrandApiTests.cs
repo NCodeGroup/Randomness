@@ -25,7 +25,8 @@ public sealed class DrandApiTests : IDisposable
     [Fact]
     public async Task GetAsync_WithJson_ReturnsTheDocument()
     {
-        Server.Serve(Route, DrandFixtures.Round(DrandFixtures.LatestRound));
+        var json = DrandFixtures.Round(DrandFixtures.LatestRound);
+        Server.Serve(Route, json);
         var api = Create();
 
         var document = await api.GetAsync(Path, CancellationToken.None);
@@ -39,7 +40,8 @@ public sealed class DrandApiTests : IDisposable
     [Fact]
     public async Task GetAsync_WithDefaultOptions_RequestsTheDefaultPath()
     {
-        Server.Serve(Route, DrandFixtures.Round(DrandFixtures.LatestRound));
+        var json = DrandFixtures.Round(DrandFixtures.LatestRound);
+        Server.Serve(Route, json);
         var api = Create();
 
         await api.GetAsync(Path, CancellationToken.None);

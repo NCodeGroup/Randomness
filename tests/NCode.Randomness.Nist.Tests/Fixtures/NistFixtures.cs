@@ -23,10 +23,17 @@ internal static class NistFixtures
     public static DateTimeOffset LatestTimestamp { get; } =
         new(2026, 11, 25, 14, 26, 0, TimeSpan.Zero);
 
-    public static string Pulse(long index) => File.ReadAllText(Path($"pulse-{index}.json"));
+    public static string Pulse(long index)
+    {
+        var path = Path($"pulse-{index}.json");
+        return File.ReadAllText(path);
+    }
 
-    public static byte[] Certificate(string prefix) =>
-        File.ReadAllBytes(Path($"certificate-{prefix}.pem"));
+    public static byte[] Certificate(string prefix)
+    {
+        var path = Path($"certificate-{prefix}.pem");
+        return File.ReadAllBytes(path);
+    }
 
     private static string Path(string name) =>
         System.IO.Path.Combine(AppContext.BaseDirectory, "Fixtures", name);

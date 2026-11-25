@@ -28,9 +28,12 @@ public class ExpandMessageXmdTests
         string expected
     )
     {
-        var actual = ExpandMessageXmd.Expand(Encoding.ASCII.GetBytes(message), Domain, length);
+        var input = Encoding.ASCII.GetBytes(message);
+        var actual = ExpandMessageXmd.Expand(input, Domain, length);
 
-        Assert.Equal(expected, Convert.ToHexStringLower(actual));
+        var hex = Convert.ToHexStringLower(actual);
+
+        Assert.Equal(expected, hex);
     }
 
     [Theory]

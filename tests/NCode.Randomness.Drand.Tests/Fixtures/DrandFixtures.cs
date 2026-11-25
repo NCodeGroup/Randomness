@@ -17,9 +17,20 @@ internal static class DrandFixtures
     public static DateTimeOffset LatestTimestamp { get; } =
         new(2026, 11, 25, 14, 30, 30, TimeSpan.Zero);
 
-    public static string Info => File.ReadAllText(Path("info.json"));
+    public static string Info
+    {
+        get
+        {
+            var path = Path("info.json");
+            return File.ReadAllText(path);
+        }
+    }
 
-    public static string Round(long round) => File.ReadAllText(Path($"public-{round}.json"));
+    public static string Round(long round)
+    {
+        var path = Path($"public-{round}.json");
+        return File.ReadAllText(path);
+    }
 
     private static string Path(string name) =>
         System.IO.Path.Combine(AppContext.BaseDirectory, "Fixtures", name);

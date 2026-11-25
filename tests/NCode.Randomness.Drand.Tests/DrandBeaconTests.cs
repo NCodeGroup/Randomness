@@ -24,21 +24,21 @@ public sealed class DrandBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_WithDrandData_ReturnsTheVerifiedPulse()
     {
-        Server.Serve(QuicknetPath + "latest", DrandFixtures.Round(DrandFixtures.LatestRound));
+        var json = DrandFixtures.Round(DrandFixtures.LatestRound);
+        Server.Serve(QuicknetPath + "latest", json);
         var beacon = Create();
 
         var pulse = await beacon.GetLatestPulseAsync(CancellationToken.None);
 
-        var document = System.Text.Json.JsonElement.Parse(
-            DrandFixtures.Round(DrandFixtures.LatestRound)
-        );
+        var document = System.Text.Json.JsonElement.Parse(json);
         var signature = document.GetProperty("signature").GetString();
+        var randomness = Convert.ToHexStringLower(pulse.Randomness);
         Assert.Equal(DrandDefaults.BeaconName, pulse.Beacon);
         Assert.Equal(DrandDefaults.ChainHash, pulse.Chain);
         Assert.Equal(DrandFixtures.LatestRound, pulse.Round);
         Assert.Equal(signature, pulse.Id);
         Assert.Equal(DrandFixtures.LatestTimestamp, pulse.Timestamp);
-        Assert.Equal(DrandFixtures.LatestRandomness, Convert.ToHexStringLower(pulse.Randomness));
+        Assert.Equal(DrandFixtures.LatestRandomness, randomness);
         Assert.Equal([QuicknetPath + "latest"], Server.Requests);
     }
 
@@ -46,20 +46,23 @@ public sealed class DrandBeaconTests : IDisposable
     public async Task GetLatestPulseAsync_WithRoundOfTheTestChain_ReturnsIt()
     {
         var path = $"/{DrandTestChain.Chain.Hash}/public/";
-        Server.Serve(path + "latest", DrandTestChain.Json(5));
+        var json = DrandTestChain.Json(5);
+        Server.Serve(path + "latest", json);
         var beacon = Create(DrandTestChain.Chain);
 
         var pulse = await beacon.GetLatestPulseAsync(CancellationToken.None);
 
+        var timestamp = DrandTestChain.Chain.TimeOf(5);
         Assert.Equal(5, pulse.Round);
         Assert.Equal(DrandTestChain.Chain.Hash, pulse.Chain);
-        Assert.Equal(DrandTestChain.Chain.TimeOf(5), pulse.Timestamp);
+        Assert.Equal(timestamp, pulse.Timestamp);
     }
 
     [Fact]
     public async Task GetLatestPulseAsync_WhenTheSignatureIsNotTheChains_IsInvalid()
     {
-        Server.Serve(QuicknetPath + "latest", DrandTestChain.Json(5));
+        var json = DrandTestChain.Json(5);
+        Server.Serve(QuicknetPath + "latest", json);
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -149,7 +152,8 @@ public sealed class DrandBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_WhenTheCallerCancels_PropagatesTheCancellation()
     {
-        Server.Serve(QuicknetPath + "latest", DrandFixtures.Round(DrandFixtures.LatestRound));
+        var json = DrandFixtures.Round(DrandFixtures.LatestRound);
+        Server.Serve(QuicknetPath + "latest", json);
         var beacon = Create();
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync();
@@ -162,11 +166,8 @@ public sealed class DrandBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_WhenTheAnswerIsNotJson_IsInvalid()
     {
-        Server.Serve(
-            QuicknetPath + "latest",
-            DrandFixtures.Round(DrandFixtures.LatestRound),
-            "text/html"
-        );
+        var json = DrandFixtures.Round(DrandFixtures.LatestRound);
+        Server.Serve(QuicknetPath + "latest", json, "text/html");
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -183,7 +184,8 @@ public sealed class DrandBeaconTests : IDisposable
     public async Task GetLatestPulseAsync_WhenTheAnswerIsTooLarge_IsInvalid()
     {
         Options.MaxResponseBytes = 100;
-        Server.Serve(QuicknetPath + "latest", DrandFixtures.Round(DrandFixtures.LatestRound));
+        var json = DrandFixtures.Round(DrandFixtures.LatestRound);
+        Server.Serve(QuicknetPath + "latest", json);
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -203,21 +205,25 @@ public sealed class DrandBeaconTests : IDisposable
     [Fact]
     public async Task GetPulseAsync_WithPublishedRound_ReturnsIt()
     {
-        Server.Serve(QuicknetPath + "1000", DrandFixtures.Round(1000));
+        var json = DrandFixtures.Round(1000);
+        Server.Serve(QuicknetPath + "1000", json);
         var beacon = Create();
 
         var pulse = await beacon.GetPulseAsync(1000, CancellationToken.None);
 
+        var randomness = Convert.ToHexStringLower(pulse.Randomness);
+        var timestamp = DrandChain.Quicknet.TimeOf(1000);
         Assert.Equal(1000, pulse.Round);
-        Assert.Equal(DrandFixtures.FirstRandomness, Convert.ToHexStringLower(pulse.Randomness));
-        Assert.Equal(DrandChain.Quicknet.TimeOf(1000), pulse.Timestamp);
+        Assert.Equal(DrandFixtures.FirstRandomness, randomness);
+        Assert.Equal(timestamp, pulse.Timestamp);
         Assert.Equal([QuicknetPath + "1000"], Server.Requests);
     }
 
     [Fact]
     public async Task GetPulseAsync_WhenServerAnswersAnotherRound_IsInvalid()
     {
-        Server.Serve(QuicknetPath + "1000", DrandFixtures.Round(DrandFixtures.LatestRound));
+        var json = DrandFixtures.Round(DrandFixtures.LatestRound);
+        Server.Serve(QuicknetPath + "1000", json);
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -233,9 +239,8 @@ public sealed class DrandBeaconTests : IDisposable
     [Fact]
     public async Task GetPulseAsync_WhenTheSignatureIsOfAnotherRound_IsInvalid()
     {
-        var forged = DrandFixtures
-            .Round(1000)
-            .Replace("\"round\":1000", "\"round\":1001", StringComparison.Ordinal);
+        var fixture = DrandFixtures.Round(1000);
+        var forged = fixture.Replace("\"round\":1000", "\"round\":1001", StringComparison.Ordinal);
         Server.Serve(QuicknetPath + "1001", forged);
         var beacon = Create();
 

@@ -31,12 +31,11 @@ public sealed class NistCertificateCacheTests : IDisposable
 
     private static byte[] Id(string hex) => Convert.FromHexString(hex);
 
-    private void ServeCurrent() =>
-        Server.Serve(
-            CurrentRoute,
-            Encoding.UTF8.GetString(NistFixtures.Certificate("5b6386e6")),
-            "text/plain"
-        );
+    private void ServeCurrent()
+    {
+        var certificate = Encoding.UTF8.GetString(NistFixtures.Certificate("5b6386e6"));
+        Server.Serve(CurrentRoute, certificate, "text/plain");
+    }
 
     private NistCertificateCache Create(NistBeaconOptions? beaconOptions = null)
     {
@@ -87,13 +86,11 @@ public sealed class NistCertificateCacheTests : IDisposable
     {
         ServeCurrent();
         var cache = Create();
+        var id = Id(NistFixtures.CurrentCertificateId);
 
-        var certificate = await cache.GetAsync(
-            Id(NistFixtures.CurrentCertificateId),
-            CancellationToken.None
-        );
+        var certificate = await cache.GetAsync(id, CancellationToken.None);
 
-        Assert.Equal(Id(NistFixtures.CurrentCertificateId), certificate.Id);
+        Assert.Equal(id, certificate.Id);
     }
 
     [Fact]
@@ -101,15 +98,13 @@ public sealed class NistCertificateCacheTests : IDisposable
     {
         using var signer = new NistTestSigner();
         ServeCurrent();
-        Server.Serve(
-            "/beacon/2.0/certificate/" + signer.IdHex,
-            Encoding.ASCII.GetString(signer.Pem),
-            "text/plain"
-        );
+        var pem = Encoding.ASCII.GetString(signer.Pem);
+        Server.Serve("/beacon/2.0/certificate/" + signer.IdHex, pem, "text/plain");
         var cache = Create(new NistBeaconOptions { CertificateIds = [signer.IdHex] });
+        var currentId = Id(NistFixtures.CurrentCertificateId);
 
         var exception = await Assert.ThrowsAsync<NistFormatException>(async () =>
-            await cache.GetAsync(Id(NistFixtures.CurrentCertificateId), CancellationToken.None)
+            await cache.GetAsync(currentId, CancellationToken.None)
         );
         var certificate = await cache.GetAsync(signer.Id, CancellationToken.None);
 
@@ -122,14 +117,10 @@ public sealed class NistCertificateCacheTests : IDisposable
     public async Task GetAsync_WithAnUppercaseConfiguredId_MatchesIt()
     {
         using var signer = new NistTestSigner();
-        Server.Serve(
-            "/beacon/2.0/certificate/" + signer.IdHex,
-            Encoding.ASCII.GetString(signer.Pem),
-            "text/plain"
-        );
-        var cache = Create(
-            new NistBeaconOptions { CertificateIds = [signer.IdHex.ToUpperInvariant()] }
-        );
+        var pem = Encoding.ASCII.GetString(signer.Pem);
+        Server.Serve("/beacon/2.0/certificate/" + signer.IdHex, pem, "text/plain");
+        var upperId = signer.IdHex.ToUpperInvariant();
+        var cache = Create(new NistBeaconOptions { CertificateIds = [upperId] });
 
         var certificate = await cache.GetAsync(signer.Id, CancellationToken.None);
 
@@ -140,9 +131,10 @@ public sealed class NistCertificateCacheTests : IDisposable
     public async Task GetAsync_WhenPinnedButNotServed_Throws()
     {
         var cache = Create();
+        var id = Id(NistFixtures.CurrentCertificateId);
 
         var exception = await Assert.ThrowsAsync<NistFormatException>(async () =>
-            await cache.GetAsync(Id(NistFixtures.CurrentCertificateId), CancellationToken.None)
+            await cache.GetAsync(id, CancellationToken.None)
         );
 
         Assert.Contains("does not serve", exception.Message, StringComparison.Ordinal);

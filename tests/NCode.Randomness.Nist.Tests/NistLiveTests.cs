@@ -23,11 +23,11 @@ public class NistLiveTests
         var pulse = await beacon.GetLatestPulseAsync(CancellationToken.None);
         var round = await beacon.GetPulseAsync(pulse.Round - 10, CancellationToken.None);
 
-        Assert.InRange(
-            DateTimeOffset.UtcNow - pulse.Timestamp,
-            TimeSpan.FromMinutes(-2),
-            TimeSpan.FromMinutes(5)
-        );
+        var age = DateTimeOffset.UtcNow - pulse.Timestamp;
+        var earliest = TimeSpan.FromMinutes(-2);
+        var latest = TimeSpan.FromMinutes(5);
+
+        Assert.InRange(age, earliest, latest);
         Assert.Equal(64, pulse.Randomness.Length);
         Assert.Equal(pulse.Round - 10, round.Round);
     }
@@ -59,7 +59,9 @@ public class NistLiveTests
         var value = host.Services.GetRequiredService<ISecureRandom>().NextInteger(1, 7);
         await host.StopAsync();
 
-        Assert.Equal(BeaconHealth.Healthy, Assert.Single(status.Beacons).Health);
+        var onlyBeacon = Assert.Single(status.Beacons);
+
+        Assert.Equal(BeaconHealth.Healthy, onlyBeacon.Health);
         Assert.InRange(value, 1, 6);
     }
 }

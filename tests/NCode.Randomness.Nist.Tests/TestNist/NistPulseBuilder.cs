@@ -37,14 +37,18 @@ internal sealed record NistPulseBuilder
 
     public Action<JsonObject>? AfterSigning { get; init; }
 
-    public static NistPulseBuilder For(long index) =>
-        new()
+    public static NistPulseBuilder For(long index)
+    {
+        var next = LocalRandom(index + 1);
+        var precommitment = SHA512.HashData(next);
+        return new NistPulseBuilder
         {
             PulseIndex = index,
             LocalRandomValue = LocalRandom(index),
-            Precommitment = SHA512.HashData(LocalRandom(index + 1)),
+            Precommitment = precommitment,
             Timestamp = Epoch.AddMinutes(index),
         };
+    }
 
     public static byte[] LocalRandom(long index)
     {
@@ -98,21 +102,27 @@ internal sealed record NistPulseBuilder
         pulse["signatureValue"] = "00";
         pulse["outputValue"] = zeros;
 
-        var unsigned = NistPulse.Parse(Parse(new JsonObject { ["pulse"] = pulse.DeepClone() }));
+        var clone = pulse.DeepClone();
+        var unsignedElement = Parse(new JsonObject { ["pulse"] = clone });
+        var unsigned = NistPulse.Parse(unsignedElement);
         var signature = signer.Sign(unsigned.SignedBytes);
         var hashed = new byte[unsigned.SignedBytes.Length + signature.Length];
         unsigned.SignedBytes.CopyTo(hashed, 0);
         signature.CopyTo(hashed, unsigned.SignedBytes.Length);
         pulse["signatureValue"] = Convert.ToHexString(signature);
-        pulse["outputValue"] = Convert.ToHexString(SHA512.HashData(hashed));
+        var output = SHA512.HashData(hashed);
+        pulse["outputValue"] = Convert.ToHexString(output);
 
         AfterSigning?.Invoke(pulse);
         return new JsonObject { ["pulse"] = pulse }.ToJsonString();
     }
 
-    private static JsonElement Parse(JsonNode node) =>
-        JsonElement.Parse(
-            node.ToJsonString(),
+    private static JsonElement Parse(JsonNode node)
+    {
+        var json = node.ToJsonString();
+        return JsonElement.Parse(
+            json,
             new JsonDocumentOptions { MaxDepth = 16, AllowDuplicateProperties = false }
         );
+    }
 }

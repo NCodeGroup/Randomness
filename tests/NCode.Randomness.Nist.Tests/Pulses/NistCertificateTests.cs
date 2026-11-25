@@ -18,8 +18,9 @@ public class NistCertificateTests
     public void Parse_WhenCertificateIsNists_ReadsKeyAndValidity()
     {
         var id = Convert.FromHexString(NistFixtures.CurrentCertificateId);
+        var pem = NistFixtures.Certificate("5b6386e6");
 
-        using var certificate = NistCertificate.Parse(NistFixtures.Certificate("5b6386e6"), id);
+        using var certificate = NistCertificate.Parse(pem, id);
 
         Assert.Equal<byte>(id, certificate.Id);
         Assert.Equal(4096, certificate.Key.KeySize);
@@ -52,10 +53,9 @@ public class NistCertificateTests
     public void Parse_WhenIdentifierIsAnotherCertificates_Throws()
     {
         var other = Convert.FromHexString(NistFixtures.PreviousCertificateId);
+        var pem = NistFixtures.Certificate("5b6386e6");
 
-        var exception = Assert.Throws<NistFormatException>(() =>
-            NistCertificate.Parse(NistFixtures.Certificate("5b6386e6"), other)
-        );
+        var exception = Assert.Throws<NistFormatException>(() => NistCertificate.Parse(pem, other));
 
         Assert.Contains("does not hash", exception.Message, StringComparison.Ordinal);
     }
@@ -74,7 +74,8 @@ public class NistCertificateTests
     public void Parse_WhenLabelIsNotCertificate_Throws()
     {
         using var signer = new NistTestSigner();
-        var pem = Encoding.ASCII.GetBytes(PemEncoding.WriteString("PUBLIC KEY", signer.Der));
+        var text = PemEncoding.WriteString("PUBLIC KEY", signer.Der);
+        var pem = Encoding.ASCII.GetBytes(text);
 
         var exception = Assert.Throws<NistFormatException>(() =>
             NistCertificate.Parse(pem, signer.Id)
@@ -115,11 +116,11 @@ public class NistCertificateTests
             new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.Zero)
         );
         var der = certificate.RawData;
-        var pem = Encoding.ASCII.GetBytes(PemEncoding.WriteString("CERTIFICATE", der));
+        var text = PemEncoding.WriteString("CERTIFICATE", der);
+        var pem = Encoding.ASCII.GetBytes(text);
+        var id = SHA512.HashData(der);
 
-        var exception = Assert.Throws<NistFormatException>(() =>
-            NistCertificate.Parse(pem, SHA512.HashData(der))
-        );
+        var exception = Assert.Throws<NistFormatException>(() => NistCertificate.Parse(pem, id));
 
         Assert.Contains("RSA key", exception.Message, StringComparison.Ordinal);
     }
@@ -128,11 +129,11 @@ public class NistCertificateTests
     public void Parse_WhenDerIsNotX509_Throws()
     {
         var der = RandomNumberGenerator.GetBytes(64);
-        var pem = Encoding.ASCII.GetBytes(PemEncoding.WriteString("CERTIFICATE", der));
+        var text = PemEncoding.WriteString("CERTIFICATE", der);
+        var pem = Encoding.ASCII.GetBytes(text);
+        var id = SHA512.HashData(der);
 
-        var exception = Assert.Throws<NistFormatException>(() =>
-            NistCertificate.Parse(pem, SHA512.HashData(der))
-        );
+        var exception = Assert.Throws<NistFormatException>(() => NistCertificate.Parse(pem, id));
 
         Assert.Contains("X.509", exception.Message, StringComparison.Ordinal);
     }

@@ -45,7 +45,8 @@ public sealed class NistBeaconTests : IDisposable
         Assert.Equal(NistFixtures.LatestIndex, pulse.Round);
         Assert.Equal(NistFixtures.LatestOutput, pulse.Id);
         Assert.Equal(NistFixtures.LatestTimestamp, pulse.Timestamp);
-        Assert.Equal(NistFixtures.LatestOutput, Convert.ToHexString(pulse.Randomness));
+        var randomness = Convert.ToHexString(pulse.Randomness);
+        Assert.Equal(NistFixtures.LatestOutput, randomness);
         Assert.Equal(
             [
                 PulsePath + "last",
@@ -59,20 +60,13 @@ public sealed class NistBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_ForTheNextIndex_ReusesTheLastPulse()
     {
-        var signer = Pin(new NistTestSigner());
+        var signer = new NistTestSigner();
+        Pin(signer);
         var first = NistPulseBuilder.For(100).Build(signer);
-        var second = (
-            NistPulseBuilder.For(101) with
-            {
-                Previous = NistPulseBuilder.OutputOf(first),
-            }
-        ).Build(signer);
-        var third = (
-            NistPulseBuilder.For(102) with
-            {
-                Previous = NistPulseBuilder.OutputOf(second),
-            }
-        ).Build(signer);
+        var firstOutput = NistPulseBuilder.OutputOf(first);
+        var second = (NistPulseBuilder.For(101) with { Previous = firstOutput }).Build(signer);
+        var secondOutput = NistPulseBuilder.OutputOf(second);
+        var third = (NistPulseBuilder.For(102) with { Previous = secondOutput }).Build(signer);
         ServeSigner(signer).Serve(PulsePath + "last", second).Serve(PulsePath + "100", first);
         var beacon = Create();
         await beacon.GetLatestPulseAsync(CancellationToken.None);
@@ -88,8 +82,10 @@ public sealed class NistBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_WhenPredecessorIsMissing_IsInvalid()
     {
-        var signer = Pin(new NistTestSigner());
-        ServeSigner(signer).Serve(PulsePath + "last", NistPulseBuilder.For(101).Build(signer));
+        var signer = new NistTestSigner();
+        Pin(signer);
+        var pulse = NistPulseBuilder.For(101).Build(signer);
+        ServeSigner(signer).Serve(PulsePath + "last", pulse);
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -106,13 +102,11 @@ public sealed class NistBeaconTests : IDisposable
     public async Task GetLatestPulseAsync_WhenPredecessorIsAnotherPulse_IsInvalid()
     {
         ServeNist();
+        var pulse = NistFixtures.Pulse(1484768);
+        var certificate = Encoding.UTF8.GetString(NistFixtures.Certificate("e692b0f6"));
         Server
-            .Serve(PulsePath + (NistFixtures.LatestIndex - 1), NistFixtures.Pulse(1484768))
-            .Serve(
-                CertificatePath + NistFixtures.PreviousCertificateId,
-                Encoding.UTF8.GetString(NistFixtures.Certificate("e692b0f6")),
-                "text/plain"
-            );
+            .Serve(PulsePath + (NistFixtures.LatestIndex - 1), pulse)
+            .Serve(CertificatePath + NistFixtures.PreviousCertificateId, certificate, "text/plain");
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -129,7 +123,8 @@ public sealed class NistBeaconTests : IDisposable
     public async Task GetLatestPulseAsync_WhenTheCertificateIsNotPinned_IsInvalid()
     {
         using var signer = new NistTestSigner();
-        Server.Serve(PulsePath + "last", NistPulseBuilder.For(101).Build(signer));
+        var pulse = NistPulseBuilder.For(101).Build(signer);
+        Server.Serve(PulsePath + "last", pulse);
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -229,7 +224,8 @@ public sealed class NistBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_WhenTheAnswerIsNotJson_IsInvalid()
     {
-        Server.Serve(PulsePath + "last", NistFixtures.Pulse(NistFixtures.LatestIndex), "text/html");
+        var pulse = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        Server.Serve(PulsePath + "last", pulse, "text/html");
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -262,12 +258,10 @@ public sealed class NistBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_WhenThePulseIsOnAnotherChain_IsInvalid()
     {
-        var signer = Pin(new NistTestSigner());
-        ServeSigner(signer)
-            .Serve(
-                PulsePath + "last",
-                (NistPulseBuilder.For(101) with { ChainIndex = 3 }).Build(signer)
-            );
+        var signer = new NistTestSigner();
+        Pin(signer);
+        var pulse = (NistPulseBuilder.For(101) with { ChainIndex = 3 }).Build(signer);
+        ServeSigner(signer).Serve(PulsePath + "last", pulse);
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -283,8 +277,10 @@ public sealed class NistBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_WhenThePulseStartsTheChain_IsInvalid()
     {
-        var signer = Pin(new NistTestSigner());
-        ServeSigner(signer).Serve(PulsePath + "last", NistPulseBuilder.For(1).Build(signer));
+        var signer = new NistTestSigner();
+        Pin(signer);
+        var pulse = NistPulseBuilder.For(1).Build(signer);
+        ServeSigner(signer).Serve(PulsePath + "last", pulse);
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -301,15 +297,16 @@ public sealed class NistBeaconTests : IDisposable
     public async Task GetLatestPulseAsync_WithAnotherChainIndex_UsesItsPaths()
     {
         Options.ChainIndex = 3;
-        var signer = Pin(new NistTestSigner());
+        var signer = new NistTestSigner();
+        Pin(signer);
         var first = (NistPulseBuilder.For(100) with { ChainIndex = 3 }).Build(signer);
-        var second = (
-            NistPulseBuilder.For(101) with
-            {
-                ChainIndex = 3,
-                Previous = NistPulseBuilder.OutputOf(first),
-            }
-        ).Build(signer);
+        var firstOutput = NistPulseBuilder.OutputOf(first);
+        var secondBuilder = NistPulseBuilder.For(101) with
+        {
+            ChainIndex = 3,
+            Previous = firstOutput,
+        };
+        var second = secondBuilder.Build(signer);
         ServeSigner(signer)
             .Serve("/beacon/2.0/chain/3/pulse/last", second)
             .Serve("/beacon/2.0/chain/3/pulse/100", first);
@@ -337,10 +334,8 @@ public sealed class NistBeaconTests : IDisposable
     public async Task GetPulseAsync_WithPublishedIndex_ReturnsIt()
     {
         ServeNist();
-        Server.Serve(
-            PulsePath + NistFixtures.LatestIndex,
-            NistFixtures.Pulse(NistFixtures.LatestIndex)
-        );
+        var latest = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        Server.Serve(PulsePath + NistFixtures.LatestIndex, latest);
         var beacon = Create();
 
         var pulse = await beacon.GetPulseAsync(NistFixtures.LatestIndex, CancellationToken.None);
@@ -352,32 +347,29 @@ public sealed class NistBeaconTests : IDisposable
     [Fact]
     public async Task GetPulseAsync_AcrossACertificateRotation_ReturnsIt()
     {
+        var pulse = NistFixtures.Pulse(1484769);
+        var predecessor = NistFixtures.Pulse(1484768);
+        var rotated = Encoding.UTF8.GetString(NistFixtures.Certificate("528943a5"));
+        var previous = Encoding.UTF8.GetString(NistFixtures.Certificate("e692b0f6"));
         Server
-            .Serve(PulsePath + "1484769", NistFixtures.Pulse(1484769))
-            .Serve(PulsePath + "1484768", NistFixtures.Pulse(1484768))
-            .Serve(
-                CertificatePath + NistFixtures.RotatedCertificateId,
-                Encoding.UTF8.GetString(NistFixtures.Certificate("528943a5")),
-                "text/plain"
-            )
-            .Serve(
-                CertificatePath + NistFixtures.PreviousCertificateId,
-                Encoding.UTF8.GetString(NistFixtures.Certificate("e692b0f6")),
-                "text/plain"
-            );
+            .Serve(PulsePath + "1484769", pulse)
+            .Serve(PulsePath + "1484768", predecessor)
+            .Serve(CertificatePath + NistFixtures.RotatedCertificateId, rotated, "text/plain")
+            .Serve(CertificatePath + NistFixtures.PreviousCertificateId, previous, "text/plain");
         var beacon = Create();
 
-        var pulse = await beacon.GetPulseAsync(1484769, CancellationToken.None);
+        var result = await beacon.GetPulseAsync(1484769, CancellationToken.None);
 
-        Assert.Equal(1484769, pulse.Round);
-        Assert.Equal(64, pulse.Randomness.Length);
+        Assert.Equal(1484769, result.Round);
+        Assert.Equal(64, result.Randomness.Length);
     }
 
     [Fact]
     public async Task GetPulseAsync_WhenServerAnswersAnotherPulse_IsInvalid()
     {
         ServeNist();
-        Server.Serve(PulsePath + "2043000", NistFixtures.Pulse(NistFixtures.LatestIndex));
+        var pulse = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        Server.Serve(PulsePath + "2043000", pulse);
         var beacon = Create();
 
         var exception = await BeaconAssert.AssertBeaconErrorAsync(
@@ -431,25 +423,22 @@ public sealed class NistBeaconTests : IDisposable
         return signer;
     }
 
-    private StubNistServer ServeSigner(NistTestSigner signer) =>
-        Server.Serve(
-            CertificatePath + signer.IdHex,
-            Encoding.ASCII.GetString(signer.Pem),
-            "text/plain"
-        );
+    private StubNistServer ServeSigner(NistTestSigner signer)
+    {
+        var certificate = Encoding.ASCII.GetString(signer.Pem);
+        return Server.Serve(CertificatePath + signer.IdHex, certificate, "text/plain");
+    }
 
-    private void ServeNist() =>
+    private void ServeNist()
+    {
+        var latest = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        var predecessor = NistFixtures.Pulse(NistFixtures.LatestIndex - 1);
+        var certificate = Encoding.UTF8.GetString(NistFixtures.Certificate("5b6386e6"));
         Server
-            .Serve(PulsePath + "last", NistFixtures.Pulse(NistFixtures.LatestIndex))
-            .Serve(
-                PulsePath + (NistFixtures.LatestIndex - 1),
-                NistFixtures.Pulse(NistFixtures.LatestIndex - 1)
-            )
-            .Serve(
-                CertificatePath + NistFixtures.CurrentCertificateId,
-                Encoding.UTF8.GetString(NistFixtures.Certificate("5b6386e6")),
-                "text/plain"
-            );
+            .Serve(PulsePath + "last", latest)
+            .Serve(PulsePath + (NistFixtures.LatestIndex - 1), predecessor)
+            .Serve(CertificatePath + NistFixtures.CurrentCertificateId, certificate, "text/plain");
+    }
 
     private NistBeacon Create()
     {

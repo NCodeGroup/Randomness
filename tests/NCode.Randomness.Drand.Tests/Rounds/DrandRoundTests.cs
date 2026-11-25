@@ -18,8 +18,13 @@ public class DrandRoundTests
             new JsonDocumentOptions { MaxDepth = 16, AllowDuplicateProperties = false }
         );
 
-    private static string SignatureOf(long round) =>
-        Parse(DrandFixtures.Round(round)).GetProperty("signature").GetString() ?? string.Empty;
+    private static string SignatureOf(long round)
+    {
+        var text = DrandFixtures.Round(round);
+        var document = Parse(text);
+        var signature = document.GetProperty("signature");
+        return signature.GetString() ?? string.Empty;
+    }
 
     private static string RoundJson(string round, string signature) =>
         $$"""{"round":{{round}},"signature":"{{signature}}"}""";
@@ -29,40 +34,49 @@ public class DrandRoundTests
     [Fact]
     public void Verify_WithFirstFixtureRound_ReturnsRound()
     {
-        var json = Parse(DrandFixtures.Round(FirstFixtureRound));
+        var text = DrandFixtures.Round(FirstFixtureRound);
+        var json = Parse(text);
 
         var round = DrandRound.Verify(json, DrandChain.Quicknet);
+        var signature = Convert.ToHexStringLower(round.Signature);
+        var randomness = Convert.ToHexStringLower(round.Randomness);
+        var timestamp = DrandChain.Quicknet.TimeOf(FirstFixtureRound);
 
         Assert.Equal(FirstFixtureRound, round.Round);
-        Assert.Equal(SignatureOf(FirstFixtureRound), Convert.ToHexStringLower(round.Signature));
-        Assert.Equal(DrandFixtures.FirstRandomness, Convert.ToHexStringLower(round.Randomness));
-        Assert.Equal(DrandChain.Quicknet.TimeOf(FirstFixtureRound), round.Timestamp);
+        var expectedSignature = SignatureOf(FirstFixtureRound);
+        Assert.Equal(expectedSignature, signature);
+        Assert.Equal(DrandFixtures.FirstRandomness, randomness);
+        Assert.Equal(timestamp, round.Timestamp);
     }
 
     [Fact]
     public void Verify_WithLatestFixtureRound_ReturnsRound()
     {
-        var json = Parse(DrandFixtures.Round(DrandFixtures.LatestRound));
+        var text = DrandFixtures.Round(DrandFixtures.LatestRound);
+        var json = Parse(text);
 
         var round = DrandRound.Verify(json, DrandChain.Quicknet);
+        var signature = Convert.ToHexStringLower(round.Signature);
+        var randomness = Convert.ToHexStringLower(round.Randomness);
 
         Assert.Equal(DrandFixtures.LatestRound, round.Round);
-        Assert.Equal(
-            SignatureOf(DrandFixtures.LatestRound),
-            Convert.ToHexStringLower(round.Signature)
-        );
-        Assert.Equal(DrandFixtures.LatestRandomness, Convert.ToHexStringLower(round.Randomness));
+        var expectedSignature = SignatureOf(DrandFixtures.LatestRound);
+        Assert.Equal(expectedSignature, signature);
+        Assert.Equal(DrandFixtures.LatestRandomness, randomness);
         Assert.Equal(DrandFixtures.LatestTimestamp, round.Timestamp);
     }
 
     [Fact]
     public void Verify_WithoutRandomness_ReturnsSameRandomness()
     {
-        var json = Parse(RoundJson("1000", SignatureOf(FirstFixtureRound)));
+        var signature = SignatureOf(FirstFixtureRound);
+        var text = RoundJson("1000", signature);
+        var json = Parse(text);
 
         var round = DrandRound.Verify(json, DrandChain.Quicknet);
+        var randomness = Convert.ToHexStringLower(round.Randomness);
 
-        Assert.Equal(DrandFixtures.FirstRandomness, Convert.ToHexStringLower(round.Randomness));
+        Assert.Equal(DrandFixtures.FirstRandomness, randomness);
     }
 
     [Fact]
@@ -98,7 +112,9 @@ public class DrandRoundTests
     [Fact]
     public void Verify_WithSignatureOfAnotherRound_Throws()
     {
-        var json = Parse(RoundJson("1001", SignatureOf(FirstFixtureRound)));
+        var signature = SignatureOf(FirstFixtureRound);
+        var text = RoundJson("1001", signature);
+        var json = Parse(text);
 
         var exception = Assert.Throws<DrandFormatException>(() =>
             DrandRound.Verify(json, DrandChain.Quicknet)
@@ -110,7 +126,8 @@ public class DrandRoundTests
     [Fact]
     public void Verify_WithTestChainRound_VerifiesOnTestChainOnly()
     {
-        var json = Parse(DrandTestChain.Json(5));
+        var text = DrandTestChain.Json(5);
+        var json = Parse(text);
 
         var round = DrandRound.Verify(json, DrandTestChain.Chain);
         var exception = Assert.Throws<DrandFormatException>(() =>
@@ -124,7 +141,8 @@ public class DrandRoundTests
     [Fact]
     public void Verify_WithIdentitySignature_Throws()
     {
-        var json = Parse(RoundJson("1000", "c0" + new string('0', 94)));
+        var text = RoundJson("1000", "c0" + new string('0', 94));
+        var json = Parse(text);
 
         var exception = Assert.Throws<DrandFormatException>(() =>
             DrandRound.Verify(json, DrandChain.Quicknet)
@@ -136,7 +154,8 @@ public class DrandRoundTests
     [Fact]
     public void Verify_WithPointOutsideG1_Throws()
     {
-        var json = Parse(RoundJson("1000", "80" + new string('0', 94)));
+        var text = RoundJson("1000", "80" + new string('0', 94));
+        var json = Parse(text);
 
         var exception = Assert.Throws<DrandFormatException>(() =>
             DrandRound.Verify(json, DrandChain.Quicknet)
@@ -148,7 +167,8 @@ public class DrandRoundTests
     [Fact]
     public void Verify_WithNonHexSignature_Throws()
     {
-        var json = Parse(RoundJson("1000", new string('z', 96)));
+        var text = RoundJson("1000", new string('z', 96));
+        var json = Parse(text);
 
         var exception = Assert.Throws<DrandFormatException>(() =>
             DrandRound.Verify(json, DrandChain.Quicknet)
@@ -160,7 +180,8 @@ public class DrandRoundTests
     [Fact]
     public void Verify_WithShortSignature_Throws()
     {
-        var json = Parse(RoundJson("1000", new string('0', 94)));
+        var text = RoundJson("1000", new string('0', 94));
+        var json = Parse(text);
 
         var exception = Assert.Throws<DrandFormatException>(() =>
             DrandRound.Verify(json, DrandChain.Quicknet)
@@ -201,7 +222,9 @@ public class DrandRoundTests
     [InlineData("9223372036854775807")]
     public void Verify_WithInvalidRound_Throws(string round)
     {
-        var json = Parse(RoundJson(round, SignatureOf(FirstFixtureRound)));
+        var signature = SignatureOf(FirstFixtureRound);
+        var text = RoundJson(round, signature);
+        var json = Parse(text);
 
         var exception = Assert.Throws<DrandFormatException>(() =>
             DrandRound.Verify(json, DrandChain.Quicknet)

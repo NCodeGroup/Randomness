@@ -16,15 +16,17 @@ public class G1HashToCurveTests
     public void HashToField_WithEmptyMessage_ReturnsRfcVector()
     {
         var u = G1HashToCurve.HashToField([], Domain);
+        var first = Convert.ToHexStringLower(u[0].ToArray());
+        var second = Convert.ToHexStringLower(u[1].ToArray());
 
         Assert.Equal(2, u.Length);
         Assert.Equal(
             "0ba14bd907ad64a016293ee7c2d276b8eae71f25a4b941eece7b0d89f17f75cb3ae5438a614fb61d6835ad59f29c564f",
-            Convert.ToHexStringLower(u[0].ToArray())
+            first
         );
         Assert.Equal(
             "019b9bd7979f12657976de2884c7cce192b82c177c80e0ec604436a7f538d231552f0d96d9f7babe5fa3b19b3ff25ac9",
-            Convert.ToHexStringLower(u[1].ToArray())
+            second
         );
     }
 
@@ -45,10 +47,13 @@ public class G1HashToCurveTests
     )]
     public void Hash_WithRfcVector_ReturnsExpectedPoint(string message, string x, string y)
     {
-        var point = G1HashToCurve.Hash(System.Text.Encoding.UTF8.GetBytes(message), Domain);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(message);
+        var point = G1HashToCurve.Hash(bytes, Domain);
+        var actualX = Convert.ToHexStringLower(point.X.ToArray());
+        var actualY = Convert.ToHexStringLower(point.Y.ToArray());
 
-        Assert.Equal(x, Convert.ToHexStringLower(point.X.ToArray()));
-        Assert.Equal(y, Convert.ToHexStringLower(point.Y.ToArray()));
+        Assert.Equal(x, actualX);
+        Assert.Equal(y, actualY);
     }
 
     #endregion
@@ -68,10 +73,13 @@ public class G1HashToCurveTests
     )]
     public void MapToCurve_WithRfcVector_ReturnsExpectedPoint(string u, string x, string y)
     {
-        var point = G1HashToCurve.MapToCurve(FieldElements.FromHex(u));
+        var element = FieldElements.FromHex(u);
+        var point = G1HashToCurve.MapToCurve(element);
+        var actualX = Convert.ToHexStringLower(point.X.ToArray());
+        var actualY = Convert.ToHexStringLower(point.Y.ToArray());
 
-        Assert.Equal(x, Convert.ToHexStringLower(point.X.ToArray()));
-        Assert.Equal(y, Convert.ToHexStringLower(point.Y.ToArray()));
+        Assert.Equal(x, actualX);
+        Assert.Equal(y, actualY);
     }
 
     #endregion

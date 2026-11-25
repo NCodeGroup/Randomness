@@ -23,14 +23,15 @@ public class NistRandomnessBuilderExtensionsTests
             new ServiceProviderOptions { ValidateOnBuild = true }
         );
 
-        var beacon = Assert.Single(provider.GetServices<IRandomnessBeacon>());
+        var beacons = provider.GetServices<IRandomnessBeacon>();
+        var beacon = Assert.Single(beacons);
+        var nistBeacon = provider.GetRequiredService<NistBeacon>();
+        var status = provider.GetRequiredService<IBeaconStatus>();
+        var statusBeacon = Assert.Single(status.Beacons);
 
         Assert.Equal(NistDefaults.BeaconName, beacon.Name);
-        Assert.Same(beacon, provider.GetRequiredService<NistBeacon>());
-        Assert.Equal(
-            NistDefaults.BeaconName,
-            Assert.Single(provider.GetRequiredService<IBeaconStatus>().Beacons).Name
-        );
+        Assert.Same(beacon, nistBeacon);
+        Assert.Equal(NistDefaults.BeaconName, statusBeacon.Name);
     }
 
     [Fact]
@@ -39,10 +40,9 @@ public class NistRandomnessBuilderExtensionsTests
         var services = new ServiceCollection();
         services.AddRandomness().AddNistBeacon();
         await using var provider = services.BuildServiceProvider();
+        var factory = provider.GetRequiredService<IHttpClientFactory>();
 
-        using var client = provider
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(NistDefaults.HttpClientName);
+        using var client = factory.CreateClient(NistDefaults.HttpClientName);
 
         Assert.NotNull(client);
     }
@@ -54,22 +54,21 @@ public class NistRandomnessBuilderExtensionsTests
         services.AddRandomness().AddNistBeacon(options => options.MaxResponseBytes = 4096);
         await using var provider = services.BuildServiceProvider();
 
-        Assert.Equal(
-            4096,
-            provider.GetRequiredService<IOptions<NistBeaconOptions>>().Value.MaxResponseBytes
-        );
+        var options = provider.GetRequiredService<IOptions<NistBeaconOptions>>();
+
+        Assert.Equal(4096, options.Value.MaxResponseBytes);
     }
 
     [Fact]
     public async Task AddNistBeacon_WithConfiguration_BindsTheSection()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection([
-                KeyValuePair.Create("BaseAddress", (string?)"https://mirror.example/beacon/2.0/"),
-                KeyValuePair.Create("ChainIndex", (string?)"3"),
-                KeyValuePair.Create("CertificateIds:0", (string?)ConfiguredId),
-            ])
-            .Build();
+        KeyValuePair<string, string?>[] entries =
+        [
+            KeyValuePair.Create("BaseAddress", (string?)"https://mirror.example/beacon/2.0/"),
+            KeyValuePair.Create("ChainIndex", (string?)"3"),
+            KeyValuePair.Create("CertificateIds:0", (string?)ConfiguredId),
+        ];
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(entries).Build();
         var services = new ServiceCollection();
         services.AddRandomness().AddNistBeacon(configuration);
         await using var provider = services.BuildServiceProvider();
@@ -84,16 +83,16 @@ public class NistRandomnessBuilderExtensionsTests
     [Fact]
     public async Task AddNistBeacon_WithOneConfiguration_BindsBothSectionsStrictly()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection([
-                KeyValuePair.Create("Randomness:Mode", (string?)"InitializeOnly"),
-                KeyValuePair.Create("RandomnessBeacons:Nist:MaxResponseBytes", (string?)"8192"),
-            ])
-            .Build();
+        KeyValuePair<string, string?>[] entries =
+        [
+            KeyValuePair.Create("Randomness:Mode", (string?)"InitializeOnly"),
+            KeyValuePair.Create("RandomnessBeacons:Nist:MaxResponseBytes", (string?)"8192"),
+        ];
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(entries).Build();
+        var randomnessSection = configuration.GetSection(RandomnessOptions.SectionName);
+        var nistSection = configuration.GetSection(NistBeaconOptions.SectionName);
         var services = new ServiceCollection();
-        services
-            .AddRandomness(configuration.GetSection(RandomnessOptions.SectionName))
-            .AddNistBeacon(configuration.GetSection(NistBeaconOptions.SectionName));
+        services.AddRandomness(randomnessSection).AddNistBeacon(nistSection);
         await using var provider = services.BuildServiceProvider();
 
         var randomness = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
@@ -126,9 +125,8 @@ public class NistRandomnessBuilderExtensionsTests
     [Fact]
     public async Task AddNistBeacon_WithAnUnknownConfigurationKey_FailsTheHostAtStart()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection([KeyValuePair.Create("Unknown", (string?)"1")])
-            .Build();
+        KeyValuePair<string, string?>[] entries = [KeyValuePair.Create("Unknown", (string?)"1")];
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(entries).Build();
         var builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings());
         builder
             .Services.AddRandomness(options => options.Mode = BeaconMode.Offline)
