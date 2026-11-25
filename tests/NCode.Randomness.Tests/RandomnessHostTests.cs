@@ -90,10 +90,9 @@ public class RandomnessHostTests
 
     #endregion
 
-    private static IConfiguration Configure(params (string Key, string Value)[] values) =>
-        new ConfigurationBuilder()
-            .AddInMemoryCollection(
-                values.Select(value => KeyValuePair.Create(value.Key, (string?)value.Value))
-            )
-            .Build();
+    private static IConfiguration Configure(params (string Key, string Value)[] values)
+    {
+        var pairs = values.Select(value => KeyValuePair.Create(value.Key, (string?)value.Value));
+        return new ConfigurationBuilder().AddInMemoryCollection(pairs).Build();
+    }
 }

@@ -33,11 +33,13 @@ public class RandomnessHostBuilderTests
         var builder = RandomnessHost.CreateBuilder();
         builder.AddBeacon<NamedBeacon>();
 
+        var timeout = TimeSpan.FromSeconds(10);
+
         await using var host = await builder.BuildAsync(CancellationToken.None);
         await host
             .BeaconStatus.WaitForPulseAsync(CancellationToken.None)
             .AsTask()
-            .WaitAsync(TimeSpan.FromSeconds(10));
+            .WaitAsync(timeout);
 
         var state = Assert.Single(host.BeaconStatus.Beacons);
         Assert.Equal("named", state.Name);
