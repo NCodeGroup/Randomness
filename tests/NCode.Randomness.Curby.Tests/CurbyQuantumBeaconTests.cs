@@ -512,6 +512,20 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         );
     }
 
+    [Fact]
+    public async Task GetPulseAsync_ForTheSameRoundTwice_ReusesTheVerifiedPulse()
+    {
+        ServeCurbyQ();
+        var beacon = Create();
+        var first = await beacon.GetPulseAsync(CurbyQuantumFixtures.Round, CancellationToken.None);
+        Server.Requests.Clear();
+
+        var second = await beacon.GetPulseAsync(CurbyQuantumFixtures.Round, CancellationToken.None);
+
+        Assert.Same(first, second);
+        Assert.Equal([RoundPath], Server.Requests);
+    }
+
     #endregion
 
     #region GetLatestPulseAsync Tests

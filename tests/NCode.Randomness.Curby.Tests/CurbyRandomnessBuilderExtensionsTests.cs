@@ -263,6 +263,27 @@ public class CurbyRandomnessBuilderExtensionsTests
     }
 
     [Fact]
+    public async Task AddCurbyQuantumBeacon_WithInvalidQuantumChain_FailsTheHostAtStart()
+    {
+        var settings = new HostApplicationBuilderSettings();
+        var builder = Host.CreateEmptyApplicationBuilder(settings);
+        builder
+            .Services.AddRandomness(options => options.Mode = BeaconMode.Offline)
+            .AddCurbyQuantumBeacon(options => options.QuantumChainId = "not-a-cid");
+        using var host = builder.Build();
+
+        var exception = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync()
+        );
+
+        Assert.Contains(
+            "RandomnessBeacons:Curby:QuantumChainId",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
     public async Task AddCurbyQuantumBeacon_WithConfigure_AppliesTheOptions()
     {
         var services = new ServiceCollection();
