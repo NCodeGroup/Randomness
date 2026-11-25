@@ -6,7 +6,6 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using NCode.Randomness.Curby.Http;
 using NCode.Randomness.Curby.Twine;
-using Polly;
 
 namespace NCode.Randomness.Curby;
 
@@ -124,7 +123,7 @@ internal sealed class CurbyBeacon : IRandomnessBeacon
                 exception
             );
         }
-        catch (Exception exception) when (IsOutage(exception, cancellationToken))
+        catch (Exception exception) when (TwineErrors.IsOutage(exception, cancellationToken))
         {
             throw new BeaconException(
                 BeaconError.Unavailable,
@@ -133,7 +132,7 @@ internal sealed class CurbyBeacon : IRandomnessBeacon
                 exception
             );
         }
-        catch (Exception exception) when (IsMalformed(exception, cancellationToken))
+        catch (Exception exception) when (TwineErrors.IsMalformed(exception, cancellationToken))
         {
             // Anything else the parser or verifier throws, such as an invalid UTF-16 escape, is bad data too.
             throw new BeaconException(
@@ -144,35 +143,6 @@ internal sealed class CurbyBeacon : IRandomnessBeacon
             );
         }
     }
-
-    /// <summary>
-    /// Returns whether <paramref name="exception"/> is neither a beacon failure, a disposal, a cancellation nor an
-    /// outage, so the parser or verifier threw it on malformed data, such as an invalid UTF-16 escape.
-    /// </summary>
-    /// <param name="exception">The exception to classify.</param>
-    /// <param name="cancellationToken">The caller's token, whose cancellation is not an outage.</param>
-    /// <returns><see langword="true"/> when the data was malformed; otherwise <see langword="false"/>.</returns>
-    internal static bool IsMalformed(Exception exception, CancellationToken cancellationToken) =>
-        exception is not (BeaconException or ObjectDisposedException or OperationCanceledException)
-        && !IsOutage(exception, cancellationToken);
-
-    /// <summary>
-    /// Returns whether <paramref name="exception"/> shows the service could not be reached: a failed request, a
-    /// timeout, an I/O failure, a cancellation the caller did not ask for or a request the resilience policy rejected.
-    /// </summary>
-    /// <param name="exception">The exception to classify.</param>
-    /// <param name="cancellationToken">The caller's token, whose cancellation is not an outage.</param>
-    /// <returns><see langword="true"/> when the service is unavailable; otherwise <see langword="false"/>.</returns>
-    internal static bool IsOutage(Exception exception, CancellationToken cancellationToken) =>
-        exception is not BeaconException
-        && (
-            exception is HttpRequestException or TimeoutException or IOException
-            || (
-                exception is OperationCanceledException
-                && !cancellationToken.IsCancellationRequested
-            )
-            || exception is ExecutionRejectedException
-        );
 
     private async ValueTask<TwinePulse?> GetPulseAsync(
         TwineChain chain,

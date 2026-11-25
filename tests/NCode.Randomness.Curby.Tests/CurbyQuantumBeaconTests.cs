@@ -383,6 +383,23 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     }
 
     [Fact]
+    public async Task GetPulseAsync_WhenTheBodyIsCorrupt_IsUnavailable()
+    {
+        using var builder = new QuantumRoundBuilder();
+        ServeChains(builder);
+        var roundPath = RoundPathOf(builder.Round);
+        var corrupt = new InvalidDataException("corrupt");
+        Server.Fail(roundPath, corrupt);
+        var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.Unavailable, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Same(corrupt, exception.InnerException);
+    }
+
+    [Fact]
     public async Task GetPulseAsync_WithNegativeRound_IsNotFound()
     {
         var beacon = Create();

@@ -176,7 +176,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
                 exception
             );
         }
-        catch (Exception exception) when (CurbyBeacon.IsOutage(exception, cancellationToken))
+        catch (Exception exception) when (TwineErrors.IsOutage(exception, cancellationToken))
         {
             throw new BeaconException(
                 BeaconError.Unavailable,
@@ -185,7 +185,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
                 exception
             );
         }
-        catch (Exception exception) when (CurbyBeacon.IsMalformed(exception, cancellationToken))
+        catch (Exception exception) when (TwineErrors.IsMalformed(exception, cancellationToken))
         {
             // Anything else the parser or verifier throws, such as an invalid UTF-16 escape, is bad data too.
             throw new BeaconException(
