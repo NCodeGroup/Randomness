@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Description>Cryptographically secure random numbers for .NET: an SP 800-90A HMAC_DRBG seeded by the operating system and strengthened by public randomness beacons, unbiased typed values and ranges, and reproducible draws from a verified beacon pulse.</Description>
-    <PackageTags>random rng csprng drbg entropy randomness-beacon curby cryptography</PackageTags>
+    <PackageTags>random rng csprng drbg hmac-drbg sp800-90a entropy randomness-beacon verifiable-random provably-fair curby nist drand cryptography</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />

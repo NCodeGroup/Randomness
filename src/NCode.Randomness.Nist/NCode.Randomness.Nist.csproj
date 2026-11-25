@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Description>The NIST Randomness Beacon 2.0 adapter for NCode.Randomness: fetches pulses of the NIST beacon's chain, or takes saved pulse and certificate documents offline, and verifies their RSA signatures against pinned certificates, their output values, and their hash chain and precommitment to the previous pulse before any byte is used.</Description>
-    <PackageTags>random randomness-beacon nist beacon cryptography</PackageTags>
+    <PackageTags>random randomness-beacon nist nist-beacon hash-chain cryptography</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" />

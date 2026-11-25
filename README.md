@@ -5,10 +5,10 @@ Cryptographically secure random numbers for .NET, strengthened by public randomn
 [NIST Randomness Beacon](https://beacon.nist.gov/) and [drand](https://drand.love/), and reproducible draws that anyone
 can check against a beacon pulse.
 
-[//]: # "Badges: to show the CI status, add this line below, with the repository's owner and name:"
-[//]: # "[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)"
-[//]: # "Badges: to show the OpenSSF Scorecard, add this line below, with the repository's owner and name:"
-[//]: # "[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/OWNER/REPO/badge)](https://scorecard.dev/viewer/?uri=github.com/OWNER/REPO)"
+[![CI](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml/badge.svg)](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/NCodeGroup/Randomness/badge)](https://scorecard.dev/viewer/?uri=github.com/NCodeGroup/Randomness)
+[![NuGet](https://img.shields.io/nuget/v/NCode.Randomness.svg)](https://www.nuget.org/packages/NCode.Randomness/)
+
 [//]: # "Badges: once the project is registered at bestpractices.dev, record its number as docs/best-practices-criteria.md says, then add the OpenSSF Best Practices badge that page shows."
 
 ## Why
