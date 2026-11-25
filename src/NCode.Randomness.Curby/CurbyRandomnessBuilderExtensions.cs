@@ -64,7 +64,9 @@ public static class CurbyRandomnessBuilderExtensions
 
         /// <summary>
         /// Registers the CURBy-Q beacon, named <c>curby-q</c>, with its default options: the CURBy-Q chain and the
-        /// Bell chain served by <see cref="CurbyDefaults.BaseAddress"/>.
+        /// Bell chain served by <see cref="CurbyDefaults.BaseAddress"/>. It allows <c>curby-q</c> pulses up to 30
+        /// minutes old, since CURBy-Q completes a round about every 13 minutes, unless
+        /// <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> or a longer <c>Randomness:MaxPulseAge</c> is set.
         /// </summary>
         /// <returns>The builder, for chaining.</returns>
         public IRandomnessBuilder AddCurbyQuantumBeacon()
@@ -75,7 +77,9 @@ public static class CurbyRandomnessBuilderExtensions
         }
 
         /// <summary>
-        /// Registers the CURBy-Q beacon with options set by <paramref name="configure"/>.
+        /// Registers the CURBy-Q beacon with options set by <paramref name="configure"/>. It allows <c>curby-q</c>
+        /// pulses up to 30 minutes old, since CURBy-Q completes a round about every 13 minutes, unless
+        /// <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> or a longer <c>Randomness:MaxPulseAge</c> is set.
         /// </summary>
         /// <param name="configure">Sets the options.</param>
         /// <returns>The builder, for chaining.</returns>
@@ -92,7 +96,10 @@ public static class CurbyRandomnessBuilderExtensions
 
         /// <summary>
         /// Registers the CURBy-Q beacon with options bound from <paramref name="configuration"/>, such as
-        /// <c>configuration.GetSection("RandomnessBeacons:Curby")</c>. An unknown key fails the host at start.
+        /// <c>configuration.GetSection("RandomnessBeacons:Curby")</c>. An unknown key fails the host at start. It
+        /// allows <c>curby-q</c> pulses up to 30 minutes old, since CURBy-Q completes a round about every 13
+        /// minutes, unless <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> or a longer <c>Randomness:MaxPulseAge</c> is
+        /// set.
         /// </summary>
         /// <param name="configuration">The configuration section to bind.</param>
         /// <returns>The builder, for chaining.</returns>
@@ -139,6 +146,7 @@ public static class CurbyRandomnessBuilderExtensions
         {
             builder.AddCurbyServices();
             var services = builder.Services;
+            services.AddOptions<RandomnessOptions>().PostConfigure(UseQuantumMaxPulseAge);
             services.TryAddSingleton<CurbyQuantumBeacon>();
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<IRandomnessBeacon, CurbyQuantumBeacon>(provider =>
@@ -160,6 +168,18 @@ public static class CurbyRandomnessBuilderExtensions
             );
             return builder;
         }
+    }
+
+    private static readonly TimeSpan QuantumMaxPulseAge = TimeSpan.FromMinutes(30);
+
+    private static void UseQuantumMaxPulseAge(RandomnessOptions options)
+    {
+        if (options.MaxPulseAgeByBeacon is null || options.MaxPulseAge >= QuantumMaxPulseAge)
+        {
+            return;
+        }
+
+        options.MaxPulseAgeByBeacon.TryAdd(CurbyDefaults.QuantumBeaconName, QuantumMaxPulseAge);
     }
 
     private static void ConfigureResilience(HttpStandardResilienceOptions options)

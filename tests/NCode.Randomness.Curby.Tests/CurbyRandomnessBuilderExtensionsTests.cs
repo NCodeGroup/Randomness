@@ -179,5 +179,55 @@ public class CurbyRandomnessBuilderExtensionsTests
         Assert.Equal(8192, options.MaxResponseBytes);
     }
 
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_ByDefault_AllowsThirtyMinuteOldPulses()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyBeacon().AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
+
+        var limit = Assert.Single(options.MaxPulseAgeByBeacon);
+        Assert.Equal(CurbyDefaults.QuantumBeaconName, limit.Key);
+        Assert.Equal(TimeSpan.FromMinutes(30), limit.Value);
+        Assert.DoesNotContain(CurbyDefaults.BeaconName, options.MaxPulseAgeByBeacon.Keys);
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithHostLimit_KeepsIt()
+    {
+        var services = new ServiceCollection();
+        services
+            .AddRandomness(options =>
+                options.MaxPulseAgeByBeacon[CurbyDefaults.QuantumBeaconName] = TimeSpan.FromMinutes(
+                    45
+                )
+            )
+            .AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
+
+        Assert.Equal(
+            TimeSpan.FromMinutes(45),
+            options.MaxPulseAgeByBeacon[CurbyDefaults.QuantumBeaconName]
+        );
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithLongerMaxPulseAge_AddsNoLimit()
+    {
+        var services = new ServiceCollection();
+        services
+            .AddRandomness(options => options.MaxPulseAge = TimeSpan.FromHours(1))
+            .AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
+
+        Assert.Empty(options.MaxPulseAgeByBeacon);
+    }
+
     #endregion
 }
