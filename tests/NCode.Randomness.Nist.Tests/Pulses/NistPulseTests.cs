@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using NCode.Randomness.Nist.Pulses;
 using NCode.Randomness.Nist.Tests.Fixtures;
+using NCode.Randomness.Nist.Tests.TestNist;
 
 namespace NCode.Randomness.Nist.Tests.Pulses;
 
@@ -157,4 +158,298 @@ public class NistPulseTests
     }
 
     #endregion
+
+    #region Verify Tests
+
+    [Theory]
+    [InlineData(2043330, "5b6386e6", NistFixtures.CurrentCertificateId)]
+    [InlineData(2043331, "5b6386e6", NistFixtures.CurrentCertificateId)]
+    [InlineData(1484768, "e692b0f6", NistFixtures.PreviousCertificateId)]
+    [InlineData(1484769, "528943a5", NistFixtures.RotatedCertificateId)]
+    public void Verify_WhenPulseIsNists_Succeeds(long index, string prefix, string id)
+    {
+        var pulse = NistPulse.Parse(Document(index));
+        using var certificate = NistCertificate.Parse(
+            NistFixtures.Certificate(prefix),
+            Convert.FromHexString(id)
+        );
+
+        pulse.Verify(certificate);
+    }
+
+    [Fact]
+    public void Verify_WhenPulseNamesAnotherCertificate_Throws()
+    {
+        var pulse = NistPulse.Parse(Document(NistFixtures.LatestIndex));
+        using var certificate = NistCertificate.Parse(
+            NistFixtures.Certificate("e692b0f6"),
+            Convert.FromHexString(NistFixtures.PreviousCertificateId)
+        );
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.Verify(certificate));
+
+        Assert.Contains("names another certificate", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WhenLocalRandomValueIsAltered_Throws()
+    {
+        var pulse = NistPulse.Parse(
+            Document(NistFixtures.LatestIndex, "pulse.localRandomValue", $"\"{Hex(64)}\"")
+        );
+        using var certificate = NistCertificate.Parse(
+            NistFixtures.Certificate("5b6386e6"),
+            Convert.FromHexString(NistFixtures.CurrentCertificateId)
+        );
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.Verify(certificate));
+
+        Assert.Contains("does not verify", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WhenBuiltPulseIsValid_Succeeds()
+    {
+        using var signer = new NistTestSigner();
+        using var certificate = signer.Certificate();
+        var pulse = ParseBuilt(NistPulseBuilder.For(5).Build(signer));
+
+        pulse.Verify(certificate);
+    }
+
+    [Fact]
+    public void Verify_WhenBuiltPulseHasNoExternal_Succeeds()
+    {
+        using var signer = new NistTestSigner();
+        using var certificate = signer.Certificate();
+        var builder = NistPulseBuilder.For(5) with { IncludeExternal = false };
+        var pulse = ParseBuilt(builder.Build(signer));
+
+        pulse.Verify(certificate);
+    }
+
+    [Fact]
+    public void Verify_WhenPulseIsDatedAfterTheCertificate_Throws()
+    {
+        using var signer = new NistTestSigner();
+        using var certificate = signer.Certificate();
+        var builder = NistPulseBuilder.For(5) with
+        {
+            Timestamp = new DateTimeOffset(2028, 1, 1, 0, 0, 0, TimeSpan.Zero),
+        };
+        var pulse = ParseBuilt(builder.Build(signer));
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.Verify(certificate));
+
+        Assert.Contains("validity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WhenPulseIsDatedBeforeTheCertificate_Throws()
+    {
+        using var signer = new NistTestSigner();
+        using var certificate = signer.Certificate();
+        var builder = NistPulseBuilder.For(5) with
+        {
+            Timestamp = new DateTimeOffset(2025, 12, 31, 0, 0, 0, TimeSpan.Zero),
+        };
+        var pulse = ParseBuilt(builder.Build(signer));
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.Verify(certificate));
+
+        Assert.Contains("validity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WhenVersionIsNotSupported_Throws()
+    {
+        using var signer = new NistTestSigner();
+        using var certificate = signer.Certificate();
+        var builder = NistPulseBuilder.For(5) with { Version = "2.1" };
+        var pulse = ParseBuilt(builder.Build(signer));
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.Verify(certificate));
+
+        Assert.Contains("version", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WhenCipherSuiteIsNotSupported_Throws()
+    {
+        using var signer = new NistTestSigner();
+        using var certificate = signer.Certificate();
+        var builder = NistPulseBuilder.For(5) with { CipherSuite = 1 };
+        var pulse = ParseBuilt(builder.Build(signer));
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.Verify(certificate));
+
+        Assert.Contains("Cipher suite", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WhenOutputIsReplaced_Throws()
+    {
+        using var signer = new NistTestSigner();
+        using var certificate = signer.Certificate();
+        var builder = NistPulseBuilder.For(5) with
+        {
+            AfterSigning = node => node["outputValue"] = Hex(64),
+        };
+        var pulse = ParseBuilt(builder.Build(signer));
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.Verify(certificate));
+
+        Assert.Contains(
+            "The output value of pulse 5 is not the hash",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public void Verify_WhenSignatureIsCut_Throws()
+    {
+        using var signer = new NistTestSigner();
+        using var certificate = signer.Certificate();
+        var builder = NistPulseBuilder.For(5) with
+        {
+            AfterSigning = node =>
+                node["signatureValue"] = ((string?)node["signatureValue"])?[..(255 * 2)],
+        };
+        var pulse = ParseBuilt(builder.Build(signer));
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.Verify(certificate));
+
+        Assert.Contains(
+            "The signature has 255 bytes, not 256.",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    #endregion
+
+    #region VerifyFollows Tests
+
+    [Theory]
+    [InlineData(2043330, 2043331)]
+    [InlineData(1484768, 1484769)]
+    public void VerifyFollows_WhenPulsesAreNists_Succeeds(long predecessor, long index)
+    {
+        var pulse = NistPulse.Parse(Document(index));
+
+        pulse.VerifyFollows(NistPulse.Parse(Document(predecessor)));
+    }
+
+    [Fact]
+    public void VerifyFollows_WhenPredecessorIsNotAdjacent_Throws()
+    {
+        var pulse = NistPulse.Parse(Document(NistFixtures.LatestIndex));
+        var predecessor = NistPulse.Parse(Document(1484768));
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.VerifyFollows(predecessor));
+
+        Assert.Contains("does not precede", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyFollows_WhenBuiltPulsesFollow_Succeeds()
+    {
+        using var signer = new NistTestSigner();
+        var (predecessor, pulse) = BuiltPair(signer, null);
+
+        pulse.VerifyFollows(predecessor);
+    }
+
+    [Fact]
+    public void VerifyFollows_WhenPreviousIsWrong_Throws()
+    {
+        using var signer = new NistTestSigner();
+        var (predecessor, pulse) = BuiltPair(signer, builder =>
+            builder with
+            {
+                Previous = NistPulseBuilder.LocalRandom(99),
+            }
+        );
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.VerifyFollows(predecessor));
+
+        Assert.Contains("does not chain to", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyFollows_WhenPrecommitmentIsZero_Throws()
+    {
+        using var signer = new NistTestSigner();
+        var predecessorJson = (
+            NistPulseBuilder.For(10) with
+            {
+                Precommitment = new byte[64],
+            }
+        ).Build(signer);
+        var pulseJson = (
+            NistPulseBuilder.For(11) with
+            {
+                Previous = NistPulseBuilder.OutputOf(predecessorJson),
+            }
+        ).Build(signer);
+        var predecessor = ParseBuilt(predecessorJson);
+        var pulse = ParseBuilt(pulseJson);
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.VerifyFollows(predecessor));
+
+        Assert.Contains("precommitment", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyFollows_WhenPredecessorIsLater_Throws()
+    {
+        using var signer = new NistTestSigner();
+        var predecessorJson = (
+            NistPulseBuilder.For(10) with
+            {
+                Timestamp = NistPulseBuilder.For(11).Timestamp.AddMinutes(1),
+            }
+        ).Build(signer);
+        var pulseJson = (
+            NistPulseBuilder.For(11) with
+            {
+                Previous = NistPulseBuilder.OutputOf(predecessorJson),
+            }
+        ).Build(signer);
+        var predecessor = ParseBuilt(predecessorJson);
+        var pulse = ParseBuilt(pulseJson);
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.VerifyFollows(predecessor));
+
+        Assert.Contains("is not earlier", exception.Message, StringComparison.Ordinal);
+    }
+
+    #endregion
+
+    private static NistPulse ParseBuilt(string json) =>
+        NistPulse.Parse(
+            JsonElement.Parse(
+                json,
+                new JsonDocumentOptions { MaxDepth = 16, AllowDuplicateProperties = false }
+            )
+        );
+
+    private static (NistPulse Predecessor, NistPulse Pulse) BuiltPair(
+        NistTestSigner signer,
+        Func<NistPulseBuilder, NistPulseBuilder>? alter
+    )
+    {
+        var predecessorJson = NistPulseBuilder.For(10).Build(signer);
+        var builder = NistPulseBuilder.For(11) with
+        {
+            Previous = NistPulseBuilder.OutputOf(predecessorJson),
+        };
+        if (alter is not null)
+        {
+            builder = alter(builder);
+        }
+
+        return (ParseBuilt(predecessorJson), ParseBuilt(builder.Build(signer)));
+    }
 }
