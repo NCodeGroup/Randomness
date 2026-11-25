@@ -30,8 +30,7 @@ The packages take no dependency on a buffer library, NCode.Buffers included. The
 `BufferFactory.Rent(32, isSensitive: true, out Span<byte> key)`. `GetBytes` returns an ordinary array for values that
 aren't secret, and its documentation steers a key to `Fill`.
 
-For secret material, this rule wins over the project template's C# rule and ADR-0112, which rent transient buffers from
-`ArrayPool<T>.Shared` and clear the ones that held secret material.
+For secret material, this rule wins over project-template ADR-0112 and the project template's C# rule on binary data.
 
 ## Options considered
 
