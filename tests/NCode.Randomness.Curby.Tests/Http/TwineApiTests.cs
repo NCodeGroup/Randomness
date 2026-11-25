@@ -115,6 +115,35 @@ public sealed class TwineApiTests : IDisposable
     }
 
     [Fact]
+    public async Task GetBytesAsync_AtTheLimit_ReturnsTheBody()
+    {
+        Options.MaxResponseBytes = 1024;
+        var text = new string('a', 1024);
+        Server.Serve(Path, text, "application/octet-stream");
+        var api = Create();
+
+        var body = await api.GetBytesAsync(Path, CancellationToken.None);
+
+        Assert.NotNull(body);
+        Assert.Equal(1024, body.Length);
+    }
+
+    [Fact]
+    public async Task GetBytesAsync_OneByteOverTheLimit_Throws()
+    {
+        Options.MaxResponseBytes = 1024;
+        var text = new string('a', 1025);
+        Server.Serve(Path, text, "application/octet-stream");
+        var api = Create();
+
+        var exception = await Assert.ThrowsAsync<TwineFormatException>(async () =>
+            await api.GetBytesAsync(Path, CancellationToken.None)
+        );
+
+        Assert.Contains("more than", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task GetBytesAsync_OverTheLimit_Throws()
     {
         Options.MaxResponseBytes = 1024;

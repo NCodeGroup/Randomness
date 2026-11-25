@@ -344,6 +344,22 @@ public class QuantumRoundTests
     }
 
     [Theory]
+    [InlineData(8)]
+    [InlineData(8388608)]
+    public void Verify_WithSeedLengthAtItsBounds_ReadsIt(int seedLength)
+    {
+        using var builder = new QuantumRoundBuilder { SeedLength = seedLength };
+        var built = builder.Build();
+        using var chain = VerifyChain(builder);
+        var documents = Documents(built.RoundJson);
+
+        var round = QuantumRound.Verify(documents, chain);
+
+        var result = Assert.IsType<QuantumResult>(round.Result);
+        Assert.Equal(seedLength, result.SeedLength);
+    }
+
+    [Theory]
     [InlineData(128)]
     [InlineData(260)]
     public void Verify_WithOutputLengthOutOfRange_Throws(int outputBits)

@@ -98,6 +98,21 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     }
 
     [Fact]
+    public async Task GetPulseAsync_WhenTheResponseIsTenPulsesBack_Succeeds()
+    {
+        using var builder = new QuantumRoundBuilder { BellPulsesAfterResponse = 9 };
+        var round = ServeBuilt(builder);
+        var beacon = Create();
+
+        var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
+
+        var bellResponsePath = BellPulsePath(builder, round, 0);
+
+        Assert.Equal(round.Randomness, pulse.Randomness);
+        Assert.Contains(bellResponsePath, Server.Requests);
+    }
+
+    [Fact]
     public async Task GetPulseAsync_WhenTheResponseIsElevenPulsesBack_IsInvalid()
     {
         using var builder = new QuantumRoundBuilder { BellPulsesAfterResponse = 10 };
@@ -109,6 +124,52 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         );
 
         Assert.Contains("within 10 Bell pulses", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheBellChainHasNoResponse_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder { OmitBellResponse = true };
+        ServeBuilt(builder);
+        var beacon = Create();
+        Func<CancellationToken, ValueTask<BeaconPulse>> fetch = token =>
+            beacon.GetPulseAsync(builder.Round, token);
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, fetch);
+
+        Assert.Contains("starts before", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenEverySeedPulseMixesInThePrecommit_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder { OmitSeedPulseZero = true };
+        ServeBuilt(builder);
+        var beacon = Create();
+        Func<CancellationToken, ValueTask<BeaconPulse>> fetch = token =>
+            beacon.GetPulseAsync(builder.Round, token);
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, fetch);
+
+        Assert.Contains("starts before", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheServerThrowsUnexpectedly_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder();
+        ServeChains(builder);
+        var roundPath = RoundPathOf(builder.Round);
+        var boom = new InvalidOperationException("boom");
+        Server.Fail(roundPath, boom);
+        var beacon = Create();
+        Func<CancellationToken, ValueTask<BeaconPulse>> fetch = token =>
+            beacon.GetPulseAsync(builder.Round, token);
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, fetch);
+
+        Assert.Contains("cannot be read", exception.Message, StringComparison.Ordinal);
+        Assert.Same(boom, exception.InnerException);
     }
 
     [Fact]

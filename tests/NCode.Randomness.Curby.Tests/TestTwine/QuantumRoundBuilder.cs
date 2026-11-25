@@ -42,6 +42,17 @@ internal sealed class QuantumRoundBuilder : IDisposable
     public int SeedCount { get; init; } = 1;
 
     /// <summary>
+    /// Whether the Bell chain is built from status pulses only, so no pulse answers the request.
+    /// </summary>
+    public bool OmitBellResponse { get; init; }
+
+    /// <summary>
+    /// Whether the seed chain starts with the first pulse that mixes in the precommit, and the precommit mixes in no
+    /// seed pulse.
+    /// </summary>
+    public bool OmitSeedPulseZero { get; init; }
+
+    /// <summary>
     /// Whether the precommit mixes in a pulse of the Bell chain; false leaves the mixin out.
     /// </summary>
     public bool PrecommitMixesBell { get; init; } = true;
@@ -76,21 +87,25 @@ internal sealed class QuantumRoundBuilder : IDisposable
         var request = BuildRequest(ref clock);
 
         var bellPulses = new List<(string Json, Cid Cid)>();
-        var responseDataHash = Ipld.Text(BellResponseDataHash ?? DataHash);
-        var requestLink = Ipld.Link(request.Cid);
-        var responseTime = Timestamp(ref clock);
-        var responseTimestamp = Ipld.Text(responseTime);
-        var responseType = Ipld.Text("result");
-        var responsePayload = Ipld.Map(
-            ("dataHash", responseDataHash),
-            ("ref", requestLink),
-            ("timestamp", responseTimestamp),
-            ("type", responseType)
-        );
-        var responseContent = Bell.Content(0, null, responsePayload);
-        var bellResponse = Bell.Seal(responseContent);
-        bellPulses.Add(bellResponse);
-        for (var i = 1; i <= BellPulsesAfterResponse; i++)
+        if (!OmitBellResponse)
+        {
+            var responseDataHash = Ipld.Text(BellResponseDataHash ?? DataHash);
+            var requestLink = Ipld.Link(request.Cid);
+            var responseTime = Timestamp(ref clock);
+            var responseTimestamp = Ipld.Text(responseTime);
+            var responseType = Ipld.Text("result");
+            var responsePayload = Ipld.Map(
+                ("dataHash", responseDataHash),
+                ("ref", requestLink),
+                ("timestamp", responseTimestamp),
+                ("type", responseType)
+            );
+            var responseContent = Bell.Content(0, null, responsePayload);
+            var bellResponse = Bell.Seal(responseContent);
+            bellPulses.Add(bellResponse);
+        }
+
+        while (bellPulses.Count <= BellPulsesAfterResponse)
         {
             var statusCode = Ipld.Integer(0);
             var statusTime = Timestamp(ref clock);
@@ -101,22 +116,26 @@ internal sealed class QuantumRoundBuilder : IDisposable
                 ("timestamp", statusTimestamp),
                 ("type", statusType)
             );
-            var statusContent = Bell.Content(i, bellPulses[^1].Cid, statusPayload);
+            Cid? previousBell = bellPulses.Count == 0 ? null : bellPulses[^1].Cid;
+            var statusContent = Bell.Content(bellPulses.Count, previousBell, statusPayload);
             var status = Bell.Seal(statusContent);
             bellPulses.Add(status);
         }
 
         var seedPulses = new List<(string Json, Cid Cid)>();
-        var firstSeedRound = Ipld.Integer(100);
-        var firstSeedTime = Timestamp(ref clock);
-        var firstSeedTimestamp = Ipld.Text(firstSeedTime);
-        var firstSeedPayload = Ipld.Map(
-            ("round", firstSeedRound),
-            ("timestamp", firstSeedTimestamp)
-        );
-        var firstSeedContent = Seed.Content(0, null, firstSeedPayload);
-        var firstSeed = Seed.Seal(firstSeedContent);
-        seedPulses.Add(firstSeed);
+        if (!OmitSeedPulseZero)
+        {
+            var firstSeedRound = Ipld.Integer(100);
+            var firstSeedTime = Timestamp(ref clock);
+            var firstSeedTimestamp = Ipld.Text(firstSeedTime);
+            var firstSeedPayload = Ipld.Map(
+                ("round", firstSeedRound),
+                ("timestamp", firstSeedTimestamp)
+            );
+            var firstSeedContent = Seed.Content(0, null, firstSeedPayload);
+            var firstSeed = Seed.Seal(firstSeedContent);
+            seedPulses.Add(firstSeed);
+        }
 
         var precommitDataHash = Ipld.Text(DataHash);
         var precommitRound = Ipld.Integer(Round);
@@ -146,7 +165,10 @@ internal sealed class QuantumRoundBuilder : IDisposable
             precommitMixins.Add((Bell.ChainCid, bellPulses[^1].Cid));
         }
 
-        precommitMixins.Add((Seed.ChainCid, seedPulses[0].Cid));
+        if (!OmitSeedPulseZero)
+        {
+            precommitMixins.Add((Seed.ChainCid, seedPulses[0].Cid));
+        }
         var precommitContent = Quantum.Content(
             1,
             request.Cid,
@@ -156,7 +178,8 @@ internal sealed class QuantumRoundBuilder : IDisposable
         var precommit = Quantum.Seal(precommitContent);
 
         var mixingCount = SeedPulsesMixingPrecommit ?? SeedCount + 1;
-        for (var i = 1; i <= mixingCount; i++)
+        var firstMixing = seedPulses.Count;
+        for (var i = firstMixing; i < firstMixing + mixingCount; i++)
         {
             var seedPulseRound = Ipld.Integer(100 + i);
             var seedPulseTime = Timestamp(ref clock);
@@ -165,9 +188,10 @@ internal sealed class QuantumRoundBuilder : IDisposable
                 ("round", seedPulseRound),
                 ("timestamp", seedPulseTimestamp)
             );
+            Cid? previousSeed = seedPulses.Count == 0 ? null : seedPulses[^1].Cid;
             var seedPulseContent = Seed.Content(
                 i,
-                seedPulses[^1].Cid,
+                previousSeed,
                 seedPulsePayload,
                 (Quantum.ChainCid, precommit.Cid)
             );
@@ -176,7 +200,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
         }
 
         var seed = new byte[SeedLength / 8];
-        Sha3.Shake256(seedPulses[1 + SeedCount].Cid.Digest, seed);
+        Sha3.Shake256(seedPulses[firstMixing + SeedCount].Cid.Digest, seed);
         var parameters = Parameters(seed);
         var randomness = RandomNumberGenerator.GetBytes(64);
         var resultMixins = new List<(Cid Chain, Cid Value)>();
