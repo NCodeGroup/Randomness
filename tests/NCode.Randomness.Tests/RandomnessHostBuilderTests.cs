@@ -24,6 +24,15 @@ public class RandomnessHostBuilderTests
 
         Assert.IsType<DefaultSecureRandom>(host.SecureRandom);
         Assert.Equal(32, bytes.Length);
+    }
+
+    [Fact]
+    public async Task BuildAsync_WithNoBeacon_TracksNoBeacon()
+    {
+        var builder = RandomnessHost.CreateBuilder();
+
+        await using var host = await builder.BuildAsync(CancellationToken.None);
+
         Assert.Empty(host.BeaconStatus.Beacons);
     }
 
@@ -42,7 +51,7 @@ public class RandomnessHostBuilderTests
             .WaitAsync(timeout);
 
         var state = Assert.Single(host.BeaconStatus.Beacons);
-        Assert.Equal("named", state.Name);
+        Assert.Equal(NamedBeacon.BeaconName, state.Name);
         Assert.Equal(BeaconHealth.Healthy, state.Health);
     }
 
@@ -77,11 +86,24 @@ public class RandomnessHostBuilderTests
     }
 
     [Fact]
-    public async Task BuildAsync_WhenAServiceFailsToStart_StopsTheServicesItStarted()
+    public async Task BuildAsync_WhenAServiceCannotBeConstructed_ThrowsAndNamesItsDependency()
     {
-        var recording = new RecordingHostedService();
         var builder = RandomnessHost.CreateBuilder();
-        builder.Services.AddSingleton<IHostedService>(recording);
+        builder.Services.AddSingleton<UnresolvableService>();
+
+        var exception = await Assert.ThrowsAsync<AggregateException>(async () =>
+            await builder.BuildAsync(CancellationToken.None)
+        );
+
+        var inner = Assert.Single(exception.InnerExceptions);
+        Assert.IsType<InvalidOperationException>(inner);
+        Assert.Contains(nameof(IUnregisteredDependency), inner.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task BuildAsync_WhenAServiceFailsToStart_RethrowsItsFailure()
+    {
+        var builder = RandomnessHost.CreateBuilder();
         builder.Services.AddSingleton<IHostedService, FailingHostedService>();
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -89,12 +111,26 @@ public class RandomnessHostBuilderTests
         );
 
         Assert.Equal(FailingHostedService.Message, exception.Message);
+    }
+
+    [Fact]
+    public async Task BuildAsync_WhenAServiceFailsToStart_StopsTheServicesItStarted()
+    {
+        var recording = new RecordingHostedService();
+        var builder = RandomnessHost.CreateBuilder();
+        builder.Services.AddSingleton<IHostedService>(recording);
+        builder.Services.AddSingleton<IHostedService, FailingHostedService>();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await builder.BuildAsync(CancellationToken.None)
+        );
+
         Assert.Equal(1, recording.Starts);
         Assert.Equal(1, recording.Stops);
     }
 
     [Fact]
-    public async Task BuildAsync_WhenAServiceFailsToStartAndAnotherFailsToStop_ThrowsBothAndDisposesTheProvider()
+    public async Task BuildAsync_WhenAServiceFailsToStartAndAnotherFailsToStop_ThrowsBothFailures()
     {
         var stopFailing = new StopFailingHostedService();
         var builder = RandomnessHost.CreateBuilder();
@@ -111,6 +147,20 @@ public class RandomnessHostBuilderTests
         Assert.Contains(exception.InnerExceptions, inner =>
             inner is InvalidOperationException && inner.Message == StopFailingHostedService.Message
         );
+    }
+
+    [Fact]
+    public async Task BuildAsync_WhenAServiceFailsToStartAndAnotherFailsToStop_DisposesTheProvider()
+    {
+        var stopFailing = new StopFailingHostedService();
+        var builder = RandomnessHost.CreateBuilder();
+        builder.Services.AddSingleton<IHostedService>(_ => stopFailing);
+        builder.Services.AddSingleton<IHostedService, FailingHostedService>();
+
+        await Assert.ThrowsAsync<AggregateException>(async () =>
+            await builder.BuildAsync(CancellationToken.None)
+        );
+
         Assert.True(stopFailing.Disposed);
     }
 
@@ -120,16 +170,29 @@ public class RandomnessHostBuilderTests
         var builder = RandomnessHost.CreateBuilder();
         await using var host = await builder.BuildAsync(CancellationToken.None);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await builder.BuildAsync(CancellationToken.None)
         );
+
+        Assert.Contains("already built", exception.Message, StringComparison.Ordinal);
     }
 
     #endregion
 
+    private interface IUnregisteredDependency;
+
+    private sealed class UnresolvableService
+    {
+        public UnresolvableService(IUnregisteredDependency dependency) => Dependency = dependency;
+
+        public IUnregisteredDependency Dependency { get; }
+    }
+
     private sealed class NamedBeacon : IRandomnessBeacon
     {
-        public string Name => "named";
+        public const string BeaconName = "named";
+
+        public string Name => BeaconName;
 
         public ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken)
         {
