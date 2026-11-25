@@ -28,7 +28,7 @@ network, the beacon API, any mirror, and the beacon operator's future behavior a
 | --- | --- | --- |
 | Attacker reads the beacon and predicts secret output | Yes | R1: beacon pulses are only additional input to an OS-seeded HMAC_DRBG ([ADR-1000](decisions/1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md)) |
 | A compromised API or mirror serves forged pulses or a forged key | Yes | R2: the chain CID is pinned and fixes the key; every document's CID and RS256 signature is checked ([ADR-1003](decisions/1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md)) |
-| Replay of an old pulse, or a rolled-back chain | Yes | R3: rounds must not decrease, and pulses older than `MaxPulseAge` are refused |
+| Replay of an old pulse, or a rolled-back chain | Yes | R3: rounds must not decrease, and pulses older than their beacon's limit (`MaxPulseAge`, or its `MaxPulseAgeByBeacon` entry) are refused |
 | Equivocation: two different pulses for one round | Yes | R3: a second pulse for an accepted round with other content is refused, and a beacon cannot switch chains |
 | A server grinds a pulse's CID, its randomness, without changing what is signed | Yes | R2: documents must have exactly the members Twine defines, and signatures must be canonical base64url of exactly the modulus length |
 | The beacon operator grinds its own output | Partly | RS256 (deterministic) signatures and the salt precommitment, as CURBy's protocol defines; the operator still knows a pulse before publishing it, so draws commit to a future round ([draws.md](draws.md)) |

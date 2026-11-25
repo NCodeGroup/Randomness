@@ -18,7 +18,8 @@ product does.
   `GetItem`, `GetItems`, `GetString` and `AsRandom`.
 - `IRandomnessBeacon` and `BeaconPulse`, the port a beacon adapter implements, registered with `AddBeacon<TBeacon>()`.
 - A background beacon collector with `Continuous`, `InitializeOnly` and `Offline` modes, per-fetch timeouts,
-  exponential back-off with jitter, and an optional `RequireInitialPulse` start check.
+  exponential back-off with jitter, an optional `RequireInitialPulse` start check, and a pulse age limit per beacon,
+  `MaxPulseAgeByBeacon` ([ADR-1008](docs/decisions/1008-pulse-staleness-is-judged-per-beacon.md)).
 - `IBeaconStatus`, the health check `AddRandomnessBeacons()`, and the metrics `ncode.randomness.beacon.pulses` and
   `ncode.randomness.generator.reseeds`.
 - Reproducible draws: `IVerifiableRandomFactory` and `VerifiableRandom`, algorithm `ncode-randomness-draw/1`, specified
