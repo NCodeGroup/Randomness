@@ -15,6 +15,27 @@ namespace NCode.Randomness.Drand.Rounds;
 internal sealed class DrandChain(string hash, G2Affine publicKey, long genesisTime, int period)
 {
     /// <summary>
+    /// Gets the quicknet chain, pinned from <see cref="DrandDefaults"/>.
+    /// </summary>
+    public static DrandChain Quicknet { get; } = CreateQuicknet();
+
+    /// <summary>
+    /// Creates the quicknet chain from <see cref="DrandDefaults"/>.
+    /// </summary>
+    /// <returns>The quicknet chain.</returns>
+    private static DrandChain CreateQuicknet()
+    {
+        var publicKeyBytes = Convert.FromHexString(DrandDefaults.PublicKey);
+        var publicKey = G2Affine.FromCompressed(publicKeyBytes);
+        return new DrandChain(
+            DrandDefaults.ChainHash,
+            publicKey,
+            DrandDefaults.GenesisTime,
+            DrandDefaults.Period
+        );
+    }
+
+    /// <summary>
     /// Gets the chain hash, in lowercase hex.
     /// </summary>
     public string Hash { get; } = hash;
@@ -39,27 +60,6 @@ internal sealed class DrandChain(string hash, G2Affine publicKey, long genesisTi
     /// </summary>
     public long MaxRound =>
         (DateTimeOffset.MaxValue.ToUnixTimeSeconds() - GenesisTime) / Period + 1;
-
-    /// <summary>
-    /// Gets the quicknet chain, pinned from <see cref="DrandDefaults"/>.
-    /// </summary>
-    public static DrandChain Quicknet { get; } = CreateQuicknet();
-
-    /// <summary>
-    /// Creates the quicknet chain from <see cref="DrandDefaults"/>.
-    /// </summary>
-    /// <returns>The quicknet chain.</returns>
-    private static DrandChain CreateQuicknet()
-    {
-        var publicKeyBytes = Convert.FromHexString(DrandDefaults.PublicKey);
-        var publicKey = G2Affine.FromCompressed(publicKeyBytes);
-        return new DrandChain(
-            DrandDefaults.ChainHash,
-            publicKey,
-            DrandDefaults.GenesisTime,
-            DrandDefaults.Period
-        );
-    }
 
     /// <summary>
     /// Gets the time a round is due: the genesis time plus the periods before it.

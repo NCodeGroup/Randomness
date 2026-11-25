@@ -18,6 +18,12 @@ internal sealed class DrandRound
     private const int SignatureLength = 48;
     private const int RandomnessLength = 32;
 
+    /// <summary>
+    /// Gets the domain separation tag of the quicknet signature scheme: RFC 9380 hash-to-curve for G1 with
+    /// SHA-256, as the BLS signature ciphersuite names it.
+    /// </summary>
+    internal static ReadOnlySpan<byte> Domain => "BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_"u8;
+
     private DrandRound(long round, byte[] signature, byte[] randomness, DateTimeOffset timestamp)
     {
         Round = round;
@@ -25,12 +31,6 @@ internal sealed class DrandRound
         Randomness = randomness;
         Timestamp = timestamp;
     }
-
-    /// <summary>
-    /// Gets the domain separation tag of the quicknet signature scheme: RFC 9380 hash-to-curve for G1 with
-    /// SHA-256, as the BLS signature ciphersuite names it.
-    /// </summary>
-    internal static ReadOnlySpan<byte> Domain => "BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_"u8;
 
     /// <summary>
     /// Gets the number of the round.

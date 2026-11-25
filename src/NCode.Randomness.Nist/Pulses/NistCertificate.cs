@@ -125,8 +125,10 @@ internal sealed class NistCertificate : IDisposable
                 );
             }
 
-            var notBefore = new DateTimeOffset(certificate.NotBefore.ToUniversalTime());
-            var notAfter = new DateTimeOffset(certificate.NotAfter.ToUniversalTime());
+            var notBeforeUtc = certificate.NotBefore.ToUniversalTime();
+            var notBefore = new DateTimeOffset(notBeforeUtc);
+            var notAfterUtc = certificate.NotAfter.ToUniversalTime();
+            var notAfter = new DateTimeOffset(notAfterUtc);
             return new NistCertificate(id, key, notBefore, notAfter);
         }
     }
