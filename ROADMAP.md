@@ -12,8 +12,6 @@ maintainers say whether it fits.
 
 ## Next Twelve Months
 
-- **More beacons.** Adapters for the NIST Randomness Beacon 2.0 and for drand (League of Entropy), so no single beacon
-  is a point of trust ([#2](https://github.com/NCodeGroup/Randomness/issues/2)).
 - **Draws offline.** Verify a pulse document a user supplies, so a published draw can be checked without the network
   ([#3](https://github.com/NCodeGroup/Randomness/issues/3)).
 - **Use without a host.** A builder that composes the secure generator and beacons without dependency injection ([#4](https://github.com/NCodeGroup/Randomness/issues/4)).
