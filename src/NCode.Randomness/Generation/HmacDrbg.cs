@@ -1,16 +1,15 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Buffers;
 using System.Security.Cryptography;
 
 namespace NCode.Randomness.Generation;
 
 /// <summary>
 /// HMAC_DRBG with HMAC-SHA-512, as NIST SP 800-90A Rev. 1 section 10.1.2 specifies it, without prediction resistance
-/// (the owner reseeds). Its security strength is 256 bits. Its key and value live in pinned arrays, so the garbage
-/// collector never leaves a copy behind, and <see cref="Dispose"/> zeroes them. Not thread-safe: the owner serializes
-/// calls.
+/// (the owner reseeds). Its security strength is 256 bits. Its key, its value and any input too long for the stack live
+/// in pinned arrays, so the garbage collector never leaves a copy behind, and <see cref="Dispose"/> zeroes them. Not
+/// thread-safe: the owner serializes calls.
 /// </summary>
 internal sealed class HmacDrbg : IDisposable
 {
@@ -138,11 +137,10 @@ internal sealed class HmacDrbg : IDisposable
     )
     {
         var length = first.Length + second.Length + third.Length;
-        byte[]? rented = null;
         var seed =
             length <= StackThreshold
                 ? stackalloc byte[StackThreshold]
-                : (rented = ArrayPool<byte>.Shared.Rent(length));
+                : GC.AllocateUninitializedArray<byte>(length, pinned: true);
         seed = seed[..length];
         try
         {
@@ -154,10 +152,6 @@ internal sealed class HmacDrbg : IDisposable
         finally
         {
             CryptographicOperations.ZeroMemory(seed);
-            if (rented is not null)
-            {
-                ArrayPool<byte>.Shared.Return(rented);
-            }
         }
     }
 
@@ -168,11 +162,10 @@ internal sealed class HmacDrbg : IDisposable
     private void Update(ReadOnlySpan<byte> providedData)
     {
         var length = OutputLength + 1 + providedData.Length;
-        byte[]? rented = null;
         var message =
             length <= StackThreshold
                 ? stackalloc byte[StackThreshold]
-                : (rented = ArrayPool<byte>.Shared.Rent(length));
+                : GC.AllocateUninitializedArray<byte>(length, pinned: true);
         message = message[..length];
         try
         {
@@ -185,10 +178,6 @@ internal sealed class HmacDrbg : IDisposable
         finally
         {
             CryptographicOperations.ZeroMemory(message);
-            if (rented is not null)
-            {
-                ArrayPool<byte>.Shared.Return(rented);
-            }
         }
     }
 
