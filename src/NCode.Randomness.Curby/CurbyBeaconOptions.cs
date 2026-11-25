@@ -40,4 +40,10 @@ public sealed class CurbyBeaconOptions
     /// Gets or sets the largest response body read, in bytes. The default is 256 KiB; a pulse is about 4 KiB.
     /// </summary>
     public int MaxResponseBytes { get; set; } = 256 * 1024;
+
+    /// <summary>
+    /// Gets or sets how long a failed chain fetch is remembered: until it passes, a pulse on that chain fails at once,
+    /// without another request. The default is 1 minute; it must be from 1 second to 1 day.
+    /// </summary>
+    public TimeSpan ChainRetryDelay { get; set; } = TimeSpan.FromMinutes(1);
 }

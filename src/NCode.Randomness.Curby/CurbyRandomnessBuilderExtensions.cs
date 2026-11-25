@@ -149,6 +149,7 @@ public static class CurbyRandomnessBuilderExtensions
             services.TryAddEnumerable(validator);
             var registered = services.Any(descriptor => descriptor.ServiceType == typeof(TwineApi));
             services.TryAddSingleton<TwineApi>();
+            services.TryAddSingleton(TimeProvider.System);
             services.TryAddSingleton<TwineChainCache>();
             if (registered)
             {

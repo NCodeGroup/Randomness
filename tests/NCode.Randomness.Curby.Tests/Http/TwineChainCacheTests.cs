@@ -3,6 +3,7 @@
 
 using System.Net;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using NCode.Randomness.Curby.Http;
 using NCode.Randomness.Curby.Tests.Fixtures;
 using NCode.Randomness.Curby.Tests.TestTwine;
@@ -16,6 +17,9 @@ public sealed class TwineChainCacheTests : IDisposable
 
     private StubTwineServer Server { get; } = new();
 
+    private FakeTimeProvider Time { get; } =
+        new(new DateTimeOffset(2026, 11, 25, 12, 0, 0, TimeSpan.Zero));
+
     private TwineChainCache Cache { get; }
 
     public TwineChainCacheTests()
@@ -23,7 +27,7 @@ public sealed class TwineChainCacheTests : IDisposable
         var curbyOptions = new CurbyBeaconOptions();
         var options = Options.Create(curbyOptions);
         var api = new TwineApi(Server, options);
-        Cache = new TwineChainCache(api);
+        Cache = new TwineChainCache(api, options, Time);
     }
 
     public void Dispose()
@@ -82,10 +86,102 @@ public sealed class TwineChainCacheTests : IDisposable
             await Cache.GetAsync(cid, "rng", CancellationToken.None)
         );
         Server.Serve(ChainPath, CurbyFixtures.Chain);
+        Time.Advance(new CurbyBeaconOptions().ChainRetryDelay);
         var chain = await Cache.GetAsync(cid, "rng", CancellationToken.None);
 
         Assert.NotNull(chain);
         Assert.Equal([ChainPath, ChainPath], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenTwoCallersAskAtOnce_FetchesOnce()
+    {
+        var cid = Cid.Parse(CurbyFixtures.ChainId);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Server.Serve(ChainPath, CurbyFixtures.Chain);
+        Server.Hold(ChainPath, release.Task);
+
+        var first = Cache.GetAsync(cid, "rng", CancellationToken.None).AsTask();
+        var second = Cache.GetAsync(cid, "rng", CancellationToken.None).AsTask();
+        var waiting = !first.IsCompleted && !second.IsCompleted;
+        release.SetResult();
+        var firstChain = await first;
+        var secondChain = await second;
+
+        Assert.True(waiting);
+        Assert.Same(firstChain, secondChain);
+        Assert.Equal([ChainPath], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenTheFirstCallerCancels_StillServesTheSecond()
+    {
+        var cid = Cid.Parse(CurbyFixtures.ChainId);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Server.Serve(ChainPath, CurbyFixtures.Chain);
+        Server.Hold(ChainPath, release.Task);
+        using var cancellation = new CancellationTokenSource();
+
+        var first = Cache.GetAsync(cid, "rng", cancellation.Token).AsTask();
+        var second = Cache.GetAsync(cid, "rng", CancellationToken.None).AsTask();
+        await cancellation.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first);
+        release.SetResult();
+        var chain = await second;
+
+        Assert.NotNull(chain);
+        Assert.Equal([ChainPath], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_WithinTheRetryDelayAfterAFailure_FailsWithoutARequest()
+    {
+        var cid = Cid.Parse(CurbyFixtures.ChainId);
+        await Assert.ThrowsAsync<TwineFormatException>(async () =>
+            await Cache.GetAsync(cid, "rng", CancellationToken.None)
+        );
+        Server.Serve(ChainPath, CurbyFixtures.Chain);
+        Time.Advance(TimeSpan.FromSeconds(59));
+
+        var exception = await Assert.ThrowsAsync<TwineFormatException>(async () =>
+            await Cache.GetAsync(cid, "rng", CancellationToken.None)
+        );
+
+        Assert.Contains("does not serve chain", exception.Message, StringComparison.Ordinal);
+        Assert.Equal([ChainPath], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_AfterTheRetryDelay_FetchesAgain()
+    {
+        var cid = Cid.Parse(CurbyFixtures.ChainId);
+        await Assert.ThrowsAsync<TwineFormatException>(async () =>
+            await Cache.GetAsync(cid, "rng", CancellationToken.None)
+        );
+        Server.Serve(ChainPath, CurbyFixtures.Chain);
+        Time.Advance(TimeSpan.FromMinutes(1));
+
+        var chain = await Cache.GetAsync(cid, "rng", CancellationToken.None);
+
+        Assert.NotNull(chain);
+        Assert.Equal([ChainPath, ChainPath], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenTheFetchOutlastsItsTimeout_IsCancelled()
+    {
+        var cid = Cid.Parse(CurbyFixtures.ChainId);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Server.Serve(ChainPath, CurbyFixtures.Chain);
+        Server.Hold(ChainPath, release.Task);
+
+        var pending = Cache.GetAsync(cid, "rng", CancellationToken.None).AsTask();
+        Time.Advance(TwineChainCache.FetchTimeout);
+        // The real 10-second bound only stops a broken fetch from hanging the run; it ends in a TimeoutException,
+        // which fails the assertion.
+        var bounded = pending.WaitAsync(TimeSpan.FromSeconds(10));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => bounded);
     }
 
     [Fact]

@@ -15,6 +15,10 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
 
     private const int MinResponseBytes = 1024;
 
+    private static TimeSpan MinRetryDelay { get; } = TimeSpan.FromSeconds(1);
+
+    private static TimeSpan MaxRetryDelay { get; } = TimeSpan.FromDays(1);
+
     /// <summary>
     /// Adds a failure when a chain identifier setting is not a Twine content identifier.
     /// </summary>
@@ -63,6 +67,13 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
         {
             failures.Add(
                 $"{Prefix}{nameof(options.MaxResponseBytes)} must be at least {MinResponseBytes}."
+            );
+        }
+
+        if (options.ChainRetryDelay < MinRetryDelay || options.ChainRetryDelay > MaxRetryDelay)
+        {
+            failures.Add(
+                $"{Prefix}{nameof(options.ChainRetryDelay)} must be between {MinRetryDelay} and {MaxRetryDelay}."
             );
         }
 

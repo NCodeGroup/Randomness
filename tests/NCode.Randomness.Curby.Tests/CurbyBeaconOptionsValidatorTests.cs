@@ -98,5 +98,34 @@ public class CurbyBeaconOptionsValidatorTests
         );
     }
 
+    [Fact]
+    public void Validate_WithShortestChainRetryDelay_Succeeds()
+    {
+        var options = new CurbyBeaconOptions { ChainRetryDelay = TimeSpan.FromSeconds(1) };
+
+        var result = new CurbyBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Theory]
+    [InlineData(999)]
+    [InlineData(86_400_001)]
+    public void Validate_WithChainRetryDelayOutOfRange_Fails(long milliseconds)
+    {
+        var options = new CurbyBeaconOptions
+        {
+            ChainRetryDelay = TimeSpan.FromMilliseconds(milliseconds),
+        };
+
+        var result = new CurbyBeaconOptionsValidator().Validate(null, options);
+
+        Assert.Contains(
+            "RandomnessBeacons:Curby:ChainRetryDelay must be between 00:00:01 and 1.00:00:00.",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
     #endregion
 }

@@ -23,7 +23,7 @@ internal sealed class TwineTestServices : IDisposable
     )
     {
         var api = new TwineApi(server, options);
-        var chains = new TwineChainCache(api);
+        var chains = new TwineChainCache(api, options, TimeProvider.System);
         Caches.Add(chains);
         return (api, chains);
     }
