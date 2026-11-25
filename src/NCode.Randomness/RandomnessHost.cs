@@ -117,11 +117,32 @@ public sealed class RandomnessHost : IAsyncDisposable
 
             return new RandomnessHost(provider, [.. started]);
         }
-        catch
+        catch (Exception startFailure)
+        {
+            await CleanUpAfterFailedStartAsync(provider, started, startFailure)
+                .ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    // The start failure is the cause the caller needs, so a stop failure must not hide it or leave the provider alive.
+    private static async ValueTask CleanUpAfterFailedStartAsync(
+        ServiceProvider provider,
+        IReadOnlyList<IHostedService> started,
+        Exception startFailure
+    )
+    {
+        try
         {
             await StopAsync(started).ConfigureAwait(false);
+        }
+        catch (AggregateException stopFailure)
+        {
+            throw new AggregateException([startFailure, .. stopFailure.InnerExceptions]);
+        }
+        finally
+        {
             await provider.DisposeAsync().ConfigureAwait(false);
-            throw;
         }
     }
 
@@ -129,6 +150,9 @@ public sealed class RandomnessHost : IAsyncDisposable
     /// Stops the beacon collection, waiting up to 30 seconds, and disposes the generator, zeroing its state. A second
     /// call does nothing.
     /// </summary>
+    /// <exception cref="AggregateException">
+    /// A hosted service failed to stop; every other service was still stopped and the generator disposed.
+    /// </exception>
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -149,9 +173,22 @@ public sealed class RandomnessHost : IAsyncDisposable
     private static async ValueTask StopAsync(IReadOnlyList<IHostedService> services)
     {
         using var timeout = new CancellationTokenSource(ShutdownTimeout);
+        var failures = new List<Exception>();
         for (var index = services.Count - 1; index >= 0; index--)
         {
-            await services[index].StopAsync(timeout.Token).ConfigureAwait(false);
+            try
+            {
+                await services[index].StopAsync(timeout.Token).ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                failures.Add(exception);
+            }
+        }
+
+        if (failures.Count != 0)
+        {
+            throw new AggregateException(failures);
         }
     }
 }

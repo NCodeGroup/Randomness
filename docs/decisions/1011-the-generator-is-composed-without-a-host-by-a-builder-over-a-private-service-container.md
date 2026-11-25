@@ -23,8 +23,9 @@ as `AddRandomness` does.
 - **Build and start in one call.** `BuildAsync` builds the service provider with `ValidateOnBuild` and
   `ValidateScopes`, runs the options' start validation (`IAsyncStartupValidator`) as the generic host does, and starts
   every registered `IHostedService` in registration order, so `RequireInitialPulse` holds as it does in a host. When any
-  of that fails, it stops the services it started, in reverse order, disposes the provider and rethrows. A builder
-  builds one host.
+  of that fails, it stops the services it started, in reverse order, disposes the provider and rethrows. When stopping
+  fails too, it throws one `AggregateException` that holds the start failure and the stop failures. A builder builds one
+  host.
 - **A small surface.** `RandomnessHost` exposes `SecureRandom`, `BeaconStatus` and `VerifiableRandomFactory`, typed by
   their interfaces, so the generator is reachable only as an `ISecureRandom`
   ([ADR-1000](1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md)). The
@@ -32,7 +33,9 @@ as `AddRandomness` does.
 - **Asynchronous disposal only.** `RandomnessHost` implements `IAsyncDisposable` and not `IDisposable`: stopping the
   collector is asynchronous, and blocking on a task is banned. `DisposeAsync` stops the hosted services in reverse
   order, waiting up to 30 seconds, the generic host's default `HostOptions.ShutdownTimeout` (read 2026-11-25), then
-  disposes the provider, which disposes the generator and zeroes its state. A second call does nothing.
+  disposes the provider, which disposes the generator and zeroes its state. A second call does nothing. A service whose
+  stop throws doesn't keep the others from stopping or the provider from being disposed; `DisposeAsync` then throws an
+  `AggregateException` of the failures.
 - **No host lifetime.** `RandomnessHost` calls only `StartAsync` and `StopAsync`: it has no console lifetime, no
   `IHostApplicationLifetime` and no `IHostedLifecycleService` hooks, none of which a part of this library uses.
 
