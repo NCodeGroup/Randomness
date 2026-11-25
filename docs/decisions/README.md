@@ -67,9 +67,10 @@ records are indexed in [project-template/](project-template/README.md).
 | --- | --- | --- |
 | [1000](1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md) | Beacon randomness is mixed into a local generator and never used alone for secrets | Accepted |
 | [1001](1001-the-secure-generator-is-a-sharded-buffered-hmac-drbg-reseeded-from-the-operating-system.md) | The secure generator is a sharded, buffered HMAC_DRBG reseeded from the operating system | Accepted |
-| [1002](1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md) | Beacons are adapters collected in the background, and an outage degrades, never fails | Accepted |
+| [1002](1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md) | Beacons are adapters collected in the background, and an outage degrades, never fails | Accepted (amended by 1008) |
 | [1003](1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md) | CURBy pulses are verified against a pinned chain before any byte is used | Accepted |
 | [1004](1004-reproducible-draws-are-a-versioned-specified-algorithm-and-never-a-secure-random.md) | Reproducible draws are a versioned, specified algorithm and never a secure random | Accepted |
 | [1005](1005-twine-verification-is-implemented-in-the-adapter-without-an-ipld-dependency.md) | Twine verification is implemented in the adapter without an IPLD dependency | Accepted (amended by 1007) |
 | [1006](1006-options-classes-have-setters-for-the-options-pattern.md) | Options classes have setters for the options pattern | Accepted |
 | [1007](1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md) | CURBy-Q rounds are verified as CURBy's client verifies them, and their extraction is left to curby_verify (amends 1005) | Accepted |
+| [1008](1008-pulse-staleness-is-judged-per-beacon.md) | Pulse staleness is judged per beacon (amends 1002) | Accepted |

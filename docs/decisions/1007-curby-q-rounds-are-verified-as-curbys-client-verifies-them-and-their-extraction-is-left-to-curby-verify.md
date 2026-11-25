@@ -82,8 +82,6 @@ as far as CURBy's client does and as far as the served data allows, without the 
 - **Run `curby_verify` out of process.** It needs Docker and the raw data; neither is a dependency a library can impose.
 - **Read CURBy-Q only through CURBy-RNG's mixins.** This is what the default beacon does, but it never exposes a
   CURBy-Q round's own number, pulse or randomness, which is what an audit by `curby_verify` takes.
-- **A per-beacon `MaxPulseAge` in the core.** It would let CURBy-Q's 13-minute rhythm fit, but the core does not change
-  for one vendor.
 
 Not verifying the extraction costs little: a beacon's bytes are only additional input to the generator
 ([ADR-1000](1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md)), so certifying
@@ -93,8 +91,9 @@ them changes nothing for secrets.
 
 - An auditor runs `curby_verify` on the round a draw used; the library vouches for the chain of signatures and links,
   not for the quantum certificate.
-- A host that mixes in CURBy-Q sets `Randomness:MaxPulseAge` to 30 minutes, because the default of 10 minutes is shorter
-  than a round.
+- The CURBy-Q registration allows `curby-q` pulses up to 30 minutes old, because a round takes about 13 minutes and the
+  default `MaxPulseAge` is 10; the host's own `Randomness:MaxPulseAgeByBeacon:curby-q` wins
+  ([ADR-1008](1008-pulse-staleness-is-judged-per-beacon.md)).
 - A stalled chain reports stale pulses and degrades the health check, as it does for any beacon; draws over published
   rounds are unaffected. CURBy-Q has published no round since 2025-08-22 (as of 2026-11-25).
 - A round that is not cached takes about nine requests (an estimate): the round, its parameters, the crawls of the Bell
