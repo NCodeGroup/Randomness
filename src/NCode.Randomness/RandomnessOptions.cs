@@ -47,8 +47,8 @@ public sealed class RandomnessOptions
     /// <see cref="MaxPulseAge"/>, such as <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> for a beacon that publishes
     /// less often. A name that no registered beacon has fails the host at start. Empty by default.
     /// </summary>
-    public IDictionary<string, TimeSpan> MaxPulseAgeByBeacon { get; set; } =
-        new Dictionary<string, TimeSpan>(StringComparer.Ordinal);
+    public Dictionary<string, TimeSpan> MaxPulseAgeByBeacon { get; set; } =
+        new(StringComparer.Ordinal);
 
     /// <summary>
     /// Gets or sets how far a pulse's timestamp may lie ahead of this machine's clock. The default is two minutes.

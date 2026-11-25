@@ -34,12 +34,14 @@ internal sealed class BeaconTracker : IBeaconStatus
         Pool = pool;
         Options = options.Value;
         Time = time;
-        foreach (var name in Options.MaxPulseAgeByBeacon.Keys.Order(StringComparer.Ordinal))
+        var limits = Options.MaxPulseAgeByBeacon.ToFrozenDictionary(StringComparer.Ordinal);
+        var registered = string.Join(", ", Names);
+        foreach (var name in limits.Keys.Order(StringComparer.Ordinal))
         {
             if (!Indexes.ContainsKey(name))
             {
                 throw new InvalidOperationException(
-                    $"{RandomnessOptions.SectionName}:{nameof(RandomnessOptions.MaxPulseAgeByBeacon)} names '{name}', which no registered randomness beacon has."
+                    $"{RandomnessOptions.SectionName}:{nameof(RandomnessOptions.MaxPulseAgeByBeacon)} names '{name}', which no registered randomness beacon has. The registered beacons are {registered}."
                 );
             }
         }
@@ -47,9 +49,7 @@ internal sealed class BeaconTracker : IBeaconStatus
         MaxPulseAges =
         [
             .. Names.Select(name =>
-                Options.MaxPulseAgeByBeacon.TryGetValue(name, out var limit)
-                    ? limit
-                    : Options.MaxPulseAge
+                limits.TryGetValue(name, out var limit) ? limit : Options.MaxPulseAge
             ),
         ];
     }

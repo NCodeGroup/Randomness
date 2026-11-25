@@ -48,9 +48,14 @@ public class BeaconTrackerTests
         var options = new RandomnessOptions();
         options.MaxPulseAgeByBeacon["z"] = TimeSpan.FromMinutes(30);
 
-        var exception = Assert.Throws<InvalidOperationException>(() => Create(options, "a"));
+        var exception = Assert.Throws<InvalidOperationException>(() => Create(options, "a", "b"));
 
         Assert.Contains("'z'", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            "registered beacons are a, b.",
+            exception.Message,
+            StringComparison.Ordinal
+        );
     }
 
     #endregion
@@ -180,6 +185,20 @@ public class BeaconTrackerTests
         var result = tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
 
         Assert.Equal(BeaconError.StalePulse, result.Error);
+    }
+
+    [Fact]
+    public void Accept_AfterTheLimitsChange_KeepsTheLimitsItStartedWith()
+    {
+        var options = new RandomnessOptions();
+        options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(30);
+        var tracker = Create(options, "a");
+        options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(1);
+        Time.Advance(TimeSpan.FromMinutes(20));
+
+        var result = tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
+
+        Assert.Null(result.Error);
     }
 
     [Fact]

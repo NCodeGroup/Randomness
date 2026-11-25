@@ -50,6 +50,35 @@ public class RandomnessOptionsValidatorTests
         );
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(999)]
+    public void Validate_WithBeaconLimitBelowOneSecond_NamesTheKey(int milliseconds)
+    {
+        var options = new RandomnessOptions();
+        options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMilliseconds(milliseconds);
+
+        var result = new RandomnessOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Failed);
+        Assert.Contains(
+            "Randomness:MaxPulseAgeByBeacon:a",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public void Validate_WithBeaconLimitOfOneSecond_Succeeds()
+    {
+        var options = new RandomnessOptions();
+        options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromSeconds(1);
+
+        var result = new RandomnessOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
     [Fact]
     public void Validate_WithEmptyBeaconName_Fails()
     {

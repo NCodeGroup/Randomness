@@ -20,7 +20,10 @@ The core judges staleness per beacon, with a generic setting that names no vendo
 
 - **The setting.** `RandomnessOptions.MaxPulseAgeByBeacon` (`Randomness:MaxPulseAgeByBeacon:<name>`) holds the oldest
   a pulse may be, by beacon name. For a beacon it names, the entry replaces `MaxPulseAge`; every other beacon keeps
-  `MaxPulseAge`. The dictionary is empty by default, and each entry is at least one second.
+  `MaxPulseAge`. The property is a `Dictionary<string, TimeSpan>` with a setter
+  ([ADR-1006](1006-options-classes-have-setters-for-the-options-pattern.md)), and `BeaconTracker` copies it once at
+  start, so a later change to the options has no effect. The dictionary is empty by default, and each entry is at least
+  one second.
 - **An unknown name fails the host at start.** `BeaconTracker` throws `InvalidOperationException` for an entry that no
   registered beacon has, as a misspelled key fails the host elsewhere.
 - **The CURBy-Q default.** `AddCurbyQuantumBeacon()` post-configures `curby-q` to 30 minutes, roughly twice a round,
