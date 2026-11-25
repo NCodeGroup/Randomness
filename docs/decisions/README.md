@@ -76,3 +76,4 @@ records are indexed in [project-template/](project-template/README.md).
 | [1008](1008-pulse-staleness-is-judged-per-beacon.md) | Pulse staleness is judged per beacon (amends 1002) | Accepted |
 | [1009](1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md) | NIST pulses are verified against pinned certificates and their hash chain before any byte is used | Accepted |
 | [1010](1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md) | drand rounds are verified against the pinned quicknet key with a managed BLS12-381 library | Accepted |
+| [1011](1011-the-generator-is-composed-without-a-host-by-a-builder-over-a-private-service-container.md) | The generator is composed without a host by a builder over a private service container | Accepted |
