@@ -8,8 +8,9 @@
 ## Context
 
 CURBy-Q is CURBy's quantum chain: a DIRNG round turns the data of a Bell experiment into 512 bits through a Trevisan
-extractor. It publishes through Twine, like CURBy-RNG
-([ADR-1003](1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md)). Facts read from `https://api.entwine.me` on 2026-11-25:
+extractor. It publishes through Twine, like CURBy-RNG, whose pulse verification is in
+[ADR-1003](1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md).
+Facts read from `https://api.entwine.me` on 2026-11-25:
 
 - Three chains take part, each signing with RS256 and a 4096-bit key. The CURBy-Q chain has the specification
   `twine/1.0.x/diqrng/1.0.x`; the Bell chain ("NIST-bell-experiment") `twine/1.0.x/bell/1.0.x`; the seed chain
@@ -29,8 +30,11 @@ extractor. It publishes through Twine, like CURBy-RNG
   recompute only when each float is a DAG-CBOR 64-bit float (`0xfb` and 8 bytes, big-endian).
 - A round's raw Bell data is large (9,003,748 bytes for round 28297), and the extraction runs over about 30 million
   bits with a 249,224-bit seed.
-- The newest complete round is 28297 (randomness at 2025-08-22T19:42:38.156Z); CURBy-Q has published nothing since the
-  request of round 28298 that day. While it runs, it completes a round about every 13 minutes.
+- As of 2026-11-25, the newest complete round is 28297 (randomness at 2025-08-22T19:42:38.156Z); CURBy-Q has published
+  nothing since the request of round 28298 that day. While it runs, it completes a round about every 13 minutes (as of
+  2026-11-25).
+- A round that is not cached takes about nine requests, an estimate as of 2026-11-25: the round, its parameters, the
+  crawls of the Bell and seed chains, and the chain documents the first time.
 
 CURBy's client library (`@buff-beacon-project/curby-client` 1.2.0, `src/dirng.ts`) documents that it does not validate
 the DIRNG certificate or the extraction, and leaves them to `curby_verify`. That tool runs the extractor server of
@@ -92,13 +96,13 @@ them changes nothing for secrets.
 
 - An auditor runs `curby_verify` on the round a draw used; the library vouches for the chain of signatures and links,
   not for the quantum certificate.
-- The CURBy-Q registration allows `curby-q` pulses up to 30 minutes old, because a round takes about 13 minutes and the
-  default `MaxPulseAge` is 10; the host's own `Randomness:MaxPulseAgeByBeacon:curby-q` wins
-  ([ADR-1008](1008-pulse-staleness-is-judged-per-beacon.md)).
+- The CURBy-Q registration allows `curby-q` pulses up to 30 minutes old, because a round takes longer than the default
+  `MaxPulseAge`; the host's own `Randomness:MaxPulseAgeByBeacon:curby-q` wins
+  ([ADR-1008](1008-pulse-staleness-is-judged-per-beacon.md)). Context has the cadence.
 - A stalled chain reports stale pulses and degrades the health check, as it does for any beacon; draws over published
-  rounds are unaffected. CURBy-Q has published no round since 2025-08-22 (as of 2026-11-25).
-- A round that is not cached takes about nine requests (an estimate): the round, its parameters, the crawls of the Bell
-  and seed chains, and the chain documents the first time. A repeated fetch of the last verified round makes no crawl.
+  rounds are unaffected. Context has the date of the newest round.
+- A round that is not cached costs a crawl of the Bell and seed chains, and Context has the request count. A repeated
+  fetch of the last verified round makes no crawl.
 - If CURBy publishes a specification or a licensed extractor, verifying the extraction in process is a later decision.
 
 ## References

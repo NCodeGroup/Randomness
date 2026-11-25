@@ -85,7 +85,7 @@ public static class CurbyRandomnessBuilderExtensions
         /// <summary>
         /// Registers the CURBy-Q beacon, named <c>curby-q</c>, with its default options: the CURBy-Q chain and the
         /// Bell chain served by <see cref="CurbyDefaults.BaseAddress"/>. It allows <c>curby-q</c> pulses up to 30
-        /// minutes old, since CURBy-Q completes a round about every 13 minutes, unless
+        /// minutes old, since a CURBy-Q round takes longer than the default <c>Randomness:MaxPulseAge</c>, unless
         /// <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> or a longer <c>Randomness:MaxPulseAge</c> is set.
         /// </summary>
         /// <returns>The builder, for chaining.</returns>
@@ -98,8 +98,9 @@ public static class CurbyRandomnessBuilderExtensions
 
         /// <summary>
         /// Registers the CURBy-Q beacon with options set by <paramref name="configure"/>. It allows <c>curby-q</c>
-        /// pulses up to 30 minutes old, since CURBy-Q completes a round about every 13 minutes, unless
-        /// <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> or a longer <c>Randomness:MaxPulseAge</c> is set.
+        /// pulses up to 30 minutes old, since a CURBy-Q round takes longer than the default
+        /// <c>Randomness:MaxPulseAge</c>, unless <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> or a longer
+        /// <c>Randomness:MaxPulseAge</c> is set.
         /// </summary>
         /// <param name="configure">Sets the options.</param>
         /// <returns>The builder, for chaining.</returns>
