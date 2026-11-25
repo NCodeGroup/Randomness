@@ -390,10 +390,13 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var bell = FixtureBellChain();
-        var document = TwineVerificationTests.Document(CurbyQuantumFixtures.BellPulse(59313));
+        var json = CurbyQuantumFixtures.BellPulse(59313);
+        var document = TwineVerificationTests.Document(json);
         var response = TwineSignedPulse.Verify(document, bell);
 
-        Assert.True(result.IsBellResponse(response));
+        var isResponse = result.IsBellResponse(response);
+
+        Assert.True(isResponse);
     }
 
     [Fact]
@@ -404,7 +407,9 @@ public class QuantumRoundTests
         var result = BuiltResult(builder, built);
         var status = BuiltBellPulse(builder, built, 1);
 
-        Assert.False(result.IsBellResponse(status));
+        var isResponse = result.IsBellResponse(status);
+
+        Assert.False(isResponse);
     }
 
     [Fact]
@@ -414,10 +419,13 @@ public class QuantumRoundTests
         var built = builder.Build();
         var result = BuiltResult(builder, built);
         using var bell = FixtureBellChain();
-        var document = TwineVerificationTests.Document(CurbyQuantumFixtures.BellPulse(59313));
+        var json = CurbyQuantumFixtures.BellPulse(59313);
+        var document = TwineVerificationTests.Document(json);
         var response = TwineSignedPulse.Verify(document, bell);
 
-        Assert.False(result.IsBellResponse(response));
+        var isResponse = result.IsBellResponse(response);
+
+        Assert.False(isResponse);
     }
 
     [Fact]

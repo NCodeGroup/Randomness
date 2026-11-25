@@ -157,7 +157,8 @@ public class TwineVerificationTests
         var round = RoundPulses()
             .Select(element => TwineSignedPulse.Verify(Document(element.GetRawText()), quantum))
             .ToList();
-        var responseDocument = Document(CurbyQuantumFixtures.BellPulse(59313));
+        var responseJson = CurbyQuantumFixtures.BellPulse(59313);
+        var responseDocument = Document(responseJson);
         var response = TwineSignedPulse.Verify(responseDocument, bell);
         var seeds = new[] { 1914066L, 1914067L, 1914068L }
             .Select(index =>

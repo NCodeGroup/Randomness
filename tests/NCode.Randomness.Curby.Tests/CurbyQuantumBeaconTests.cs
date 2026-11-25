@@ -359,7 +359,8 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         const string reason = "the Bell test failed";
         using var builder = new QuantumRoundBuilder();
         ServeChains(builder);
-        Server.Serve(LatestPath, builder.ErrorRoundJson(reason));
+        var errorRoundJson = builder.ErrorRoundJson(reason);
+        Server.Serve(LatestPath, errorRoundJson);
         using var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(

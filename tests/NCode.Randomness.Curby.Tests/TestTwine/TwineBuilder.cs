@@ -126,23 +126,22 @@ internal sealed class TwineBuilder : IDisposable
     )
     {
         IpldNode[] links = previous is null ? [] : [Ipld.Link(previous)];
-        return Ipld.Map(
-            ("chain", Ipld.Link(ChainCid)),
-            ("index", Ipld.Integer(index)),
-            ("links", Ipld.List(links)),
-            (
-                "mixins",
-                Ipld.List([
-                    .. mixins.Select(mixin =>
-                        Ipld.Map(
-                            ("chain", Ipld.Link(mixin.Chain)),
-                            ("value", Ipld.Link(mixin.Value))
-                        )
-                    ),
-                ])
+        var chainLink = Ipld.Link(ChainCid);
+        var indexNode = Ipld.Integer(index);
+        var linksNode = Ipld.List(links);
+        var mixinsNode = Ipld.List([
+            .. mixins.Select(mixin =>
+                Ipld.Map(("chain", Ipld.Link(mixin.Chain)), ("value", Ipld.Link(mixin.Value)))
             ),
+        ]);
+        var sourceNode = Ipld.Text("test");
+        return Ipld.Map(
+            ("chain", chainLink),
+            ("index", indexNode),
+            ("links", linksNode),
+            ("mixins", mixinsNode),
             ("payload", payload),
-            ("source", Ipld.Text("test"))
+            ("source", sourceNode)
         );
     }
 

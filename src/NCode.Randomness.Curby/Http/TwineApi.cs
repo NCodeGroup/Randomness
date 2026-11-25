@@ -66,7 +66,8 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
             );
         }
 
-        var documents = ImmutableArray.CreateBuilder<TwineDocument>(json.GetArrayLength());
+        var count = json.GetArrayLength();
+        var documents = ImmutableArray.CreateBuilder<TwineDocument>(count);
         foreach (var element in json.EnumerateArray())
         {
             var document = TwineDocument.Parse(element);

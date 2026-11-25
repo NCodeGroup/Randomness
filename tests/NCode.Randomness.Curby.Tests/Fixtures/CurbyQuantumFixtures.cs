@@ -45,6 +45,9 @@ internal static class CurbyQuantumFixtures
 
     public static string SeedPulse(long index) => Read($"seed-pulse-{index}.json");
 
-    private static string Read(string name) =>
-        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "CurbyQ", name));
+    private static string Read(string name)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "CurbyQ", name);
+        return File.ReadAllText(path);
+    }
 }

@@ -27,7 +27,8 @@ public class TwineSignedPulseTests
         var document = TwineVerificationTests.Document(pulseJson);
 
         var pulse = TwineSignedPulse.Verify(document, chain);
-        var previousCid = CurbyFixtures.CidOf(CurbyFixtures.Pulse(1620422));
+        var previousJson = CurbyFixtures.Pulse(1620422);
+        var previousCid = CurbyFixtures.CidOf(previousJson);
         var previous = pulse.Previous?.ToString();
         var quantumMixin = pulse.MixinOf(quantum)?.ToString();
         var chainMixin = pulse.MixinOf(chain.Cid);
@@ -104,8 +105,10 @@ public class TwineSignedPulseTests
     public void VerifyPrecededBy_WithConsecutiveCurbyPulses_Succeeds()
     {
         using var chain = VerifyCurbyChain();
-        var firstDocument = TwineVerificationTests.Document(CurbyFixtures.Pulse(1620422));
-        var secondDocument = TwineVerificationTests.Document(CurbyFixtures.Pulse(1620423));
+        var firstJson = CurbyFixtures.Pulse(1620422);
+        var firstDocument = TwineVerificationTests.Document(firstJson);
+        var secondJson = CurbyFixtures.Pulse(1620423);
+        var secondDocument = TwineVerificationTests.Document(secondJson);
         var first = TwineSignedPulse.Verify(firstDocument, chain);
         var second = TwineSignedPulse.Verify(secondDocument, chain);
 
@@ -118,8 +121,10 @@ public class TwineSignedPulseTests
     public void VerifyPrecededBy_WithAPulseTwoRoundsEarlier_Throws()
     {
         using var chain = VerifyCurbyChain();
-        var earlierDocument = TwineVerificationTests.Document(CurbyFixtures.Pulse(1620421));
-        var pulseDocument = TwineVerificationTests.Document(CurbyFixtures.Pulse(1620423));
+        var earlierJson = CurbyFixtures.Pulse(1620421);
+        var earlierDocument = TwineVerificationTests.Document(earlierJson);
+        var pulseJson = CurbyFixtures.Pulse(1620423);
+        var pulseDocument = TwineVerificationTests.Document(pulseJson);
         var earlier = TwineSignedPulse.Verify(earlierDocument, chain);
         var pulse = TwineSignedPulse.Verify(pulseDocument, chain);
 
