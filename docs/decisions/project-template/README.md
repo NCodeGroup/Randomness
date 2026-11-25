@@ -50,6 +50,7 @@ never brings a number the project already uses
 | [0035](0035-a-sole-maintainer-dismisses-the-scorecard-alerts-one-person-cannot-clear.md) | With one writer, the Scorecard alerts of Branch-Protection, CII-Best-Practices and Contributors are dismissed as won't fix with a standard comment, through the project template's tools/Dismiss-ScorecardAlerts.ps1, and /best-practices reports a dismissed alert as accepted (amends 0020 and 0037) |
 | [0036](0036-a-required-approval-is-met-by-ncode-reviews-approver-app.md) | Where NCode Review's approver app is set up, the baseline requires one approval, of the last push, whatever the number of writers, since GitHub counts an approval from a reviewer that can write; Actions never approve pull requests, and the baseline pull request is opened from an issue's link (amends 0022, 0034 and, where a project has it, 0150) |
 | [0037](0037-best-practices-reports-scorecard-and-answers-for-the-default-branch.md) | `/best-practices` reports the Scorecard checks under 10 with their actions, finds an existing registration by URL, and answers for the default branch's tip (amends 0020 and 0025) |
+| [0038](0038-the-templates-scripts-carry-the-templates-copyright-and-license.md) | Every script the template owns, in `.template/`, `build/`, `.claude/hooks/` and `.githooks/`, carries the template's copyright line and `SPDX-License-Identifier: MIT`, which a project's header check leaves alone |
 
 ## .NET
 

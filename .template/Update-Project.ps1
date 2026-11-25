@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Marcin Polewski
+# SPDX-License-Identifier: MIT
+
 <#
 .SYNOPSIS
     Update this project to the newest version of the project template it was created from, and commit it.
@@ -18,6 +21,9 @@
                       reset first, discarding a local edit, and listed as refreshed.
                       A file the update leaves as the project had it, such as an edit the new version also
                       makes or a deleted file it also deletes, is listed under none of these.
+                      An action pin, a uses: <action>@<sha> # <version> line, that the project moved past
+                      the new version's pin of that action in the same file, such as a Dependabot bump the
+                      template hasn't made yet, is kept and listed as kept, so an update never downgrades it.
       Merged          Files whose tools can't include a second file (copier.yml's _merged_files). The template's
                       changes are merged with the project's edits, like a Git merge; the same lines changed on
                       both sides conflict. An adopted project's own lines at the end of .gitignore,
@@ -95,7 +101,7 @@
     in .github/workflows runs on a release event or uploads release assets, whose releases the template's
     tools/Set-RepositoryBaseline.ps1 leaves mutable, it says to delete or leave out that paragraph, also when the
     project is already up to date (the template's ADR-0028).
-    With NCode Review, when .github/workflows/code-review.yml pins NCodeGroup/code-review before v1.5.0, passes no approve: true or passes approve: true without approver-private-key, or AGENTS.md's Landing section doesn't say draft: yes, it says what to change, to store the approver's key with tools/Enable-CodeReview.ps1 -ApproverPrivateKeyPath from NCodeGroup/code-review and to run the template's tools/Set-RepositoryBaseline.ps1 again, also when the project is already up to date (the template's ADR-0022 and ADR-0036). It says that v1.5.0, published on 2026-11-21, waits out the three-day cooldown of the template's ADR-0009 until 2026-11-24, or is adopted sooner only by that record's commented exception.
+    With NCode Review, when .github/workflows/code-review.yml pins NCodeGroup/code-review before v1.5.0, passes no approve: true or passes approve: true without approver-private-key, or AGENTS.md's Landing section doesn't say draft: yes, it says what to change, to store the approver's key with tools/Enable-CodeReview.ps1 -ApproverPrivateKeyPath from NCodeGroup/code-review and to run the template's tools/Set-RepositoryBaseline.ps1 again, also when the project is already up to date (the template's ADR-0022 and ADR-0036).
 
     On Windows it stops before it changes anything when the project's template version has a path Git for Windows
     refuses to check out, such as the uses_node file names of v0.69.0 to v0.75.0, because the update starts with
@@ -321,8 +327,7 @@ function Get-CiPermissionNote {
 
 # NCode Review approves a clean pull request only with approve: true, and from NCodeGroup/code-review v1.5.0 on submits the
 # approval as the NCode Review Approver, which meets a required approval, when approver-private-key is passed; code-review.yml
-# and AGENTS.md are project-owned, so the update can only say what they still lack (the template's ADR-0022 and ADR-0036),
-# and when ADR-0009's cooldown lets it adopt v1.5.0.
+# and AGENTS.md are project-owned, so the update can only say what they still lack (the template's ADR-0022 and ADR-0036).
 function Get-CodeReviewNote {
     $workflow = '.github/workflows/code-review.yml'
     if (-not (Test-Path -LiteralPath $workflow -PathType Leaf)) { return }
@@ -350,7 +355,7 @@ function Get-CodeReviewNote {
     }
     if (-not $findings.Count) { return }
     ''
-    "NCode Review approves a clean pull request only with approve: true, and from NCodeGroup/code-review v1.5.0 on, given approver-private-key, submits the approval as the NCode Review Approver, an app that can write, so the approval meets a required approval (the template's ADR-0022, ADR-0034 and ADR-0036, in docs/decisions/project-template/): $($findings -join '; '). Pin v1.5.0 or later (published on 2026-11-21: the three-day cooldown of the template's ADR-0009 adopts it from 2026-11-24, and sooner only by that record's commented exception) and pass approve: true and approver-private-key: `${{ secrets.NCODE_REVIEW_APPROVER_PRIVATE_KEY }} in the review job of .github/workflows/code-review.yml, as the template's code-review.yml does, store the approver's key in the code-review environment with tools/Enable-CodeReview.ps1 -ApproverPrivateKeyPath from NCodeGroup/code-review, set - draft: yes in AGENTS.md's Landing section, so a pull request opens as a draft and marking it ready is the maintainer's review, then run the template's tools/Set-RepositoryBaseline.ps1 again, so the default branch dismisses stale approvals and requires one approval, of the last push, where the approver is set up or a second person has write access."
+    "NCode Review approves a clean pull request only with approve: true, and from NCodeGroup/code-review v1.5.0 on, given approver-private-key, submits the approval as the NCode Review Approver, an app that can write, so the approval meets a required approval (the template's ADR-0022, ADR-0034 and ADR-0036, in docs/decisions/project-template/): $($findings -join '; '). Pin v1.5.0 or later and pass approve: true and approver-private-key: `${{ secrets.NCODE_REVIEW_APPROVER_PRIVATE_KEY }} in the review job of .github/workflows/code-review.yml, as the template's code-review.yml does, store the approver's key in the code-review environment with tools/Enable-CodeReview.ps1 -ApproverPrivateKeyPath from NCodeGroup/code-review, set - draft: yes in AGENTS.md's Landing section, so a pull request opens as a draft and marking it ready is the maintainer's review, then run the template's tools/Set-RepositoryBaseline.ps1 again, so the default branch dismisses stale approvals and requires one approval, of the last push, where the approver is set up or a second person has write access."
 }
 
 # Nerdbank.GitVersioning, which version.json turns on (the template's ADR-0138), fails a build on a shallow clone and ignores -p:Version: name each job of the project's own workflows, other than publish.yml, which has its own check, that builds, packs, tests without --no-build or pushes packages in a shallow actions/checkout's folder, by the step's working-directory: or the job's or workflow's defaults:, or with a -p:Version argument.
@@ -628,6 +633,57 @@ function Test-EditKept([string]$File, [string]$ResetCommit, [string]$Head) {
     $true
 }
 
+# Writes back each action pin of a template-owned file that the project moved past the new version's pin of that action, such as a Dependabot bump the template hasn't made yet (#495), so the update never downgrades it. Leaves a file Git lists as conflicted as it is, and throws, naming the file, when Git can't read its state or the project's changes to it. Returns File, Action, Kept and Template, once per action written back, in the order the file pins them.
+function Restore-NewerPin([string]$File, [string]$ResetCommit, [string]$Head) {
+    $pin = '^(?<lead>[ \t]*(?:-[ \t]+)?uses:[ \t]*)(?<action>[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+)@(?<sha>[0-9a-fA-F]{40})(?<gap>[ \t]+#[ \t]*)(?<version>v?[0-9]+(?:\.[0-9]+){0,3})[ \t]*\z'
+    $unmerged = @(git -c core.quotePath=false ls-files --unmerged -- $File)
+    if ($LASTEXITCODE) { throw "Reading whether $File has a conflict failed." }
+    if ($unmerged) { return }
+    $diff = @(git -c core.quotePath=false diff --no-color --no-ext-diff --no-renames -U0 $ResetCommit $Head -- $File)
+    if ($LASTEXITCODE) { throw "Reading this project's changes to $File failed." }
+    $path = Join-Path $project $File
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return }
+    $ours = @{}
+    $inHunk = $false
+    foreach ($line in $diff) {
+        if ($line.StartsWith('@@')) { $inHunk = $true; continue }
+        if (-not $inHunk -or -not $line.StartsWith('+')) { continue }
+        if ($line.Substring(1).TrimEnd("`r") -match $pin) {
+            $entry = "$($Matches['sha']) $($Matches['version'])"
+            if (-not $ours.ContainsKey($Matches['action'])) { $ours[$Matches['action']] = [Collections.Generic.List[string]]::new() }
+            if (-not $ours[$Matches['action']].Contains($entry)) { $ours[$Matches['action']].Add($entry) }
+        }
+    }
+    if (-not $ours.Count) { return }
+    $parse = {
+        param([string]$Text)
+        $number = $Text.TrimStart('v')
+        if (-not $number.Contains('.')) { $number += '.0' }
+        $parsed = $null
+        if ([version]::TryParse($number, [ref]$parsed)) { $parsed }
+    }
+    $pieces = @([IO.File]::ReadAllText($path) -split '(?<=\n)')
+    $recorded = [ordered]@{}
+    $changed = $false
+    for ($i = 0; $i -lt $pieces.Count; $i++) {
+        $piece = $pieces[$i]
+        $eol = if ($piece -match '\r?\n\z') { $Matches[0] } else { '' }
+        $body = $piece.Substring(0, $piece.Length - $eol.Length)
+        if ($body -notmatch $pin) { continue }
+        $lead = $Matches['lead']; $action = $Matches['action']; $gap = $Matches['gap']; $version = $Matches['version']
+        if (-not $ours.ContainsKey($action) -or $ours[$action].Count -ne 1) { continue }
+        $sha, $ourVersion = $ours[$action][0] -split ' '
+        $ourParsed = & $parse $ourVersion
+        $lineParsed = & $parse $version
+        if (-not $ourParsed -or -not $lineParsed -or $ourParsed -le $lineParsed) { continue }
+        $pieces[$i] = "$lead$action@$sha$gap$ourVersion$eol"
+        $changed = $true
+        if (-not $recorded.Contains($action)) { $recorded[$action] = [pscustomobject]@{ File = $File; Action = $action; Kept = $ourVersion; Template = $version } }
+    }
+    if ($changed) { [IO.File]::WriteAllText($path, -join $pieces) }
+    $recorded.Values
+}
+
 # How to run the template's .githooks in this clone: HooksPath when core.hooksPath can point at it, otherwise the
 # Note to warn with. A hooks path turns off the hooks in .git/hooks.
 # A hooks path the clone already has, from any Git config, is never changed: one that names a .githooks folder runs the
@@ -718,8 +774,9 @@ function Get-CSharpFileWithoutHeader {
     $setting = [regex]::Match([IO.File]::ReadAllText((Join-Path (Get-Location).Path '.editorconfig')), '(?m)^file_header_template\s*=\s*(.+?)\r?$')
     if (-not $setting.Success) { return }
     $header = (($setting.Groups[1].Value -split '\\n') | ForEach-Object { "// $_" }) -join "`n"
+    $root = (Get-Location).ProviderPath
     foreach ($file in Get-ChildItem -LiteralPath . -Filter *.cs -File -Recurse -ErrorAction SilentlyContinue) {
-        if ($file.FullName -match '[\\/](bin|obj|node_modules|artifacts|\.git|Migrations)[\\/]' -or $file.Name -match '\.(g|generated|designer)\.cs$') { continue }
+        if ([IO.Path]::GetRelativePath($root, $file.FullName) -match '(^|[\\/])(bin|obj|node_modules|artifacts|\.git|\.claude|Migrations)[\\/]' -or $file.Name -match '\.(g|generated|designer)\.cs$') { continue }
         $text = ([IO.File]::ReadAllText($file.FullName).TrimStart([char]0xFEFF)) -replace "`r`n", "`n"
         if (-not $text.StartsWith("$header`n")) { [IO.Path]::GetRelativePath((Get-Location).Path, $file.FullName) -replace '\\', '/' }
     }
@@ -792,8 +849,9 @@ function Get-AssemblyVersionFloor {
 
 function Get-PublishedPackageVersion {
     param([scriptblock]$Fetch = { param($Uri) Invoke-RestMethod -Uri $Uri -TimeoutSec 20 })
+    $root = (Get-Location).ProviderPath
     foreach ($file in Get-ChildItem -LiteralPath . -Filter *.csproj -File -Recurse -ErrorAction SilentlyContinue) {
-        if ($file.FullName -match '[\\/](bin|obj|node_modules|artifacts|\.git)[\\/]' -or $file.Name -like '*.Tests.csproj') { continue }
+        if ([IO.Path]::GetRelativePath($root, $file.FullName) -match '(^|[\\/])(bin|obj|node_modules|artifacts|\.git|\.claude)[\\/]' -or $file.Name -like '*.Tests.csproj') { continue }
         $text = Get-Content -LiteralPath $file.FullName -Raw
         if ($text -match '<IsPackable>\s*false') { continue }
         $id = if ($text -match '<PackageId>\s*([^<\s]+)\s*</PackageId>') { $Matches[1] } else { $file.BaseName }
@@ -820,7 +878,7 @@ function Get-PackageMetadataDrift {
     )
     $root = (Get-Location).ProviderPath
     foreach ($file in Get-ChildItem -LiteralPath . -Filter *.csproj -File -Recurse -ErrorAction SilentlyContinue) {
-        if ($file.FullName -match '[\\/](bin|obj|node_modules|artifacts|\.git)[\\/]' -or $file.Name -like '*.Tests.csproj') { continue }
+        if ([IO.Path]::GetRelativePath($root, $file.FullName) -match '(^|[\\/])(bin|obj|node_modules|artifacts|\.git|\.claude)[\\/]' -or $file.Name -like '*.Tests.csproj') { continue }
         $text = Get-Content -LiteralPath $file.FullName -Raw
         if ($text -match '<IsPackable>\s*false') { continue }
         $id = if ($text -match '<PackageId>\s*([^<\s]+)\s*</PackageId>') { $Matches[1] } else { $file.BaseName }
@@ -858,7 +916,7 @@ function Get-PackageMetadataDrift {
 # A deliberate copy of tools/adopt/Adoption.psm1's Get-NuGetLogistics: change both, or tests\Test-NuGetLogistics.ps1 fails.
 function Get-NuGetLogistics {
     $root = (Get-Location).ProviderPath
-    $excluded = 'bin', 'obj', 'node_modules', 'artifacts', '.git'
+    $excluded = 'bin', 'obj', 'node_modules', 'artifacts', '.git', '.claude'
     $found = [Collections.Generic.List[object]]::new()
     $pending = [Collections.Generic.Stack[string]]::new()
     $pending.Push($root)
@@ -939,7 +997,8 @@ function Get-NuGetLogistics {
 # tools/adopt/Adoption.psm1 in the template has a deliberate copy of this function, not shared code: this script runs on its own, from an older template's copy. Change both together; tests/Test-LibraryRelease.ps1 keeps the two equal.
 function Test-PackageValidationBaseline {
     if ((Test-Path -LiteralPath Directory.Build.props -PathType Leaf) -and (Get-Content -LiteralPath Directory.Build.props -Raw) -match 'PackageValidationBaselineVersion') { return $true }
-    @(Get-ChildItem -LiteralPath . -Filter *.csproj -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notmatch '[\\/](bin|obj|node_modules|artifacts|\.git)[\\/]' -and (Get-Content -LiteralPath $_.FullName -Raw) -match 'PackageValidationBaselineVersion' }).Count -gt 0
+    $root = (Get-Location).ProviderPath
+    @(Get-ChildItem -LiteralPath . -Filter *.csproj -File -Recurse -ErrorAction SilentlyContinue | Where-Object { [IO.Path]::GetRelativePath($root, $_.FullName) -notmatch '(^|[\\/])(bin|obj|node_modules|artifacts|\.git|\.claude)[\\/]' -and (Get-Content -LiteralPath $_.FullName -Raw) -match 'PackageValidationBaselineVersion' }).Count -gt 0
 }
 
 # A deliberate copy of tools/adopt/Adoption.psm1's Update-VersionFile: change both, or tests\Test-LibraryRelease.ps1 fails.
@@ -1129,6 +1188,7 @@ try {
     }
     $versionFileNew = $false
     $resetCommit = $null
+    $keptPins = @()
     try {
         # Reset the template-owned files to the project's current version; what changes was edited or deleted here. A file the project owns is left out, so its copy is never overwritten.
         $exclude = foreach ($file in $projectOwned + $merged + $ownedFiles) { '--exclude', "/$file" }
@@ -1198,6 +1258,11 @@ try {
             if (Test-Path -LiteralPath $full) { [IO.File]::WriteAllText($full, [IO.File]::ReadAllText($full).TrimEnd("`r", "`n") + $keptLines[$file]) }
         }
 
+        # Put back each action pin the project moved past the new version's (Restore-NewerPin, #495), so the update never downgrades one.
+        if ($resetCommit) {
+            $keptPins = @(foreach ($change in $reset) { if ($change.Kind -eq 'modified') { Restore-NewerPin $change.File $resetCommit $head } })
+        }
+
         # Drop the reset commit but keep its changes, and any conflict, in the index and the working tree.
         if ($resetCommitted) { git update-ref HEAD $head; if ($LASTEXITCODE) { throw 'Removing the reset commit failed.' } }
     }
@@ -1256,6 +1321,7 @@ try {
     $restored = @($reset | Where-Object { $_.Kind -eq 'added' -and $_.File -in $differs } | ForEach-Object File)
     $refreshed = @($refreshed | Where-Object { $_ -in $differs })
     if ($edited) { ''; 'Local edits discarded — these files are the template''s; make the change in a project file instead:'; $edited | ForEach-Object { "  $_" } }
+    if ($keptPins) { ''; 'Kept — action pins this project moved past the template''s, such as a Dependabot bump; the template''s older pin would downgrade them:'; $keptPins | ForEach-Object { "  $($_.File): $($_.Action) $($_.Kept), where the template pins $($_.Template)" } }
     if ($restored) { ''; 'Restored — these files are the template''s, so the project can''t delete them:'; $restored | ForEach-Object { "  $_" } }
     if ($droppedTextRules) { ''; "Left out of the lines .gitattributes kept from this repository at adoption: its catch-all text rule ($($droppedTextRules -join '; ')). Git uses the last rule that matches, so the rule overrode the template's binary rules, such as *.png binary and *.ico binary, and git add dropped the CR of each CR LF pair in a binary file it staged. Check the binary files committed while the rule applied, and replace any that no longer open." }
     if ($refreshed) { ''; 'Refreshed — these files are the template''s, but earlier template versions never updated them; a local edit to one is discarded, so make the change in a project file instead:'; $refreshed | ForEach-Object { "  $_" } }
