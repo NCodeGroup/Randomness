@@ -15,6 +15,8 @@ namespace NCode.Randomness.Nist.Http;
 /// <see cref="NistBeaconOptions.CertificateRetryDelay"/>.
 /// </summary>
 // ADR-1009: a certificate NIST serves but the configuration does not pin never reaches a pulse.
+// The shared-fetch policy, one Lazy fetch per key under FetchTimeout with a failure remembered for the retry delay,
+// is copied on purpose from TwineChainCache in NCode.Randomness.Curby: a fix to one copy belongs in the other.
 internal sealed class NistCertificateCache(
     NistApi api,
     IOptions<NistBeaconOptions> options,
@@ -100,7 +102,7 @@ internal sealed class NistCertificateCache(
     /// <param name="id">The identifier the certificate must hash to.</param>
     /// <returns>The shared fetch of the certificate.</returns>
     private Lazy<Task<NistCertificate>> GetFetch(string hex, byte[] id) =>
-        Fetches.GetOrAdd(hex, key => new Lazy<Task<NistCertificate>>(() => FetchAsync(key, id)));
+        Fetches.GetOrAdd(hex, key => new(() => FetchAsync(key, id).AsTask()));
 
     /// <summary>
     /// Gets whether a fetch failed and its failure has been remembered for the whole retry delay, so the next caller
@@ -138,8 +140,9 @@ internal sealed class NistCertificateCache(
     /// <param name="id">The identifier the certificate must hash to.</param>
     /// <returns>The parsed certificate.</returns>
     /// <exception cref="NistFormatException">NIST does not serve the certificate or it is not acceptable.</exception>
-    // Returns a Task, not a ValueTask, because every waiting caller awaits it.
-    private async Task<NistCertificate> FetchAsync(string hex, byte[] id)
+    // Takes no CancellationToken: every caller shares the fetch, so FetchTimeout bounds it rather than one caller's
+    // token.
+    private async ValueTask<NistCertificate> FetchAsync(string hex, byte[] id)
     {
         try
         {

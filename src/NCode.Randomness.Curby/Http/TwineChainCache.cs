@@ -14,6 +14,8 @@ namespace NCode.Randomness.Curby.Http;
 /// <see cref="CurbyBeaconOptions.ChainRetryDelay"/>.
 /// </summary>
 // ADR-1002: one beacon's slow chain fetch never delays another's.
+// The shared-fetch policy, one Lazy fetch per key under FetchTimeout with a failure remembered for the retry delay,
+// is copied on purpose into NistCertificateCache in NCode.Randomness.Nist: a fix to one copy belongs in the other.
 internal sealed class TwineChainCache(
     TwineApi api,
     IOptions<CurbyBeaconOptions> options,
@@ -79,7 +81,7 @@ internal sealed class TwineChainCache(
     /// <param name="key">The CID and expected family of the chain.</param>
     /// <returns>The shared fetch of the chain.</returns>
     private Lazy<Task<TwineChain>> GetFetch((Cid, string?) key) =>
-        Fetches.GetOrAdd(key, chainKey => new Lazy<Task<TwineChain>>(() => FetchAsync(chainKey)));
+        Fetches.GetOrAdd(key, chainKey => new(() => FetchAsync(chainKey).AsTask()));
 
     /// <summary>
     /// Gets whether a fetch failed and its failure has been remembered for the whole retry delay, so the next caller
@@ -116,8 +118,9 @@ internal sealed class TwineChainCache(
     /// <param name="key">The CID and expected family of the chain.</param>
     /// <returns>The verified chain.</returns>
     /// <exception cref="TwineFormatException">The Twine API does not serve the chain or it does not verify.</exception>
-    // Returns a Task, not a ValueTask, because every waiting caller awaits it.
-    private async Task<TwineChain> FetchAsync((Cid, string?) key)
+    // Takes no CancellationToken: every caller shares the fetch, so FetchTimeout bounds it rather than one caller's
+    // token.
+    private async ValueTask<TwineChain> FetchAsync((Cid, string?) key)
     {
         try
         {
