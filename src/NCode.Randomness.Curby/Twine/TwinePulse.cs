@@ -131,7 +131,7 @@ internal sealed class TwinePulse
         }
     }
 
-    private static DateTimeOffset ParseTimestamp(string text)
+    internal static DateTimeOffset ParseTimestamp(string text)
     {
         if (
             !DateTimeOffset.TryParseExact(

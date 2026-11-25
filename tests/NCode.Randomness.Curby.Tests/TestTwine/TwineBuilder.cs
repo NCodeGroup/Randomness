@@ -116,6 +116,37 @@ internal sealed class TwineBuilder : IDisposable
     }
 
     /// <summary>
+    /// Builds the content of a pulse with the given payload, for a chain of any family.
+    /// </summary>
+    public IpldMap Content(
+        long index,
+        Cid? previous,
+        IpldMap payload,
+        params (Cid Chain, Cid Value)[] mixins
+    )
+    {
+        IpldNode[] links = previous is null ? [] : [Ipld.Link(previous)];
+        return Ipld.Map(
+            ("chain", Ipld.Link(ChainCid)),
+            ("index", Ipld.Integer(index)),
+            ("links", Ipld.List(links)),
+            (
+                "mixins",
+                Ipld.List([
+                    .. mixins.Select(mixin =>
+                        Ipld.Map(
+                            ("chain", Ipld.Link(mixin.Chain)),
+                            ("value", Ipld.Link(mixin.Value))
+                        )
+                    ),
+                ])
+            ),
+            ("payload", payload),
+            ("source", Ipld.Text("test"))
+        );
+    }
+
+    /// <summary>
     /// Signs <paramref name="content"/> with the chain's key and wraps it in a document with its true CID.
     /// </summary>
     public (string Json, Cid Cid) Seal(IpldMap content, string? signature = null)
