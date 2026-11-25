@@ -75,6 +75,7 @@ public static class NistRandomnessBuilderExtensions
             >();
             services.TryAddEnumerable(validator);
             var registered = services.Any(descriptor => descriptor.ServiceType == typeof(NistApi));
+            services.TryAddSingleton(TimeProvider.System);
             services.TryAddSingleton<NistApi>();
             services.TryAddSingleton<NistCertificateCache>();
             services.TryAddSingleton<NistBeacon>();

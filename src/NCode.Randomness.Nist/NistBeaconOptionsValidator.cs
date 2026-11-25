@@ -18,6 +18,10 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
 
     private const int CertificateIdLength = 128;
 
+    private static TimeSpan MinRetryDelay { get; } = TimeSpan.FromSeconds(1);
+
+    private static TimeSpan MaxRetryDelay { get; } = TimeSpan.FromDays(1);
+
     /// <summary>
     /// Gets whether a value is a certificate identifier: 128 hexadecimal digits, the SHA-512 hash of a DER encoding.
     /// </summary>
@@ -96,6 +100,16 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
                     );
                 }
             }
+        }
+
+        if (
+            options.CertificateRetryDelay < MinRetryDelay
+            || options.CertificateRetryDelay > MaxRetryDelay
+        )
+        {
+            failures.Add(
+                $"{Prefix}{nameof(options.CertificateRetryDelay)} must be between {MinRetryDelay} and {MaxRetryDelay}."
+            );
         }
 
         if (options.MaxResponseBytes < MinResponseBytes)

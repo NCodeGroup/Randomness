@@ -29,7 +29,9 @@ builder.Services
 
 Settings bind from `RandomnessBeacons:Nist`: `BaseAddress` (default `https://beacon.nist.gov/beacon/2.0/`; a mirror can
 withhold pulses but never forge one), `ChainIndex` (default 2), `CertificateIds` (empty by default, which trusts
-`NistDefaults.CertificateIds`; a configured list replaces them) and `MaxResponseBytes` (default 64 KiB). Requests use a
+`NistDefaults.CertificateIds`; a configured list replaces them), `CertificateRetryDelay` (default 1 minute; how long a
+failed certificate fetch is remembered before a pulse that names the certificate tries again; each certificate is
+fetched once, under its own 30-second timeout, for every caller) and `MaxResponseBytes` (default 64 KiB). Requests use a
 named `HttpClient`, `NistDefaults.HttpClientName`, with retries, attempt and total timeouts and a circuit breaker; add a
 proxy or other handlers to it with `services.AddHttpClient(NistDefaults.HttpClientName)`.
 

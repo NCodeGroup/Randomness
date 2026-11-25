@@ -9,6 +9,8 @@ NCode.Randomness.Nist.NistBeaconOptions.BaseAddress.get -> System.Uri!
 NCode.Randomness.Nist.NistBeaconOptions.BaseAddress.set -> void
 NCode.Randomness.Nist.NistBeaconOptions.CertificateIds.get -> System.Collections.Generic.List<string!>!
 NCode.Randomness.Nist.NistBeaconOptions.CertificateIds.set -> void
+NCode.Randomness.Nist.NistBeaconOptions.CertificateRetryDelay.get -> System.TimeSpan
+NCode.Randomness.Nist.NistBeaconOptions.CertificateRetryDelay.set -> void
 NCode.Randomness.Nist.NistBeaconOptions.ChainIndex.get -> long
 NCode.Randomness.Nist.NistBeaconOptions.ChainIndex.set -> void
 NCode.Randomness.Nist.NistBeaconOptions.MaxResponseBytes.get -> int

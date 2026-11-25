@@ -35,6 +35,12 @@ public sealed class NistBeaconOptions
     public List<string> CertificateIds { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets how long a failed certificate fetch is remembered: until it passes, a pulse that names the
+    /// certificate fails at once, without another request. The default is 1 minute; it must be from 1 second to 1 day.
+    /// </summary>
+    public TimeSpan CertificateRetryDelay { get; set; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>
     /// Gets or sets the largest response body read, in bytes. The default is 64 KiB; a pulse is about 2 KiB.
     /// </summary>
     public int MaxResponseBytes { get; set; } = 64 * 1024;

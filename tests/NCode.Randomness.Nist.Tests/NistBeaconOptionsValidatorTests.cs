@@ -180,6 +180,35 @@ public class NistBeaconOptionsValidatorTests
     }
 
     [Fact]
+    public void Validate_WithShortestCertificateRetryDelay_Succeeds()
+    {
+        var options = new NistBeaconOptions { CertificateRetryDelay = TimeSpan.FromSeconds(1) };
+
+        var result = new NistBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Theory]
+    [InlineData(999)]
+    [InlineData(86_400_001)]
+    public void Validate_WithCertificateRetryDelayOutOfRange_Fails(long milliseconds)
+    {
+        var options = new NistBeaconOptions
+        {
+            CertificateRetryDelay = TimeSpan.FromMilliseconds(milliseconds),
+        };
+
+        var result = new NistBeaconOptionsValidator().Validate(null, options);
+
+        Assert.Contains(
+            "RandomnessBeacons:Nist:CertificateRetryDelay must be between 00:00:01 and 1.00:00:00.",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
     public void Validate_WithSeveralProblems_ReportsAllOfThem()
     {
         var options = new NistBeaconOptions

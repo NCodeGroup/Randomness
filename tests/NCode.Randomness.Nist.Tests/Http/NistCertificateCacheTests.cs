@@ -3,6 +3,7 @@
 
 using System.Text;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using NCode.Randomness.Nist.Http;
 using NCode.Randomness.Nist.Pulses;
 using NCode.Randomness.Nist.Tests.Fixtures;
@@ -18,6 +19,9 @@ public sealed class NistCertificateCacheTests : IDisposable
     private static byte[] Id(string hex) => Convert.FromHexString(hex);
 
     private StubNistServer Server { get; } = new();
+
+    private FakeTimeProvider Time { get; } =
+        new(new DateTimeOffset(2026, 11, 25, 12, 0, 0, TimeSpan.Zero));
 
     private List<IDisposable> Disposables { get; } = [];
 
@@ -42,7 +46,7 @@ public sealed class NistCertificateCacheTests : IDisposable
     {
         var options = Options.Create(beaconOptions ?? new NistBeaconOptions());
         var api = new NistApi(Server, options);
-        var cache = new NistCertificateCache(api, options);
+        var cache = new NistCertificateCache(api, options, Time);
         Disposables.Add(cache);
         return cache;
     }
@@ -140,6 +144,102 @@ public sealed class NistCertificateCacheTests : IDisposable
 
         Assert.Contains("does not serve", exception.Message, StringComparison.Ordinal);
         Assert.Equal([CurrentRoute], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenTwoCallersAskAtOnce_FetchesOnce()
+    {
+        var cache = Create();
+        var id = Id(NistFixtures.CurrentCertificateId);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        ServeCurrent();
+        Server.Hold(CurrentRoute, release.Task);
+
+        var first = cache.GetAsync(id, CancellationToken.None).AsTask();
+        var second = cache.GetAsync(id, CancellationToken.None).AsTask();
+        var waiting = !first.IsCompleted && !second.IsCompleted;
+        release.SetResult();
+        var firstCertificate = await first;
+        var secondCertificate = await second;
+
+        Assert.True(waiting);
+        Assert.Same(firstCertificate, secondCertificate);
+        Assert.Equal([CurrentRoute], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenTheFirstCallerCancels_StillServesTheSecond()
+    {
+        var cache = Create();
+        var id = Id(NistFixtures.CurrentCertificateId);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        ServeCurrent();
+        Server.Hold(CurrentRoute, release.Task);
+        using var cancellation = new CancellationTokenSource();
+
+        var first = cache.GetAsync(id, cancellation.Token).AsTask();
+        var second = cache.GetAsync(id, CancellationToken.None).AsTask();
+        await cancellation.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first);
+        release.SetResult();
+        var certificate = await second;
+
+        Assert.Equal(id, certificate.Id);
+        Assert.Equal([CurrentRoute], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_WithinTheRetryDelayAfterAFailure_FailsWithoutARequest()
+    {
+        var cache = Create();
+        var id = Id(NistFixtures.CurrentCertificateId);
+        await Assert.ThrowsAsync<NistFormatException>(async () =>
+            await cache.GetAsync(id, CancellationToken.None)
+        );
+        ServeCurrent();
+        Time.Advance(TimeSpan.FromSeconds(59));
+
+        var exception = await Assert.ThrowsAsync<NistFormatException>(async () =>
+            await cache.GetAsync(id, CancellationToken.None)
+        );
+
+        Assert.Contains("does not serve", exception.Message, StringComparison.Ordinal);
+        Assert.Equal([CurrentRoute], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_AfterTheRetryDelay_FetchesAgain()
+    {
+        var cache = Create();
+        var id = Id(NistFixtures.CurrentCertificateId);
+        await Assert.ThrowsAsync<NistFormatException>(async () =>
+            await cache.GetAsync(id, CancellationToken.None)
+        );
+        ServeCurrent();
+        Time.Advance(TimeSpan.FromMinutes(1));
+
+        var certificate = await cache.GetAsync(id, CancellationToken.None);
+
+        Assert.Equal(id, certificate.Id);
+        Assert.Equal([CurrentRoute, CurrentRoute], Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenTheFetchOutlastsItsTimeout_IsCancelled()
+    {
+        var cache = Create();
+        var id = Id(NistFixtures.CurrentCertificateId);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        ServeCurrent();
+        Server.Hold(CurrentRoute, release.Task);
+
+        var pending = cache.GetAsync(id, CancellationToken.None).AsTask();
+        Time.Advance(NistCertificateCache.FetchTimeout);
+        // The real 10-second bound only stops a broken fetch from hanging the run; it ends in a TimeoutException,
+        // which fails the assertion.
+        var bounded = pending.WaitAsync(TimeSpan.FromSeconds(10));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => bounded);
     }
 
     #endregion

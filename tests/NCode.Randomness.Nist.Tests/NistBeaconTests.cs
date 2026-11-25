@@ -498,7 +498,7 @@ public sealed class NistBeaconTests : IDisposable
     {
         var options = Microsoft.Extensions.Options.Options.Create(Options);
         var api = new NistApi(Server, options);
-        var certificates = new NistCertificateCache(api, options);
+        var certificates = new NistCertificateCache(api, options, TimeProvider.System);
         Disposables.Add(certificates);
         return new NistBeacon(api, certificates, options);
     }
