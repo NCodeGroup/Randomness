@@ -178,7 +178,7 @@ The [silver criteria](https://www.bestpractices.dev/en/criteria/1), 55 in all.
 | `build_repeatable` | MUST | yes | no | **Check**: Met while `reproducible-build` in `.github/workflows/ci.yml` passes (`./.template/Test-ReproducibleBuild.ps1`, which packs twice and compares entry by entry); a rebuild of a release's tag also matches in a later year because `Copyright` names no year ([ADR-0154](decisions/project-template/0154-a-library-build-takes-nothing-from-the-clock-and-ci-builds-it-twice.md)). |
 | `installation_common` | MUST | yes | no | **Met**: a NuGet package reference. |
 | `installation_standard_variables` | MUST | yes | no | **N/A**: it applies only to an installer that writes files where users choose. |
-| `installation_development_quick` | MUST | yes | no | **Met**: [CONTRIBUTING.md](../CONTRIBUTING.md) names the prerequisites, the one command that sets up a clone, and the build and test commands. |
+| `installation_development_quick` | MUST | yes | no | **Met**: [CONTRIBUTING.md](../CONTRIBUTING.md) names the prerequisites, the commands that set up a clone, and the build and test commands. |
 | `external_dependencies` | MUST | yes | yes | **Met**: `Directory.Packages.props` and the project files. |
 | `dependency_monitoring` | MUST | yes | no | **Check**: Dependabot (`.github/dependabot.yml`) and its alerts, which the template's `tools/Set-RepositoryBaseline.ps1` turns on; Security > Dependabot shows the open ones. |
 | `updateable_reused_components` | MUST | yes | no | **Met**: dependencies are pinned and moved by reviewed updates that Dependabot proposes, with actions pinned to a full commit SHA. |
@@ -226,8 +226,8 @@ The [gold criteria](https://www.bestpractices.dev/en/criteria/2), 23 in all.
 | `achieve_silver` | MUST | no | no | **Check**: the site sets it once the silver level is earned. |
 | `bus_factor` | MUST | no | yes | **Person**: two or more people who could carry the project on; Unmet with one maintainer, which keeps gold from being earned. |
 | `contributors_unassociated` | MUST | no | yes | **Person**: at least two significant contributors from different organizations. |
-| `copyright_per_file` | MUST | no | no | **Check**: the C# file header `.editorconfig` sets starts with the copyright line, and the build fails a C# file without it; check every other source file, such as scripts. |
-| `license_per_file` | MUST | no | no | **Check**: the C# file header holds `SPDX-License-Identifier: Apache-2.0`, and the build fails a C# file without it; check every other source file. |
+| `copyright_per_file` | MUST | no | no | **Check**: the C# file header `.editorconfig` sets starts with the copyright line, and the build fails a C# file without it; check every other source file, such as scripts. The scripts the template owns, in `.template/`, `build/`, `.claude/hooks/` and `.githooks/`, carry the template's own copyright line ([ADR-0038](decisions/project-template/0038-the-templates-scripts-carry-the-templates-copyright-and-license.md)). |
+| `license_per_file` | MUST | no | no | **Check**: the C# file header holds `SPDX-License-Identifier: Apache-2.0`, and the build fails a C# file without it; check every other source file. The scripts the template owns carry the template's `SPDX-License-Identifier: MIT` ([ADR-0038](decisions/project-template/0038-the-templates-scripts-carry-the-templates-copyright-and-license.md)). |
 
 ### Change Control
 

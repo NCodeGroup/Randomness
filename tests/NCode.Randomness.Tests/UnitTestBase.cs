@@ -7,10 +7,10 @@ namespace NCode.Randomness.Tests;
 
 public abstract class UnitTestBase : IDisposable
 {
-    private readonly MockRepository _mocks = new(MockBehavior.Strict);
+    private MockRepository Mocks { get; } = new(MockBehavior.Strict);
 
-    protected Mock<T> CreateStrictMock<T>(params object[] args)
-        where T : class => _mocks.Create<T>(args);
+    protected Mock<T> CreateStrictMock<T>(params IEnumerable<object> args)
+        where T : class => Mocks.Create<T>([.. args]);
 
     public void Dispose()
     {
@@ -22,7 +22,7 @@ public abstract class UnitTestBase : IDisposable
     {
         if (disposing)
         {
-            _mocks.Verify();
+            Mocks.Verify();
         }
     }
 }

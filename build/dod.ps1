@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Marcin Polewski
+# SPDX-License-Identifier: MIT
+
 <#
 .SYNOPSIS
     The Definition of Done: the one gate a change passes before it counts as done, run the same way by people, agents
@@ -75,7 +78,7 @@ try {
     Invoke-Stage 'Build' { dotnet build @buildArgs }
     $testArgs = @('--configuration', $configuration, '--no-build', '--nologo')
     if ($Filter) { $testArgs += '--filter', $Filter }
-    $hasTests = [bool](Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.Tests.csproj' | Where-Object { $_.FullName -notmatch '[\\/](bin|obj|artifacts|\.claude)[\\/]' } | Select-Object -First 1)
+    $hasTests = [bool](Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.Tests.csproj' | Where-Object { [IO.Path]::GetRelativePath($root, $_.FullName) -notmatch '(^|[\\/])(bin|obj|artifacts|\.claude)[\\/]' } | Select-Object -First 1)
     $coverage = $coverage -and $hasTests
     if (-not $Fast) { $testArgs += '--logger', 'trx' }
     if ($coverage -or -not $Fast) { $testArgs += '--results-directory', 'artifacts/test-results' }
