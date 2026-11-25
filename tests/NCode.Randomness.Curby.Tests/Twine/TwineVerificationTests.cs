@@ -114,64 +114,68 @@ public class TwineVerificationTests
     [Fact]
     public void Parse_WithCurbyQDocuments_RecomputesEveryCid()
     {
+        var bellPulse = CurbyQuantumFixtures.BellPulse(59313);
+        var firstSeedPulse = CurbyQuantumFixtures.SeedPulse(1914066);
+        var secondSeedPulse = CurbyQuantumFixtures.SeedPulse(1914067);
+        var thirdSeedPulse = CurbyQuantumFixtures.SeedPulse(1914068);
         var documents = new List<string>
         {
             CurbyQuantumFixtures.Chain,
             CurbyQuantumFixtures.BellChain,
             CurbyQuantumFixtures.SeedChain,
-            CurbyQuantumFixtures.BellPulse(59313),
-            CurbyQuantumFixtures.SeedPulse(1914066),
-            CurbyQuantumFixtures.SeedPulse(1914067),
-            CurbyQuantumFixtures.SeedPulse(1914068),
+            bellPulse,
+            firstSeedPulse,
+            secondSeedPulse,
+            thirdSeedPulse,
         };
-        documents.AddRange(RoundPulses().Select(element => element.GetRawText()).ToList());
+        var roundDocuments = RoundPulses().Select(element => element.GetRawText()).ToList();
+        documents.AddRange(roundDocuments);
 
         foreach (var json in documents)
         {
             var document = Document(json);
+            var expected = CurbyFixtures.CidOf(json);
+            var actual = document.Cid.ToString();
 
-            Assert.Equal(CurbyFixtures.CidOf(json), document.Cid.ToString());
+            Assert.Equal(expected, actual);
         }
     }
 
     [Fact]
     public void Verify_WithCurbyQPulses_AcceptsEachSignature()
     {
-        using var quantum = TwineChain.Verify(
-            Document(CurbyQuantumFixtures.Chain),
-            Cid.Parse(CurbyQuantumFixtures.ChainId),
-            "diqrng"
-        );
-        using var bell = TwineChain.Verify(
-            Document(CurbyQuantumFixtures.BellChain),
-            Cid.Parse(CurbyQuantumFixtures.BellChainId),
-            "bell"
-        );
-        using var seed = TwineChain.Verify(
-            Document(CurbyQuantumFixtures.SeedChain),
-            Cid.Parse(CurbyQuantumFixtures.SeedChainId),
-            null
-        );
+        var quantumDocument = Document(CurbyQuantumFixtures.Chain);
+        var quantumCid = Cid.Parse(CurbyQuantumFixtures.ChainId);
+        var bellDocument = Document(CurbyQuantumFixtures.BellChain);
+        var bellCid = Cid.Parse(CurbyQuantumFixtures.BellChainId);
+        var seedDocument = Document(CurbyQuantumFixtures.SeedChain);
+        var seedCid = Cid.Parse(CurbyQuantumFixtures.SeedChainId);
+        using var quantum = TwineChain.Verify(quantumDocument, quantumCid, "diqrng");
+        using var bell = TwineChain.Verify(bellDocument, bellCid, "bell");
+        using var seed = TwineChain.Verify(seedDocument, seedCid, null);
 
         var round = RoundPulses()
             .Select(element => TwineSignedPulse.Verify(Document(element.GetRawText()), quantum))
             .ToList();
-        var response = TwineSignedPulse.Verify(
-            Document(CurbyQuantumFixtures.BellPulse(59313)),
-            bell
-        );
+        var responseDocument = Document(CurbyQuantumFixtures.BellPulse(59313));
+        var response = TwineSignedPulse.Verify(responseDocument, bell);
         var seeds = new[] { 1914066L, 1914067L, 1914068L }
             .Select(index =>
                 TwineSignedPulse.Verify(Document(CurbyQuantumFixtures.SeedPulse(index)), seed)
             )
             .ToList();
+        var requestId = round[0].Cid.ToString();
+        var precommitId = round[1].Cid.ToString();
+        var resultId = round[2].Cid.ToString();
+        var responseId = response.Cid.ToString();
+        var seedPulseId = seeds[2].Cid.ToString();
 
         Assert.Equal(3, round.Count);
-        Assert.Equal(CurbyQuantumFixtures.RequestId, round[0].Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.PrecommitId, round[1].Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.ResultId, round[2].Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.BellResponseId, response.Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.SeedPulseId, seeds[2].Cid.ToString());
+        Assert.Equal(CurbyQuantumFixtures.RequestId, requestId);
+        Assert.Equal(CurbyQuantumFixtures.PrecommitId, precommitId);
+        Assert.Equal(CurbyQuantumFixtures.ResultId, resultId);
+        Assert.Equal(CurbyQuantumFixtures.BellResponseId, responseId);
+        Assert.Equal(CurbyQuantumFixtures.SeedPulseId, seedPulseId);
     }
 
     #endregion
@@ -216,8 +220,9 @@ public class TwineVerificationTests
     public void Verify_WithoutFamily_AcceptsAnyTwineOneChain()
     {
         using var builder = new TwineBuilder(specification: "twine/1.0.x/bell/1.0.x");
+        var document = Document(builder.ChainJson);
 
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid, null);
+        using var chain = TwineChain.Verify(document, builder.ChainCid, null);
 
         Assert.Equal(builder.ChainCid, chain.Cid);
     }

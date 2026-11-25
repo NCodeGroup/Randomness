@@ -34,6 +34,9 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
         var pulse = await beacon.GetPulseAsync(CurbyQuantumFixtures.Round, CancellationToken.None);
 
+        var firstSeedPulsePath = SeedPulsePath(1914068);
+        var secondSeedPulsePath = SeedPulsePath(1914067);
+        var thirdSeedPulsePath = SeedPulsePath(1914066);
         AssertRound(pulse);
         Assert.Equal(
             [
@@ -42,9 +45,9 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
                 BellChainPath,
                 BellChainPath + "/pulses/" + CurbyQuantumFixtures.BellResponseId,
                 SeedChainPath,
-                SeedPulsePath(1914068),
-                SeedPulsePath(1914067),
-                SeedPulsePath(1914066),
+                firstSeedPulsePath,
+                secondSeedPulsePath,
+                thirdSeedPulsePath,
                 ParametersPath,
             ],
             Server.Requests
@@ -60,9 +63,12 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
         var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
 
+        var chainId = builder.Quantum.ChainCid.ToString();
+        var resultId = round.Result.Cid.ToString();
+
         Assert.Equal(builder.Round, pulse.Round);
-        Assert.Equal(builder.Quantum.ChainCid.ToString(), pulse.Chain);
-        Assert.Equal(round.Result.Cid.ToString(), pulse.Id);
+        Assert.Equal(chainId, pulse.Chain);
+        Assert.Equal(resultId, pulse.Id);
         Assert.Equal(round.Randomness, pulse.Randomness);
     }
 
@@ -75,8 +81,10 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
         var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
 
+        var bellPulsePath = BellPulsePath(builder, round, 0);
+
         Assert.Equal(round.Randomness, pulse.Randomness);
-        Assert.Contains(BellPulsePath(builder, round, 0), Server.Requests);
+        Assert.Contains(bellPulsePath, Server.Requests);
     }
 
     [Fact]
@@ -193,7 +201,9 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         const string reason = "the Bell test failed";
         using var builder = new QuantumRoundBuilder();
         ServeChains(builder);
-        Server.Serve(RoundPathOf(builder.Round), builder.ErrorRoundJson(reason));
+        var roundPath = RoundPathOf(builder.Round);
+        var errorRoundJson = builder.ErrorRoundJson(reason);
+        Server.Serve(roundPath, errorRoundJson);
         using var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
@@ -209,7 +219,8 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         using var builder = new QuantumRoundBuilder();
         var round = builder.Build();
         ServeChains(builder);
-        Server.Serve(RoundPathOf(builder.Round), $"[{round.Request.Json},{round.Precommit.Json}]");
+        var roundPath = RoundPathOf(builder.Round);
+        Server.Serve(roundPath, $"[{round.Request.Json},{round.Precommit.Json}]");
         using var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
@@ -224,7 +235,8 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder();
         ServeChains(builder);
-        Server.Serve(RoundPathOf(builder.Round), "[]");
+        var roundPath = RoundPathOf(builder.Round);
+        Server.Serve(roundPath, "[]");
         using var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
@@ -239,7 +251,8 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder();
         var round = ServeBuilt(builder);
-        Server.Serve(RoundPathOf(builder.Round + 1), round.RoundJson);
+        var nextRoundPath = RoundPathOf(builder.Round + 1);
+        Server.Serve(nextRoundPath, round.RoundJson);
         using var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
@@ -272,7 +285,8 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder();
         var round = ServeBuilt(builder);
-        Server.Serve(BellPulsePath(builder, round, 1), round.BellPulses[0].Json);
+        var bellPulsePath = BellPulsePath(builder, round, 1);
+        Server.Serve(bellPulsePath, round.BellPulses[0].Json);
         using var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
@@ -381,13 +395,16 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Assert.Equal(CurbyQuantumFixtures.Round, pulse.Round);
         Assert.Equal(CurbyQuantumFixtures.ResultId, pulse.Id);
         Assert.Equal(CurbyQuantumFixtures.Timestamp, pulse.Timestamp);
-        Assert.Equal(CurbyQuantumFixtures.Randomness, Convert.ToHexStringLower(pulse.Randomness));
+        var randomness = Convert.ToHexStringLower(pulse.Randomness);
+        Assert.Equal(CurbyQuantumFixtures.Randomness, randomness);
     }
 
-    private static string SeedPulsePath(long index) =>
-        SeedChainPath
-        + "/pulses/"
-        + TwineVerificationTests.Document(CurbyQuantumFixtures.SeedPulse(index)).Cid;
+    private static string SeedPulsePath(long index)
+    {
+        var json = CurbyQuantumFixtures.SeedPulse(index);
+        var document = TwineVerificationTests.Document(json);
+        return SeedChainPath + "/pulses/" + document.Cid;
+    }
 
     private static string RoundPathOf(long round) => "/curbyq/round/" + round;
 
@@ -426,12 +443,12 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         var round = builder.Build();
         ServeChains(builder);
-        Server
-            .Serve(RoundPathOf(builder.Round), round.RoundJson)
-            .Serve(LatestPath, round.RoundJson);
+        var roundPath = RoundPathOf(builder.Round);
+        Server.Serve(roundPath, round.RoundJson).Serve(LatestPath, round.RoundJson);
         for (var i = 0; i < round.BellPulses.Count; i++)
         {
-            Server.Serve(BellPulsePath(builder, round, i), round.BellPulses[i].Json);
+            var bellPulsePath = BellPulsePath(builder, round, i);
+            Server.Serve(bellPulsePath, round.BellPulses[i].Json);
         }
 
         foreach (var (json, cid) in round.SeedPulses)
@@ -441,11 +458,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
         if (serveParameters)
         {
-            Server.Serve(
-                RoundPathOf(builder.Round) + "/params",
-                round.Parameters,
-                "application/octet-stream"
-            );
+            Server.Serve(roundPath + "/params", round.Parameters, "application/octet-stream");
         }
 
         return round;
@@ -453,20 +466,20 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
     private void ServeCurbyQ()
     {
+        var bellResponse = CurbyQuantumFixtures.BellPulse(59313);
         Server
             .Serve(ChainPath, CurbyQuantumFixtures.Chain)
             .Serve(RoundPath, CurbyQuantumFixtures.RoundJson)
             .Serve(LatestPath, CurbyQuantumFixtures.RoundJson)
             .Serve(BellChainPath, CurbyQuantumFixtures.BellChain)
-            .Serve(
-                BellChainPath + "/pulses/" + CurbyQuantumFixtures.BellResponseId,
-                CurbyQuantumFixtures.BellPulse(59313)
-            )
+            .Serve(BellChainPath + "/pulses/" + CurbyQuantumFixtures.BellResponseId, bellResponse)
             .Serve(SeedChainPath, CurbyQuantumFixtures.SeedChain)
             .Serve(ParametersPath, CurbyQuantumFixtures.Parameters, "application/octet-stream");
         foreach (var index in new long[] { 1914068, 1914067, 1914066 })
         {
-            Server.Serve(SeedPulsePath(index), CurbyQuantumFixtures.SeedPulse(index));
+            var seedPulsePath = SeedPulsePath(index);
+            var seedPulse = CurbyQuantumFixtures.SeedPulse(index);
+            Server.Serve(seedPulsePath, seedPulse);
         }
     }
 

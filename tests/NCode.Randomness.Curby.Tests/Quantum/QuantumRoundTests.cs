@@ -18,24 +18,28 @@ public class QuantumRoundTests
     [Fact]
     public void Verify_WithCurbyQRound_ReadsEachField()
     {
-        using var chain = TwineChain.Verify(
-            TwineVerificationTests.Document(CurbyQuantumFixtures.Chain),
-            Cid.Parse(CurbyQuantumFixtures.ChainId),
-            "diqrng"
-        );
+        var document = TwineVerificationTests.Document(CurbyQuantumFixtures.Chain);
+        var chainCid = Cid.Parse(CurbyQuantumFixtures.ChainId);
+        using var chain = TwineChain.Verify(document, chainCid, "diqrng");
+        var documents = Documents(CurbyQuantumFixtures.RoundJson);
 
-        var round = QuantumRound.Verify(Documents(CurbyQuantumFixtures.RoundJson), chain);
+        var round = QuantumRound.Verify(documents, chain);
+        var result = Assert.IsType<QuantumResult>(round.Result);
+        var requestId = result.Request.Cid.ToString();
+        var precommitId = result.Precommit.Cid.ToString();
+        var resultId = result.ResultPulse.Cid.ToString();
+        var randomness = Convert.ToHexStringLower(result.Randomness);
+        var seedChainId = result.SeedChain.ToString();
 
         Assert.Equal(CurbyQuantumFixtures.Round, round.Number);
         Assert.Null(round.ErrorReason);
-        var result = Assert.IsType<QuantumResult>(round.Result);
         Assert.Equal(CurbyQuantumFixtures.Round, result.Round);
-        Assert.Equal(CurbyQuantumFixtures.RequestId, result.Request.Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.PrecommitId, result.Precommit.Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.ResultId, result.ResultPulse.Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.Randomness, Convert.ToHexStringLower(result.Randomness));
+        Assert.Equal(CurbyQuantumFixtures.RequestId, requestId);
+        Assert.Equal(CurbyQuantumFixtures.PrecommitId, precommitId);
+        Assert.Equal(CurbyQuantumFixtures.ResultId, resultId);
+        Assert.Equal(CurbyQuantumFixtures.Randomness, randomness);
         Assert.Equal(CurbyQuantumFixtures.Timestamp, result.Timestamp);
-        Assert.Equal(CurbyQuantumFixtures.SeedChainId, result.SeedChain.ToString());
+        Assert.Equal(CurbyQuantumFixtures.SeedChainId, seedChainId);
         Assert.Equal(249224, result.SeedLength);
         Assert.Equal(1, result.SeedCount);
     }
@@ -46,8 +50,9 @@ public class QuantumRoundTests
         using var builder = new QuantumRoundBuilder();
         var built = builder.Build();
         using var chain = VerifyChain(builder);
+        var documents = Documents(built.RoundJson);
 
-        var round = QuantumRound.Verify(Documents(built.RoundJson), chain);
+        var round = QuantumRound.Verify(documents, chain);
 
         Assert.Equal(7, round.Number);
         var result = Assert.IsType<QuantumResult>(round.Result);
@@ -66,8 +71,9 @@ public class QuantumRoundTests
         using var builder = new QuantumRoundBuilder();
         var json = builder.ErrorRoundJson("the Bell test failed");
         using var chain = VerifyChain(builder);
+        var documents = Documents(json);
 
-        var round = QuantumRound.Verify(Documents(json), chain);
+        var round = QuantumRound.Verify(documents, chain);
 
         Assert.Equal(7, round.Number);
         Assert.Equal("the Bell test failed", round.ErrorReason);
@@ -78,7 +84,8 @@ public class QuantumRoundTests
     public void Verify_WithRequestAndPrecommitOnly_HasNoResult()
     {
         using var builder = new QuantumRoundBuilder();
-        var documents = Documents(builder.Build().RoundJson);
+        var built = builder.Build();
+        var documents = Documents(built.RoundJson);
         using var chain = VerifyChain(builder);
 
         var round = QuantumRound.Verify(documents[..2], chain);
@@ -92,7 +99,8 @@ public class QuantumRoundTests
     public void Verify_WithRequestOnly_HasNoResult()
     {
         using var builder = new QuantumRoundBuilder();
-        var documents = Documents(builder.Build().RoundJson);
+        var built = builder.Build();
+        var documents = Documents(built.RoundJson);
         using var chain = VerifyChain(builder);
 
         var round = QuantumRound.Verify(documents[..1], chain);
@@ -116,7 +124,8 @@ public class QuantumRoundTests
     public void Verify_WithFourPulses_Throws()
     {
         using var builder = new QuantumRoundBuilder();
-        var documents = Documents(builder.Build().RoundJson);
+        var built = builder.Build();
+        var documents = Documents(built.RoundJson);
         using var chain = VerifyChain(builder);
         IReadOnlyList<TwineDocument> four = [.. documents, documents[2]];
 
@@ -129,7 +138,8 @@ public class QuantumRoundTests
     public void Verify_WithPulsesThatSkipOne_Throws()
     {
         using var builder = new QuantumRoundBuilder();
-        var documents = Documents(builder.Build().RoundJson);
+        var built = builder.Build();
+        var documents = Documents(built.RoundJson);
         using var chain = VerifyChain(builder);
         IReadOnlyList<TwineDocument> skipping = [documents[0], documents[2]];
 
@@ -163,7 +173,8 @@ public class QuantumRoundTests
     public void Verify_WithoutARequest_Throws()
     {
         using var builder = new QuantumRoundBuilder();
-        var documents = Documents(builder.Build().RoundJson);
+        var built = builder.Build();
+        var documents = Documents(built.RoundJson);
         using var chain = VerifyChain(builder);
         IReadOnlyList<TwineDocument> withoutRequest = [documents[1], documents[2]];
 
@@ -379,10 +390,8 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var bell = FixtureBellChain();
-        var response = TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(CurbyQuantumFixtures.BellPulse(59313)),
-            bell
-        );
+        var document = TwineVerificationTests.Document(CurbyQuantumFixtures.BellPulse(59313));
+        var response = TwineSignedPulse.Verify(document, bell);
 
         Assert.True(result.IsBellResponse(response));
     }
@@ -402,12 +411,11 @@ public class QuantumRoundTests
     public void IsBellResponse_WithResponseToAnotherRequest_ReturnsFalse()
     {
         using var builder = new QuantumRoundBuilder();
-        var result = BuiltResult(builder, builder.Build());
+        var built = builder.Build();
+        var result = BuiltResult(builder, built);
         using var bell = FixtureBellChain();
-        var response = TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(CurbyQuantumFixtures.BellPulse(59313)),
-            bell
-        );
+        var document = TwineVerificationTests.Document(CurbyQuantumFixtures.BellPulse(59313));
+        var response = TwineSignedPulse.Verify(document, bell);
 
         Assert.False(result.IsBellResponse(response));
     }
@@ -438,10 +446,17 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
+        var newest = FixtureSeedPulse(seedChain, 1914068);
+        var first = FixtureSeedPulse(seedChain, 1914067);
+        var oldest = FixtureSeedPulse(seedChain, 1914066);
 
-        Assert.True(result.MixesPrecommit(FixtureSeedPulse(seedChain, 1914068)));
-        Assert.True(result.MixesPrecommit(FixtureSeedPulse(seedChain, 1914067)));
-        Assert.False(result.MixesPrecommit(FixtureSeedPulse(seedChain, 1914066)));
+        var mixesNewest = result.MixesPrecommit(newest);
+        var mixesFirst = result.MixesPrecommit(first);
+        var mixesOldest = result.MixesPrecommit(oldest);
+
+        Assert.True(mixesNewest);
+        Assert.True(mixesFirst);
+        Assert.False(mixesOldest);
     }
 
     #endregion
@@ -457,9 +472,10 @@ public class QuantumRoundTests
         var first = FixtureSeedPulse(seedChain, 1914067);
 
         var seed = result.SelectSeed([newest, first]);
+        var seedId = seed.Cid.ToString();
 
         Assert.Equal(1914068, seed.Index);
-        Assert.Equal(CurbyQuantumFixtures.SeedPulseId, seed.Cid.ToString());
+        Assert.Equal(CurbyQuantumFixtures.SeedPulseId, seedId);
     }
 
     [Fact]
@@ -503,8 +519,9 @@ public class QuantumRoundTests
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
         var seed = FixtureSeedPulse(seedChain, 1914068);
+        var parameters = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters);
 
-        result.VerifySeed(seed, Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters));
+        result.VerifySeed(seed, parameters);
     }
 
     [Fact]
@@ -548,8 +565,9 @@ public class QuantumRoundTests
         var built = builder.Build();
         var result = BuiltResult(builder, built);
         var seed = BuiltSeedPulse(builder, built, built.SeedPulses.Count - 1);
+        var parameters = Encoding.UTF8.GetBytes(built.Parameters);
 
-        result.VerifySeed(seed, Encoding.UTF8.GetBytes(built.Parameters));
+        result.VerifySeed(seed, parameters);
     }
 
     [Fact]
@@ -611,18 +629,19 @@ public class QuantumRoundTests
         Assert.Contains(expected, exception.Message, StringComparison.Ordinal);
     }
 
-    private static TwineChain FixtureSeedChain() =>
-        TwineChain.Verify(
-            TwineVerificationTests.Document(CurbyQuantumFixtures.SeedChain),
-            Cid.Parse(CurbyQuantumFixtures.SeedChainId),
-            null
-        );
+    private static TwineChain FixtureSeedChain()
+    {
+        var document = TwineVerificationTests.Document(CurbyQuantumFixtures.SeedChain);
+        var chainCid = Cid.Parse(CurbyQuantumFixtures.SeedChainId);
+        return TwineChain.Verify(document, chainCid, null);
+    }
 
-    private static TwineSignedPulse FixtureSeedPulse(TwineChain seedChain, long index) =>
-        TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(CurbyQuantumFixtures.SeedPulse(index)),
-            seedChain
-        );
+    private static TwineSignedPulse FixtureSeedPulse(TwineChain seedChain, long index)
+    {
+        var json = CurbyQuantumFixtures.SeedPulse(index);
+        var document = TwineVerificationTests.Document(json);
+        return TwineSignedPulse.Verify(document, seedChain);
+    }
 
     private static TwineSignedPulse BuiltSeedPulse(
         QuantumRoundBuilder builder,
@@ -630,39 +649,34 @@ public class QuantumRoundTests
         int index
     )
     {
-        using var chain = TwineChain.Verify(
-            TwineVerificationTests.Document(builder.Seed.ChainJson),
-            builder.Seed.ChainCid,
-            null
-        );
-        return TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(built.SeedPulses[index].Json),
-            chain
-        );
+        var chainDocument = TwineVerificationTests.Document(builder.Seed.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.Seed.ChainCid, null);
+        var pulseDocument = TwineVerificationTests.Document(built.SeedPulses[index].Json);
+        return TwineSignedPulse.Verify(pulseDocument, chain);
     }
 
     private static QuantumResult FixtureResult()
     {
-        using var chain = TwineChain.Verify(
-            TwineVerificationTests.Document(CurbyQuantumFixtures.Chain),
-            Cid.Parse(CurbyQuantumFixtures.ChainId),
-            "diqrng"
-        );
-        var round = QuantumRound.Verify(Documents(CurbyQuantumFixtures.RoundJson), chain);
+        var chainDocument = TwineVerificationTests.Document(CurbyQuantumFixtures.Chain);
+        var chainCid = Cid.Parse(CurbyQuantumFixtures.ChainId);
+        using var chain = TwineChain.Verify(chainDocument, chainCid, "diqrng");
+        var documents = Documents(CurbyQuantumFixtures.RoundJson);
+        var round = QuantumRound.Verify(documents, chain);
         return Assert.IsType<QuantumResult>(round.Result);
     }
 
-    private static TwineChain FixtureBellChain() =>
-        TwineChain.Verify(
-            TwineVerificationTests.Document(CurbyQuantumFixtures.BellChain),
-            Cid.Parse(CurbyQuantumFixtures.BellChainId),
-            "bell"
-        );
+    private static TwineChain FixtureBellChain()
+    {
+        var document = TwineVerificationTests.Document(CurbyQuantumFixtures.BellChain);
+        var chainCid = Cid.Parse(CurbyQuantumFixtures.BellChainId);
+        return TwineChain.Verify(document, chainCid, "bell");
+    }
 
     private static QuantumResult BuiltResult(QuantumRoundBuilder builder, BuiltQuantumRound built)
     {
         using var chain = VerifyChain(builder);
-        var round = QuantumRound.Verify(Documents(built.RoundJson), chain);
+        var documents = Documents(built.RoundJson);
+        var round = QuantumRound.Verify(documents, chain);
         return Assert.IsType<QuantumResult>(round.Result);
     }
 
@@ -672,20 +686,16 @@ public class QuantumRoundTests
         int index
     )
     {
-        using var chain = TwineChain.Verify(
-            TwineVerificationTests.Document(builder.Bell.ChainJson),
-            builder.Bell.ChainCid,
-            "bell"
-        );
-        return TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(built.BellPulses[index].Json),
-            chain
-        );
+        var chainDocument = TwineVerificationTests.Document(builder.Bell.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.Bell.ChainCid, "bell");
+        var pulseDocument = TwineVerificationTests.Document(built.BellPulses[index].Json);
+        return TwineSignedPulse.Verify(pulseDocument, chain);
     }
 
     private static void AssertRefused(QuantumRoundBuilder builder, string expected)
     {
-        var documents = Documents(builder.Build().RoundJson);
+        var built = builder.Build();
+        var documents = Documents(built.RoundJson);
         using var chain = VerifyChain(builder);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
@@ -698,10 +708,9 @@ public class QuantumRoundTests
     private static List<TwineDocument> Documents(string json) =>
         [.. JsonElement.Parse(json).EnumerateArray().Select(TwineDocument.Parse)];
 
-    private static TwineChain VerifyChain(QuantumRoundBuilder builder) =>
-        TwineChain.Verify(
-            TwineVerificationTests.Document(builder.Quantum.ChainJson),
-            builder.Quantum.ChainCid,
-            "diqrng"
-        );
+    private static TwineChain VerifyChain(QuantumRoundBuilder builder)
+    {
+        var document = TwineVerificationTests.Document(builder.Quantum.ChainJson);
+        return TwineChain.Verify(document, builder.Quantum.ChainCid, "diqrng");
+    }
 }

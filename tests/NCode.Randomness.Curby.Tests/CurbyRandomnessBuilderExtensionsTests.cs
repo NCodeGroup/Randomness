@@ -131,14 +131,15 @@ public class CurbyRandomnessBuilderExtensionsTests
             new ServiceProviderOptions { ValidateOnBuild = true }
         );
 
-        var beacon = Assert.Single(provider.GetServices<IRandomnessBeacon>());
+        var beacons = provider.GetServices<IRandomnessBeacon>();
+        var beacon = Assert.Single(beacons);
+        var resolved = provider.GetRequiredService<CurbyQuantumBeacon>();
+        var status = provider.GetRequiredService<IBeaconStatus>();
+        var beaconStatus = Assert.Single(status.Beacons);
 
         Assert.Equal(CurbyDefaults.QuantumBeaconName, beacon.Name);
-        Assert.Same(beacon, provider.GetRequiredService<CurbyQuantumBeacon>());
-        Assert.Equal(
-            CurbyDefaults.QuantumBeaconName,
-            Assert.Single(provider.GetRequiredService<IBeaconStatus>().Beacons).Name
-        );
+        Assert.Same(beacon, resolved);
+        Assert.Equal(CurbyDefaults.QuantumBeaconName, beaconStatus.Name);
     }
 
     [Fact]
@@ -151,22 +152,22 @@ public class CurbyRandomnessBuilderExtensionsTests
         );
 
         var names = provider.GetServices<IRandomnessBeacon>().Select(beacon => beacon.Name);
+        var orderedNames = names.Order(StringComparer.Ordinal);
 
-        Assert.Equal(
-            [CurbyDefaults.BeaconName, CurbyDefaults.QuantumBeaconName],
-            names.Order(StringComparer.Ordinal)
-        );
+        Assert.Equal([CurbyDefaults.BeaconName, CurbyDefaults.QuantumBeaconName], orderedNames);
         Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwineApi));
     }
 
     [Fact]
     public async Task AddCurbyQuantumBeacon_WithConfiguration_BindsTheSection()
     {
+        var chainSetting = KeyValuePair.Create(
+            "QuantumChainId",
+            (string?)CurbyDefaults.QuantumChainId
+        );
+        var maxBytesSetting = KeyValuePair.Create("MaxResponseBytes", (string?)"8192");
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection([
-                KeyValuePair.Create("QuantumChainId", (string?)CurbyDefaults.QuantumChainId),
-                KeyValuePair.Create("MaxResponseBytes", (string?)"8192"),
-            ])
+            .AddInMemoryCollection([chainSetting, maxBytesSetting])
             .Build();
         var services = new ServiceCollection();
         services.AddRandomness().AddCurbyQuantumBeacon(configuration);

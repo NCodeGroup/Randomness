@@ -43,8 +43,10 @@ public class CurbyLiveTests
         var pulse = await beacon.GetPulseAsync(CurbyQuantumFixtures.Round, CancellationToken.None);
         var latest = await beacon.GetLatestPulseAsync(CancellationToken.None);
 
+        var randomness = Convert.ToHexStringLower(pulse.Randomness);
+
         Assert.Equal(CurbyQuantumFixtures.ResultId, pulse.Id);
-        Assert.Equal(CurbyQuantumFixtures.Randomness, Convert.ToHexStringLower(pulse.Randomness));
+        Assert.Equal(CurbyQuantumFixtures.Randomness, randomness);
         Assert.True(latest.Round >= CurbyQuantumFixtures.Round);
     }
 

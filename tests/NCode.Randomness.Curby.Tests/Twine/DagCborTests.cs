@@ -33,7 +33,10 @@ public class DagCborTests
     [InlineData(-0.0, "fb8000000000000000")]
     public void Encode_WithFloat_UsesEightBytes(double value, string expected)
     {
-        Assert.Equal(expected, Convert.ToHexStringLower(DagCbor.Encode(new IpldFloat(value))));
+        var encoded = DagCbor.Encode(new IpldFloat(value));
+        var hex = Convert.ToHexStringLower(encoded);
+
+        Assert.Equal(expected, hex);
     }
 
     [Theory]

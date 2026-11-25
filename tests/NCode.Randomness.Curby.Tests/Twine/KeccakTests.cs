@@ -142,10 +142,12 @@ public class KeccakTests
     )
     {
         var output = new byte[outputLength];
+        var input = Input(length);
 
-        Keccak.Shake256(Input(length), output);
+        Keccak.Shake256(input, output);
+        var hex = Convert.ToHexStringLower(output);
 
-        Assert.Equal(expected, Convert.ToHexStringLower(output));
+        Assert.Equal(expected, hex);
     }
 
     [Theory]
@@ -157,10 +159,12 @@ public class KeccakTests
     )
     {
         var output = new byte[outputLength];
+        var input = Input(length);
 
-        Sha3.Shake256(Input(length), output);
+        Sha3.Shake256(input, output);
+        var hex = Convert.ToHexStringLower(output);
 
-        Assert.Equal(expected, Convert.ToHexStringLower(output));
+        Assert.Equal(expected, hex);
     }
 
     [Shake256PlatformFact]
@@ -172,8 +176,9 @@ public class KeccakTests
             var output = new byte[(3 * length) + 1];
 
             Keccak.Shake256(input, output);
+            var expected = Shake256.HashData(input, output.Length);
 
-            Assert.Equal(Shake256.HashData(input, output.Length), output);
+            Assert.Equal(expected, output);
         }
     }
 

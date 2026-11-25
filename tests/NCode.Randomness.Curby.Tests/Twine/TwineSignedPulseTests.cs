@@ -23,20 +23,24 @@ public class TwineSignedPulseTests
     {
         using var chain = VerifyCurbyChain();
         var quantum = Cid.Parse(QuantumChainId);
+        var pulseJson = CurbyFixtures.Pulse(1620423);
+        var document = TwineVerificationTests.Document(pulseJson);
 
-        var pulse = TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(CurbyFixtures.Pulse(1620423)),
-            chain
-        );
+        var pulse = TwineSignedPulse.Verify(document, chain);
+        var previousCid = CurbyFixtures.CidOf(CurbyFixtures.Pulse(1620422));
+        var previous = pulse.Previous?.ToString();
+        var quantumMixin = pulse.MixinOf(quantum)?.ToString();
+        var chainMixin = pulse.MixinOf(chain.Cid);
+        var salt = pulse.Payload.Get<IpldBytes>("salt");
 
         Assert.Equal(1620423, pulse.Index);
         Assert.Equal(chain.Cid, pulse.Chain);
         Assert.Equal(5, pulse.Links.Length);
-        Assert.Equal(CurbyFixtures.CidOf(CurbyFixtures.Pulse(1620422)), pulse.Previous?.ToString());
+        Assert.Equal(previousCid, previous);
         Assert.Equal(5, pulse.Mixins.Count);
-        Assert.Equal(QuantumPulseId, pulse.MixinOf(quantum)?.ToString());
-        Assert.Null(pulse.MixinOf(chain.Cid));
-        Assert.Equal(64, pulse.Payload.Get<IpldBytes>("salt").Value.Length);
+        Assert.Equal(QuantumPulseId, quantumMixin);
+        Assert.Null(chainMixin);
+        Assert.Equal(64, salt.Value.Length);
     }
 
     [Fact]
@@ -59,10 +63,11 @@ public class TwineSignedPulseTests
         using var builder = new TwineBuilder();
         using var chain = VerifyBuilderChain(builder);
         var first = builder.Pulses(1, Start)[0];
+        var payload = Ipld.Map();
         var content = builder.Content(
             1,
             null,
-            Ipld.Map(),
+            payload,
             (builder.ChainCid, first.Cid),
             (builder.ChainCid, builder.ChainCid)
         );
@@ -80,7 +85,9 @@ public class TwineSignedPulseTests
     {
         using var builder = new TwineBuilder();
         using var chain = VerifyBuilderChain(builder);
-        var sealedPulse = builder.Seal(builder.Content(-1, null, Ipld.Map()));
+        var payload = Ipld.Map();
+        var content = builder.Content(-1, null, payload);
+        var sealedPulse = builder.Seal(content);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
             TwineSignedPulse.Verify(TwineVerificationTests.Document(sealedPulse.Json), chain)
@@ -97,14 +104,10 @@ public class TwineSignedPulseTests
     public void VerifyPrecededBy_WithConsecutiveCurbyPulses_Succeeds()
     {
         using var chain = VerifyCurbyChain();
-        var first = TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(CurbyFixtures.Pulse(1620422)),
-            chain
-        );
-        var second = TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(CurbyFixtures.Pulse(1620423)),
-            chain
-        );
+        var firstDocument = TwineVerificationTests.Document(CurbyFixtures.Pulse(1620422));
+        var secondDocument = TwineVerificationTests.Document(CurbyFixtures.Pulse(1620423));
+        var first = TwineSignedPulse.Verify(firstDocument, chain);
+        var second = TwineSignedPulse.Verify(secondDocument, chain);
 
         second.VerifyPrecededBy(first);
 
@@ -115,14 +118,10 @@ public class TwineSignedPulseTests
     public void VerifyPrecededBy_WithAPulseTwoRoundsEarlier_Throws()
     {
         using var chain = VerifyCurbyChain();
-        var earlier = TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(CurbyFixtures.Pulse(1620421)),
-            chain
-        );
-        var pulse = TwineSignedPulse.Verify(
-            TwineVerificationTests.Document(CurbyFixtures.Pulse(1620423)),
-            chain
-        );
+        var earlierDocument = TwineVerificationTests.Document(CurbyFixtures.Pulse(1620421));
+        var pulseDocument = TwineVerificationTests.Document(CurbyFixtures.Pulse(1620423));
+        var earlier = TwineSignedPulse.Verify(earlierDocument, chain);
+        var pulse = TwineSignedPulse.Verify(pulseDocument, chain);
 
         var exception = Assert.Throws<TwineFormatException>(() => pulse.VerifyPrecededBy(earlier));
 
@@ -131,17 +130,16 @@ public class TwineSignedPulseTests
 
     #endregion
 
-    private static TwineChain VerifyCurbyChain() =>
-        TwineChain.Verify(
-            TwineVerificationTests.Document(CurbyFixtures.Chain),
-            Cid.Parse(CurbyFixtures.ChainId),
-            "rng"
-        );
+    private static TwineChain VerifyCurbyChain()
+    {
+        var document = TwineVerificationTests.Document(CurbyFixtures.Chain);
+        var chainCid = Cid.Parse(CurbyFixtures.ChainId);
+        return TwineChain.Verify(document, chainCid, "rng");
+    }
 
-    private static TwineChain VerifyBuilderChain(TwineBuilder builder) =>
-        TwineChain.Verify(
-            TwineVerificationTests.Document(builder.ChainJson),
-            builder.ChainCid,
-            "rng"
-        );
+    private static TwineChain VerifyBuilderChain(TwineBuilder builder)
+    {
+        var document = TwineVerificationTests.Document(builder.ChainJson);
+        return TwineChain.Verify(document, builder.ChainCid, "rng");
+    }
 }

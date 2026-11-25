@@ -15,6 +15,8 @@ internal sealed class QuantumRoundBuilder : IDisposable
 {
     private static readonly DateTimeOffset Start = new(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
+    private static readonly byte[] DefaultDataDigest = Sha3.HashData512("bell data"u8);
+
     public TwineBuilder Quantum { get; } = new(specification: "twine/1.0.x/diqrng/1.0.x");
 
     public TwineBuilder Bell { get; } = new(specification: "twine/1.0.x/bell/1.0.x");
@@ -28,8 +30,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
     /// </summary>
     public int SeedLength { get; init; } = 2048;
 
-    public string DataHash { get; init; } =
-        Convert.ToHexStringLower(Sha3.HashData512("bell data"u8));
+    public string DataHash { get; init; } = Convert.ToHexStringLower(DefaultDataDigest);
 
     /// <summary>
     /// The <c>dataHash</c> of the Bell response, or null for <see cref="DataHash"/>.
@@ -75,64 +76,70 @@ internal sealed class QuantumRoundBuilder : IDisposable
         var request = BuildRequest(ref clock);
 
         var bellPulses = new List<(string Json, Cid Cid)>();
-        var bellResponse = Bell.Seal(
-            Bell.Content(
-                0,
-                null,
-                Ipld.Map(
-                    ("dataHash", Ipld.Text(BellResponseDataHash ?? DataHash)),
-                    ("ref", Ipld.Link(request.Cid)),
-                    ("timestamp", Ipld.Text(Timestamp(ref clock))),
-                    ("type", Ipld.Text("result"))
-                )
-            )
+        var responseDataHash = Ipld.Text(BellResponseDataHash ?? DataHash);
+        var requestLink = Ipld.Link(request.Cid);
+        var responseTime = Timestamp(ref clock);
+        var responseTimestamp = Ipld.Text(responseTime);
+        var responseType = Ipld.Text("result");
+        var responsePayload = Ipld.Map(
+            ("dataHash", responseDataHash),
+            ("ref", requestLink),
+            ("timestamp", responseTimestamp),
+            ("type", responseType)
         );
+        var responseContent = Bell.Content(0, null, responsePayload);
+        var bellResponse = Bell.Seal(responseContent);
         bellPulses.Add(bellResponse);
         for (var i = 1; i <= BellPulsesAfterResponse; i++)
         {
-            var status = Bell.Seal(
-                Bell.Content(
-                    i,
-                    bellPulses[^1].Cid,
-                    Ipld.Map(
-                        ("status", Ipld.Integer(0)),
-                        ("timestamp", Ipld.Text(Timestamp(ref clock))),
-                        ("type", Ipld.Text("status"))
-                    )
-                )
+            var statusCode = Ipld.Integer(0);
+            var statusTime = Timestamp(ref clock);
+            var statusTimestamp = Ipld.Text(statusTime);
+            var statusType = Ipld.Text("status");
+            var statusPayload = Ipld.Map(
+                ("status", statusCode),
+                ("timestamp", statusTimestamp),
+                ("type", statusType)
             );
+            var statusContent = Bell.Content(i, bellPulses[^1].Cid, statusPayload);
+            var status = Bell.Seal(statusContent);
             bellPulses.Add(status);
         }
 
         var seedPulses = new List<(string Json, Cid Cid)>();
-        seedPulses.Add(
-            Seed.Seal(
-                Seed.Content(
-                    0,
-                    null,
-                    Ipld.Map(
-                        ("round", Ipld.Integer(100)),
-                        ("timestamp", Ipld.Text(Timestamp(ref clock)))
-                    )
-                )
-            )
+        var firstSeedRound = Ipld.Integer(100);
+        var firstSeedTime = Timestamp(ref clock);
+        var firstSeedTimestamp = Ipld.Text(firstSeedTime);
+        var firstSeedPayload = Ipld.Map(
+            ("round", firstSeedRound),
+            ("timestamp", firstSeedTimestamp)
         );
+        var firstSeedContent = Seed.Content(0, null, firstSeedPayload);
+        var firstSeed = Seed.Seal(firstSeedContent);
+        seedPulses.Add(firstSeed);
 
-        var precommitPayload = EditPrecommit(
-            Ipld.Map(
-                ("dataHash", Ipld.Text(DataHash)),
-                ("round", Ipld.Integer(Round)),
-                (
-                    "rule",
-                    Ipld.Map(("after", Ipld.Text("self")), ("count", Ipld.Integer(SeedCount)))
-                ),
-                ("seedAlgorithm", Ipld.Text("shake256")),
-                ("seedChain", Ipld.Link(Seed.ChainCid)),
-                ("seedLength", Ipld.Integer(SeedLength)),
-                ("stage", Ipld.Text("precommit")),
-                ("timestamp", Ipld.Text(Timestamp(ref clock)))
-            )
+        var precommitDataHash = Ipld.Text(DataHash);
+        var precommitRound = Ipld.Integer(Round);
+        var ruleAfter = Ipld.Text("self");
+        var ruleCount = Ipld.Integer(SeedCount);
+        var rule = Ipld.Map(("after", ruleAfter), ("count", ruleCount));
+        var seedAlgorithm = Ipld.Text("shake256");
+        var seedChain = Ipld.Link(Seed.ChainCid);
+        var seedLength = Ipld.Integer(SeedLength);
+        var precommitStage = Ipld.Text("precommit");
+        var precommitTime = Timestamp(ref clock);
+        var precommitTimestamp = Ipld.Text(precommitTime);
+        var precommitMap = Ipld.Map(
+            ("dataHash", precommitDataHash),
+            ("round", precommitRound),
+            ("rule", rule),
+            ("seedAlgorithm", seedAlgorithm),
+            ("seedChain", seedChain),
+            ("seedLength", seedLength),
+            ("stage", precommitStage),
+            ("timestamp", precommitTimestamp)
         );
+        var precommitPayload = EditPrecommit(precommitMap);
         var precommitMixins = new List<(Cid Chain, Cid Value)>();
         if (PrecommitMixesBell)
         {
@@ -140,24 +147,31 @@ internal sealed class QuantumRoundBuilder : IDisposable
         }
 
         precommitMixins.Add((Seed.ChainCid, seedPulses[0].Cid));
-        var precommit = Quantum.Seal(
-            Quantum.Content(1, request.Cid, precommitPayload, [.. precommitMixins])
+        var precommitContent = Quantum.Content(
+            1,
+            request.Cid,
+            precommitPayload,
+            [.. precommitMixins]
         );
+        var precommit = Quantum.Seal(precommitContent);
 
         var mixingCount = SeedPulsesMixingPrecommit ?? SeedCount + 1;
         for (var i = 1; i <= mixingCount; i++)
         {
-            var seedPulse = Seed.Seal(
-                Seed.Content(
-                    i,
-                    seedPulses[^1].Cid,
-                    Ipld.Map(
-                        ("round", Ipld.Integer(100 + i)),
-                        ("timestamp", Ipld.Text(Timestamp(ref clock)))
-                    ),
-                    (Quantum.ChainCid, precommit.Cid)
-                )
+            var seedPulseRound = Ipld.Integer(100 + i);
+            var seedPulseTime = Timestamp(ref clock);
+            var seedPulseTimestamp = Ipld.Text(seedPulseTime);
+            var seedPulsePayload = Ipld.Map(
+                ("round", seedPulseRound),
+                ("timestamp", seedPulseTimestamp)
             );
+            var seedPulseContent = Seed.Content(
+                i,
+                seedPulses[^1].Cid,
+                seedPulsePayload,
+                (Quantum.ChainCid, precommit.Cid)
+            );
+            var seedPulse = Seed.Seal(seedPulseContent);
             seedPulses.Add(seedPulse);
         }
 
@@ -171,30 +185,28 @@ internal sealed class QuantumRoundBuilder : IDisposable
             resultMixins.Add((Seed.ChainCid, seedPulses[^1].Cid));
         }
 
-        var result = Quantum.Seal(
-            Quantum.Content(
-                2,
-                precommit.Cid,
-                EditResult(
-                    Ipld.Map(
-                        ("dataHash", Ipld.Text(DataHash)),
-                        (
-                            "paramsHash",
-                            Ipld.Text(
-                                Convert.ToHexStringLower(
-                                    Sha3.HashData512(System.Text.Encoding.UTF8.GetBytes(parameters))
-                                )
-                            )
-                        ),
-                        ("randomness", Ipld.Bytes(randomness)),
-                        ("round", Ipld.Integer(Round)),
-                        ("stage", Ipld.Text("randomness")),
-                        ("timestamp", Ipld.Text(Timestamp(ref clock)))
-                    )
-                ),
-                [.. resultMixins]
-            )
+        var parametersBytes = System.Text.Encoding.UTF8.GetBytes(parameters);
+        var parametersDigest = Sha3.HashData512(parametersBytes);
+        var paramsHash = Convert.ToHexStringLower(parametersDigest);
+        var resultDataHash = Ipld.Text(DataHash);
+        var paramsHashText = Ipld.Text(paramsHash);
+        var randomnessBytes = Ipld.Bytes(randomness);
+        var resultRound = Ipld.Integer(Round);
+        var resultStage = Ipld.Text("randomness");
+        var resultTime = Timestamp(ref clock);
+        var resultTimestamp = Ipld.Text(resultTime);
+        var resultMap = Ipld.Map(
+            ("dataHash", resultDataHash),
+            ("paramsHash", paramsHashText),
+            ("randomness", randomnessBytes),
+            ("round", resultRound),
+            ("stage", resultStage),
+            ("timestamp", resultTimestamp)
         );
+        var resultPayload = EditResult(resultMap);
+        var resultContent = Quantum.Content(2, precommit.Cid, resultPayload, [.. resultMixins]);
+        var result = Quantum.Seal(resultContent);
+        var roundJson = $"[{request.Json},{precommit.Json},{result.Json}]";
 
         return new BuiltQuantumRound(
             request,
@@ -204,7 +216,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
             seedPulses,
             parameters,
             randomness,
-            $"[{request.Json},{precommit.Json},{result.Json}]"
+            roundJson
         );
     }
 
@@ -215,18 +227,19 @@ internal sealed class QuantumRoundBuilder : IDisposable
     {
         var clock = 0;
         var request = BuildRequest(ref clock);
-        var error = Quantum.Seal(
-            Quantum.Content(
-                1,
-                request.Cid,
-                Ipld.Map(
-                    ("reason", Ipld.Text(reason)),
-                    ("round", Ipld.Integer(Round)),
-                    ("stage", Ipld.Text("error")),
-                    ("timestamp", Ipld.Text(Timestamp(ref clock)))
-                )
-            )
+        var errorReason = Ipld.Text(reason);
+        var errorRound = Ipld.Integer(Round);
+        var errorStage = Ipld.Text("error");
+        var errorTime = Timestamp(ref clock);
+        var errorTimestamp = Ipld.Text(errorTime);
+        var errorPayload = Ipld.Map(
+            ("reason", errorReason),
+            ("round", errorRound),
+            ("stage", errorStage),
+            ("timestamp", errorTimestamp)
         );
+        var errorContent = Quantum.Content(1, request.Cid, errorPayload);
+        var error = Quantum.Seal(errorContent);
         return $"[{request.Json},{error.Json}]";
     }
 
@@ -237,24 +250,25 @@ internal sealed class QuantumRoundBuilder : IDisposable
         Seed.Dispose();
     }
 
-    private (string Json, Cid Cid) BuildRequest(ref int clock) =>
-        Quantum.Seal(
-            Quantum.Content(
-                0,
-                null,
-                EditRequest(
-                    Ipld.Map(
-                        (
-                            "parameters",
-                            Ipld.Map(("beta", Ipld.Float(0.5)), ("nBitsOut", Ipld.Integer(512)))
-                        ),
-                        ("round", Ipld.Integer(Round)),
-                        ("stage", Ipld.Text("request")),
-                        ("timestamp", Ipld.Text(Timestamp(ref clock)))
-                    )
-                )
-            )
+    private (string Json, Cid Cid) BuildRequest(ref int clock)
+    {
+        var beta = Ipld.Float(0.5);
+        var nBitsOut = Ipld.Integer(512);
+        var parameters = Ipld.Map(("beta", beta), ("nBitsOut", nBitsOut));
+        var round = Ipld.Integer(Round);
+        var stage = Ipld.Text("request");
+        var time = Timestamp(ref clock);
+        var timestamp = Ipld.Text(time);
+        var map = Ipld.Map(
+            ("parameters", parameters),
+            ("round", round),
+            ("stage", stage),
+            ("timestamp", timestamp)
         );
+        var payload = EditRequest(map);
+        var content = Quantum.Content(0, null, payload);
+        return Quantum.Seal(content);
+    }
 
     private static string Timestamp(ref int clock) =>
         Start

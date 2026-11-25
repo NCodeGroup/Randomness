@@ -23,17 +23,19 @@ public sealed class TwineApiTests : IDisposable
     [Fact]
     public async Task GetDocumentsAsync_WithArray_ParsesEachDocument()
     {
-        Server.Serve(Path, "[" + CurbyFixtures.Chain + "," + CurbyFixtures.Pulse(1620423) + "]");
+        var pulseJson = CurbyFixtures.Pulse(1620423);
+        Server.Serve(Path, "[" + CurbyFixtures.Chain + "," + pulseJson + "]");
         var api = Create();
 
         var documents = await api.GetDocumentsAsync(Path, CancellationToken.None);
+        var chainCid = CurbyFixtures.CidOf(CurbyFixtures.Chain);
+        var pulseCid = CurbyFixtures.CidOf(pulseJson);
+        var firstCid = documents[0].Cid.ToString();
+        var secondCid = documents[1].Cid.ToString();
 
         Assert.Equal(2, documents.Length);
-        Assert.Equal(CurbyFixtures.CidOf(CurbyFixtures.Chain), documents[0].Cid.ToString());
-        Assert.Equal(
-            CurbyFixtures.CidOf(CurbyFixtures.Pulse(1620423)),
-            documents[1].Cid.ToString()
-        );
+        Assert.Equal(chainCid, firstCid);
+        Assert.Equal(pulseCid, secondCid);
     }
 
     [Fact]
@@ -83,7 +85,9 @@ public sealed class TwineApiTests : IDisposable
 
         var body = await api.GetBytesAsync(Path, CancellationToken.None);
 
-        Assert.Equal("raw bytes"u8.ToArray(), body);
+        var expected = "raw bytes"u8.ToArray();
+
+        Assert.Equal(expected, body);
     }
 
     [Fact]
@@ -126,5 +130,9 @@ public sealed class TwineApiTests : IDisposable
 
     #endregion
 
-    private TwineApi Create() => new(Server, Microsoft.Extensions.Options.Options.Create(Options));
+    private TwineApi Create()
+    {
+        var options = Microsoft.Extensions.Options.Options.Create(Options);
+        return new TwineApi(Server, options);
+    }
 }

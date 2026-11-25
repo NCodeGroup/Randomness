@@ -70,12 +70,13 @@ public class DagJsonTests
     [InlineData("1.0842021724855042e-20")]
     public void Read_WithFractionOrExponent_ReadsAFloat(string json)
     {
-        var node = Assert.IsType<IpldFloat>(Read(json));
+        var read = Read(json);
+        var node = Assert.IsType<IpldFloat>(read);
+        var expected = double.Parse(json, CultureInfo.InvariantCulture);
+        var expectedBits = BitConverter.DoubleToInt64Bits(expected);
+        var actualBits = BitConverter.DoubleToInt64Bits(node.Value);
 
-        Assert.Equal(
-            BitConverter.DoubleToInt64Bits(double.Parse(json, CultureInfo.InvariantCulture)),
-            BitConverter.DoubleToInt64Bits(node.Value)
-        );
+        Assert.Equal(expectedBits, actualBits);
     }
 
     [Fact]
@@ -119,21 +120,28 @@ public class DagJsonTests
     [Fact]
     public void TryGet_WithMissingOrMistypedField_ReturnsFalse()
     {
-        var map = Assert.IsType<IpldMap>(Read("""{"a":1}"""));
+        var read = Read("""{"a":1}""");
+        var map = Assert.IsType<IpldMap>(read);
 
-        Assert.False(map.TryGet<IpldInteger>("b", out var missing));
+        var foundMissing = map.TryGet<IpldInteger>("b", out var missing);
+        var foundMistyped = map.TryGet<IpldString>("a", out var mistyped);
+
+        Assert.False(foundMissing);
         Assert.Null(missing);
-        Assert.False(map.TryGet<IpldString>("a", out var mistyped));
+        Assert.False(foundMistyped);
         Assert.Null(mistyped);
     }
 
     [Fact]
     public void TryGet_WithField_ReturnsIt()
     {
-        var map = Assert.IsType<IpldMap>(Read("""{"a":1}"""));
+        var read = Read("""{"a":1}""");
+        var map = Assert.IsType<IpldMap>(read);
 
-        Assert.True(map.TryGet<IpldInteger>("a", out var value));
-        Assert.Equal(1, value.Value);
+        var found = map.TryGet<IpldInteger>("a", out var value);
+
+        Assert.True(found);
+        Assert.Equal(1, value!.Value);
     }
 
     #endregion
