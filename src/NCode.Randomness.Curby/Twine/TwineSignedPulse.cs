@@ -13,6 +13,57 @@ namespace NCode.Randomness.Curby.Twine;
 internal sealed class TwineSignedPulse
 {
     /// <summary>
+    /// Verifies a pulse document against <paramref name="chain"/>: it names the chain, the chain's key signed it with
+    /// RS256, and its index, links, mixins and payload are well formed. It throws
+    /// <see cref="TwineFormatException"/> when a check fails.
+    /// </summary>
+    /// <param name="document">The pulse document, already checked against its CID.</param>
+    /// <param name="chain">The verified chain the pulse belongs to.</param>
+    /// <returns>The verified pulse.</returns>
+    public static TwineSignedPulse Verify(TwineDocument document, TwineChain chain)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(chain);
+        var content = document.Content;
+        var chainCid = content.Get<IpldLink>("chain").Cid;
+        if (!chainCid.Equals(chain.Cid))
+        {
+            throw new TwineFormatException(
+                $"The pulse belongs to chain {chainCid}, not {chain.Cid}."
+            );
+        }
+
+        var multihash = document.ContentMultihash();
+        JwsRs256.Verify(document.Signature, chain.Key, multihash);
+
+        var index = content.Get<IpldInteger>("index").Value;
+        if (index < 0)
+        {
+            throw new TwineFormatException($"The pulse index {index} is negative.");
+        }
+
+        var links = content
+            .Get<IpldList>("links")
+            .Items.Select(item => item.As<IpldLink>("links").Cid)
+            .ToImmutableArray();
+        var mixins = new Dictionary<Cid, Cid>();
+        foreach (var item in content.Get<IpldList>("mixins").Items)
+        {
+            var mixin = item.As<IpldMap>("mixins");
+            var mixinChain = mixin.Get<IpldLink>("chain").Cid;
+            var mixinValue = mixin.Get<IpldLink>("value").Cid;
+            if (!mixins.TryAdd(mixinChain, mixinValue))
+            {
+                throw new TwineFormatException($"The pulse mixes in chain {mixinChain} twice.");
+            }
+        }
+
+        var payload = content.Get<IpldMap>("payload");
+        var frozenMixins = mixins.ToFrozenDictionary();
+        return new TwineSignedPulse(document.Cid, chainCid, index, links, frozenMixins, payload);
+    }
+
+    /// <summary>
     /// Creates a pulse from values the caller has already verified.
     /// </summary>
     /// <param name="cid">The CID of the pulse's document.</param>
@@ -77,68 +128,14 @@ internal sealed class TwineSignedPulse
     /// Returns the pulse of <paramref name="chain"/> that this pulse mixes in, or <see langword="null"/> when it mixes
     /// in none.
     /// </summary>
+    /// <param name="chain">The CID of the chain whose pulse to look for.</param>
+    /// <returns>The CID of the mixed-in pulse, or <see langword="null"/> when this pulse mixes in none of the chain.</returns>
     public Cid? MixinOf(Cid chain) => Mixins.GetValueOrDefault(chain);
-
-    /// <summary>
-    /// Verifies a pulse document against <paramref name="chain"/>: it names the chain, the chain's key signed it with
-    /// RS256, and its index, links, mixins and payload are well formed. It throws
-    /// <see cref="TwineFormatException"/> when a check fails.
-    /// </summary>
-    /// <param name="document">The pulse document, already checked against its CID.</param>
-    /// <param name="chain">The verified chain the pulse belongs to.</param>
-    /// <returns>The verified pulse.</returns>
-    public static TwineSignedPulse Verify(TwineDocument document, TwineChain chain)
-    {
-        ArgumentNullException.ThrowIfNull(document);
-        ArgumentNullException.ThrowIfNull(chain);
-        var content = document.Content;
-        var chainCid = content.Get<IpldLink>("chain").Cid;
-        if (!chainCid.Equals(chain.Cid))
-        {
-            throw new TwineFormatException(
-                $"The pulse belongs to chain {chainCid}, not {chain.Cid}."
-            );
-        }
-
-        var multihash = document.ContentMultihash();
-        JwsRs256.Verify(document.Signature, chain.Key, multihash);
-
-        var index = content.Get<IpldInteger>("index").Value;
-        if (index < 0)
-        {
-            throw new TwineFormatException($"The pulse index {index} is negative.");
-        }
-
-        var links = content
-            .Get<IpldList>("links")
-            .Items.Select(item => item.As<IpldLink>("links").Cid)
-            .ToImmutableArray();
-        var mixins = new Dictionary<Cid, Cid>();
-        foreach (var item in content.Get<IpldList>("mixins").Items)
-        {
-            var mixin = item.As<IpldMap>("mixins");
-            var mixinChain = mixin.Get<IpldLink>("chain").Cid;
-            var mixinValue = mixin.Get<IpldLink>("value").Cid;
-            if (!mixins.TryAdd(mixinChain, mixinValue))
-            {
-                throw new TwineFormatException($"The pulse mixes in chain {mixinChain} twice.");
-            }
-        }
-
-        var payload = content.Get<IpldMap>("payload");
-        return new TwineSignedPulse(
-            document.Cid,
-            chainCid,
-            index,
-            links,
-            mixins.ToFrozenDictionary(),
-            payload
-        );
-    }
 
     /// <summary>
     /// Checks that this pulse directly follows <paramref name="previous"/> on the same chain.
     /// </summary>
+    /// <param name="previous">The pulse that must come directly before this one.</param>
     public void VerifyPrecededBy(TwineSignedPulse previous)
     {
         ArgumentNullException.ThrowIfNull(previous);

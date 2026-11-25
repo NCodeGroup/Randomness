@@ -55,7 +55,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
     /// <summary>
     /// The last pulse verified, so the same round fetched again needs no crawl.
     /// </summary>
-    private volatile BeaconPulse? _last;
+    private BeaconPulse? _last;
 
     /// <inheritdoc/>
     public ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken) =>
@@ -139,7 +139,10 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
             }
 
             var resultId = result.ResultPulse.Cid.ToString();
-            if (_last is { } last && string.Equals(last.Id, resultId, StringComparison.Ordinal))
+            if (
+                Volatile.Read(ref _last) is { } last
+                && string.Equals(last.Id, resultId, StringComparison.Ordinal)
+            )
             {
                 return last;
             }
@@ -164,7 +167,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
                 result.Timestamp,
                 result.Randomness
             );
-            _last = pulse;
+            Volatile.Write(ref _last, pulse);
             return pulse;
         }
         catch (Exception exception) when (exception is TwineFormatException or JsonException)

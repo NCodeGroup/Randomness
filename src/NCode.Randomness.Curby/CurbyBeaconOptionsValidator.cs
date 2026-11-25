@@ -32,38 +32,9 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
             );
         }
 
-        try
-        {
-            Cid.Parse(options.ChainId ?? string.Empty);
-        }
-        catch (TwineFormatException exception)
-        {
-            failures.Add(
-                $"{Prefix}{nameof(options.ChainId)} is not a Twine content identifier: {exception.Message}"
-            );
-        }
-
-        try
-        {
-            Cid.Parse(options.QuantumChainId ?? string.Empty);
-        }
-        catch (TwineFormatException exception)
-        {
-            failures.Add(
-                $"{Prefix}{nameof(options.QuantumChainId)} is not a Twine content identifier: {exception.Message}"
-            );
-        }
-
-        try
-        {
-            Cid.Parse(options.BellChainId ?? string.Empty);
-        }
-        catch (TwineFormatException exception)
-        {
-            failures.Add(
-                $"{Prefix}{nameof(options.BellChainId)} is not a Twine content identifier: {exception.Message}"
-            );
-        }
+        CheckChainId(failures, nameof(options.ChainId), options.ChainId);
+        CheckChainId(failures, nameof(options.QuantumChainId), options.QuantumChainId);
+        CheckChainId(failures, nameof(options.BellChainId), options.BellChainId);
 
         if (options.MaxResponseBytes < 1024)
         {
@@ -73,5 +44,23 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
         return failures.Count == 0
             ? ValidateOptionsResult.Success
             : ValidateOptionsResult.Fail(failures);
+    }
+
+    /// <summary>
+    /// Adds a failure when a chain identifier setting is not a Twine content identifier.
+    /// </summary>
+    /// <param name="failures">The failures found so far.</param>
+    /// <param name="key">The name of the setting, within the section.</param>
+    /// <param name="value">The value of the setting.</param>
+    private static void CheckChainId(List<string> failures, string key, string? value)
+    {
+        try
+        {
+            Cid.Parse(value ?? string.Empty);
+        }
+        catch (TwineFormatException exception)
+        {
+            failures.Add($"{Prefix}{key} is not a Twine content identifier: {exception.Message}");
+        }
     }
 }

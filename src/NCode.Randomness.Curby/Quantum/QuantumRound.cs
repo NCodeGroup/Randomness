@@ -22,34 +22,6 @@ internal sealed class QuantumRound
     private const int MaxSeedCount = 8;
 
     /// <summary>
-    /// Initializes a round.
-    /// </summary>
-    /// <param name="number">The DIRNG round number.</param>
-    /// <param name="errorReason">The reason in the round's <c>error</c> pulse, if it has one.</param>
-    /// <param name="result">The round's result, if it has one.</param>
-    private QuantumRound(long number, string? errorReason, QuantumResult? result)
-    {
-        Number = number;
-        ErrorReason = errorReason;
-        Result = result;
-    }
-
-    /// <summary>
-    /// Gets the DIRNG round number.
-    /// </summary>
-    public long Number { get; }
-
-    /// <summary>
-    /// Gets the reason CURBy-Q gave in the round's <c>error</c> pulse, or <see langword="null"/> when it has none.
-    /// </summary>
-    public string? ErrorReason { get; }
-
-    /// <summary>
-    /// Gets the round's result, or <see langword="null"/> when it has no randomness pulse.
-    /// </summary>
-    public QuantumResult? Result { get; }
-
-    /// <summary>
     /// Verifies the pulses of one round against the CURBy-Q chain.
     /// </summary>
     /// <param name="documents">The round's pulses, in the order the API serves them.</param>
@@ -259,4 +231,32 @@ internal sealed class QuantumRound
 
         return value;
     }
+
+    /// <summary>
+    /// Initializes a round.
+    /// </summary>
+    /// <param name="number">The DIRNG round number.</param>
+    /// <param name="errorReason">The reason in the round's <c>error</c> pulse, if it has one.</param>
+    /// <param name="result">The round's result, if it has one.</param>
+    private QuantumRound(long number, string? errorReason, QuantumResult? result)
+    {
+        Number = number;
+        ErrorReason = errorReason;
+        Result = result;
+    }
+
+    /// <summary>
+    /// Gets the DIRNG round number.
+    /// </summary>
+    public long Number { get; }
+
+    /// <summary>
+    /// Gets the reason CURBy-Q gave in the round's <c>error</c> pulse, or <see langword="null"/> when it has none.
+    /// </summary>
+    public string? ErrorReason { get; }
+
+    /// <summary>
+    /// Gets the round's result, or <see langword="null"/> when it has no randomness pulse.
+    /// </summary>
+    public QuantumResult? Result { get; }
 }

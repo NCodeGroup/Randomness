@@ -101,7 +101,7 @@ internal sealed class BeaconTracker : IBeaconStatus
         lock (Gate)
         {
             var state = States[index];
-            var error = Judge(index, beacon, pulse, state.LastPulse, now);
+            var error = Judge(index, pulse, state.LastPulse, now);
             if (error is { } refused)
             {
                 return Record(index, now, refused);
@@ -148,20 +148,13 @@ internal sealed class BeaconTracker : IBeaconStatus
     /// Decides whether a pulse is acceptable, and returns the reason it is not.
     /// </summary>
     /// <param name="index">The index of the beacon in the registered order.</param>
-    /// <param name="beacon">The name of the beacon that fetched the pulse.</param>
     /// <param name="pulse">The pulse to judge.</param>
     /// <param name="last">The last pulse accepted from the beacon, if any.</param>
     /// <param name="now">The current time.</param>
     /// <returns>The error that refuses the pulse, or <see langword="null"/> when it is acceptable.</returns>
-    private BeaconError? Judge(
-        int index,
-        string beacon,
-        BeaconPulse pulse,
-        BeaconPulse? last,
-        DateTimeOffset now
-    )
+    private BeaconError? Judge(int index, BeaconPulse pulse, BeaconPulse? last, DateTimeOffset now)
     {
-        if (!string.Equals(pulse.Beacon, beacon, StringComparison.Ordinal))
+        if (!string.Equals(pulse.Beacon, Names[index], StringComparison.Ordinal))
         {
             return BeaconError.InvalidPulse;
         }

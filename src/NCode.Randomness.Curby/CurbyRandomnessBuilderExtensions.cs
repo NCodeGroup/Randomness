@@ -141,12 +141,11 @@ public static class CurbyRandomnessBuilderExtensions
         private void AddCurbyServices()
         {
             var services = builder.Services;
-            services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<
-                    IValidateOptions<CurbyBeaconOptions>,
-                    CurbyBeaconOptionsValidator
-                >()
-            );
+            var validator = ServiceDescriptor.Singleton<
+                IValidateOptions<CurbyBeaconOptions>,
+                CurbyBeaconOptionsValidator
+            >();
+            services.TryAddEnumerable(validator);
             if (services.Any(descriptor => descriptor.ServiceType == typeof(TwineApi)))
             {
                 return;
@@ -177,11 +176,10 @@ public static class CurbyRandomnessBuilderExtensions
             var services = builder.Services;
             services.AddOptions<RandomnessOptions>().PostConfigure(UseQuantumMaxPulseAge);
             services.TryAddSingleton<CurbyQuantumBeacon>();
-            services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IRandomnessBeacon, CurbyQuantumBeacon>(provider =>
-                    provider.GetRequiredService<CurbyQuantumBeacon>()
-                )
+            var descriptor = ServiceDescriptor.Singleton<IRandomnessBeacon, CurbyQuantumBeacon>(
+                provider => provider.GetRequiredService<CurbyQuantumBeacon>()
             );
+            services.TryAddEnumerable(descriptor);
             return builder;
         }
 
@@ -194,11 +192,10 @@ public static class CurbyRandomnessBuilderExtensions
             builder.AddCurbyServices();
             var services = builder.Services;
             services.TryAddSingleton<CurbyBeacon>();
-            services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<IRandomnessBeacon, CurbyBeacon>(provider =>
-                    provider.GetRequiredService<CurbyBeacon>()
-                )
+            var descriptor = ServiceDescriptor.Singleton<IRandomnessBeacon, CurbyBeacon>(provider =>
+                provider.GetRequiredService<CurbyBeacon>()
             );
+            services.TryAddEnumerable(descriptor);
             return builder;
         }
     }
