@@ -52,6 +52,9 @@ internal static class DagJsonWriter
             case IpldInteger integer:
                 writer.WriteNumberValue(integer.Value);
                 break;
+            case IpldFloat number:
+                writer.WriteNumberValue(number.Value);
+                break;
             case IpldBytes bytes:
                 writer.WriteStartObject();
                 writer.WriteStartObject("/");

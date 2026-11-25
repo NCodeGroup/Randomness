@@ -9,7 +9,8 @@ namespace NCode.Randomness.Curby.Twine;
 /// <summary>
 /// Reads DAG-JSON into the IPLD data model, strictly: a map whose only key is <c>/</c> is a link (a string) or bytes
 /// (<c>{"bytes": "..."}</c>, unpadded standard base64), any other use of that key is refused, as are duplicate keys,
-/// numbers that are not 64-bit integers, and bytes or links not in canonical form.
+/// numbers that are not finite 64-bit floats or 64-bit integers, and bytes or links not in canonical form. Numbers with
+/// a fraction or exponent are 64-bit floats and other numbers are 64-bit integers.
 /// </summary>
 internal static class DagJson
 {
@@ -21,7 +22,7 @@ internal static class DagJson
             JsonValueKind.Object => ReadObject(element),
             JsonValueKind.Array => ReadArray(element),
             JsonValueKind.String => new IpldString(element.GetString() ?? string.Empty),
-            JsonValueKind.Number => ReadInteger(element),
+            JsonValueKind.Number => ReadNumber(element),
             JsonValueKind.True => new IpldBoolean(true),
             JsonValueKind.False => new IpldBoolean(false),
             JsonValueKind.Null => IpldNull.Instance,
@@ -90,10 +91,20 @@ internal static class DagJson
         return new IpldList(items.MoveToImmutable());
     }
 
-    private static IpldInteger ReadInteger(JsonElement element)
+    private static IpldNode ReadNumber(JsonElement element)
     {
         var raw = element.GetRawText();
-        if (raw.AsSpan().IndexOfAny(".eE") >= 0 || !element.TryGetInt64(out var value))
+        if (raw.AsSpan().IndexOfAny(".eE") >= 0)
+        {
+            if (!element.TryGetDouble(out var number) || !double.IsFinite(number))
+            {
+                throw new TwineFormatException($"The number {raw} is not a finite 64-bit float.");
+            }
+
+            return new IpldFloat(number);
+        }
+
+        if (!element.TryGetInt64(out var value))
         {
             throw new TwineFormatException($"The number {raw} is not a 64-bit integer.");
         }
