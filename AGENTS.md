@@ -44,6 +44,14 @@ How `/ship-plan` lands a reviewed plan. `integrate`: `pull-request` pushes the p
 
 - Secrets come only from `ISecureRandom`. Never derive a key, token, salt or nonce from `BeaconPulse.Randomness` or a
   `VerifiableRandom` ([ADR-1000](docs/decisions/1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md)).
+- Secret material, meaning a key, a seed, the generator's state or bytes kept from `ISecureRandom`, lives only in a
+  `stackalloc` span or a pinned array (`GC.AllocateArray` or `GC.AllocateUninitializedArray` with `pinned: true`) and
+  is cleared with `CryptographicOperations.ZeroMemory` on every path out, never in `ArrayPool<T>.Shared` or an unpinned
+  array, which the garbage collector can copy. This overrides the template's rule to rent transient buffers from
+  `ArrayPool<T>.Shared` for secret material; public data, such as a pulse or a response body, still rents from it. The
+  packages take no buffer library dependency, such as NCode.Buffers: their members take and fill `Span<byte>`, so
+  callers bring their own buffers
+  ([ADR-1012](docs/decisions/1012-secrets-live-only-in-stack-or-pinned-memory-and-the-packages-take-no-buffer-library-dependency.md)).
 - The sampling algorithms in `src/NCode.Randomness/Sampling/` and the draw derivation in `src/NCode.Randomness/Draws/`
   are the published `ncode-randomness-draw/1` contract in `docs/draws.md`: a change that alters the bytes they read or
   the values they return is a new algorithm name, with the document, its reference implementation and the pinned
