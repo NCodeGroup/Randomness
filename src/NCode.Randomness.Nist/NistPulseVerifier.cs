@@ -30,6 +30,7 @@ public sealed class NistPulseVerifier
     /// <param name="certificateIds">
     /// The identifiers of the certificates to pin: the SHA-512 hashes of the certificates' DER encodings, each in hex.
     /// </param>
+    /// <exception cref="ArgumentNullException"><paramref name="certificateIds"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="chainIndex"/> is less than 1.</exception>
     /// <exception cref="ArgumentException">
     /// <paramref name="certificateIds"/> is empty or holds a value that is not a certificate identifier.

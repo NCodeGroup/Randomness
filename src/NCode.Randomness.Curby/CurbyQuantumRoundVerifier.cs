@@ -38,8 +38,12 @@ public sealed class CurbyQuantumRoundVerifier
     /// </summary>
     /// <param name="quantumChainId">The content identifier (CID) of the CURBy-Q chain to pin.</param>
     /// <param name="bellChainId">The content identifier (CID) of the Bell chain to pin.</param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="quantumChainId"/> or <paramref name="bellChainId"/> is <see langword="null"/>.
+    /// </exception>
     /// <exception cref="ArgumentException">
-    /// <paramref name="quantumChainId"/> or <paramref name="bellChainId"/> is not a Twine content identifier.
+    /// <paramref name="quantumChainId"/> or <paramref name="bellChainId"/> is empty, white space or not a Twine content
+    /// identifier.
     /// </exception>
     public CurbyQuantumRoundVerifier(string quantumChainId, string bellChainId)
     {

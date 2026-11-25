@@ -28,7 +28,10 @@ public sealed class CurbyPulseVerifier
     /// Initializes the verifier to pin a chain.
     /// </summary>
     /// <param name="chainId">The content identifier (CID) of the chain to pin.</param>
-    /// <exception cref="ArgumentException"><paramref name="chainId"/> is not a Twine content identifier.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="chainId"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="chainId"/> is empty, white space or not a Twine content identifier.
+    /// </exception>
     public CurbyPulseVerifier(string chainId)
     {
         PinnedChain = ParseChainId(chainId, nameof(chainId));
