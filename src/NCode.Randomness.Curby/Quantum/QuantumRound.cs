@@ -131,8 +131,41 @@ internal sealed class QuantumRound
         var request = pulses[0];
         var precommit = pulses[1];
         var result = pulses[2];
-        var dataHash = ReadHash(precommit.Payload, QuantumKeys.DataHash, "precommit");
-        var resultDataHash = ReadHash(result.Payload, QuantumKeys.DataHash, "randomness pulse");
+        var dataHash = ReadDataHash(precommit.Payload, result.Payload);
+        var paramsHash = ReadHash(result.Payload, "paramsHash", "randomness pulse");
+        CheckSeedAlgorithm(precommit.Payload);
+        var seedCount = ReadSeedCount(precommit.Payload);
+        var seedLength = ReadSeedLength(precommit.Payload);
+        var seedChain = precommit.Payload.Get<IpldLink>("seedChain").Cid;
+        var outputBits = ReadOutputBits(request.Payload);
+        var randomness = ReadRandomness(result.Payload, outputBits);
+        var timestamp = ReadTimestamp(result.Payload);
+        return new QuantumResult
+        {
+            Request = request,
+            Precommit = precommit,
+            ResultPulse = result,
+            DataHash = dataHash,
+            SeedChain = seedChain,
+            SeedLength = seedLength,
+            SeedCount = seedCount,
+            ParamsHash = paramsHash,
+            Randomness = randomness,
+            Timestamp = timestamp,
+        };
+    }
+
+    /// <summary>
+    /// Reads the data hash the precommit commits to and checks that the randomness pulse carries the same one. It
+    /// throws <see cref="TwineFormatException"/> when either is malformed or they differ.
+    /// </summary>
+    /// <param name="precommit">The payload of the precommit pulse.</param>
+    /// <param name="result">The payload of the randomness pulse.</param>
+    /// <returns>The data hash, in lowercase hexadecimal.</returns>
+    private static string ReadDataHash(IpldMap precommit, IpldMap result)
+    {
+        var dataHash = ReadHash(precommit, QuantumKeys.DataHash, "precommit");
+        var resultDataHash = ReadHash(result, QuantumKeys.DataHash, "randomness pulse");
         if (!string.Equals(dataHash, resultDataHash, StringComparison.Ordinal))
         {
             throw new TwineFormatException(
@@ -140,17 +173,34 @@ internal sealed class QuantumRound
             );
         }
 
-        var paramsHash = ReadHash(result.Payload, "paramsHash", "randomness pulse");
+        return dataHash;
+    }
 
-        var seedAlgorithm = precommit.Payload.Get<IpldString>("seedAlgorithm").Value;
+    /// <summary>
+    /// Checks that the precommit's seed algorithm is <c>shake256</c>. It throws <see cref="TwineFormatException"/>
+    /// otherwise.
+    /// </summary>
+    /// <param name="precommit">The payload of the precommit pulse.</param>
+    private static void CheckSeedAlgorithm(IpldMap precommit)
+    {
+        var seedAlgorithm = precommit.Get<IpldString>("seedAlgorithm").Value;
         if (seedAlgorithm != "shake256")
         {
             throw new TwineFormatException(
                 $"The seed algorithm '{seedAlgorithm}' is not shake256."
             );
         }
+    }
 
-        var rule = precommit.Payload.Get<IpldMap>("rule");
+    /// <summary>
+    /// Reads how many seed pulses the precommit's rule counts. It throws <see cref="TwineFormatException"/> unless the
+    /// rule counts after <c>self</c> and the count is from 1 to the largest this package accepts.
+    /// </summary>
+    /// <param name="precommit">The payload of the precommit pulse.</param>
+    /// <returns>The number of seed pulses.</returns>
+    private static int ReadSeedCount(IpldMap precommit)
+    {
+        var rule = precommit.Get<IpldMap>("rule");
         var after = rule.Get<IpldString>("after").Value;
         if (after != "self")
         {
@@ -165,7 +215,18 @@ internal sealed class QuantumRound
             );
         }
 
-        var seedLength = precommit.Payload.Get<IpldInteger>("seedLength").Value;
+        return (int)count;
+    }
+
+    /// <summary>
+    /// Reads the length in bits of the seed the precommit asks for. It throws <see cref="TwineFormatException"/>
+    /// unless the length is a multiple of 8 bits from 8 to the largest this package accepts.
+    /// </summary>
+    /// <param name="precommit">The payload of the precommit pulse.</param>
+    /// <returns>The seed length in bits.</returns>
+    private static int ReadSeedLength(IpldMap precommit)
+    {
+        var seedLength = precommit.Get<IpldInteger>("seedLength").Value;
         if (seedLength is < 1 or > MaxSeedBits || seedLength % 8 != 0)
         {
             throw new TwineFormatException(
@@ -173,12 +234,20 @@ internal sealed class QuantumRound
             );
         }
 
-        var seedChain = precommit.Payload.Get<IpldLink>("seedChain").Cid;
+        return (int)seedLength;
+    }
 
-        var outputBits = request
-            .Payload.Get<IpldMap>("parameters")
-            .Get<IpldInteger>("nBitsOut")
-            .Value;
+    /// <summary>
+    /// Reads the number of bits the request asks the extractor to output. It throws
+    /// <see cref="TwineFormatException"/> unless the number is a multiple of 8 bits of at least the smallest this
+    /// package accepts.
+    /// </summary>
+    /// <param name="request">The payload of the request pulse.</param>
+    /// <returns>The output length in bits.</returns>
+    private static long ReadOutputBits(IpldMap request)
+    {
+        var parameters = request.Get<IpldMap>("parameters");
+        var outputBits = parameters.Get<IpldInteger>("nBitsOut").Value;
         if (outputBits < MinOutputBits || outputBits % 8 != 0)
         {
             throw new TwineFormatException(
@@ -186,7 +255,19 @@ internal sealed class QuantumRound
             );
         }
 
-        var randomness = result.Payload.Get<IpldBytes>("randomness").Value.ToArray();
+        return outputBits;
+    }
+
+    /// <summary>
+    /// Reads the randomness the randomness pulse publishes. It throws <see cref="TwineFormatException"/> unless it
+    /// has the number of bytes the request asked for.
+    /// </summary>
+    /// <param name="result">The payload of the randomness pulse.</param>
+    /// <param name="outputBits">The output length in bits that the request asked for.</param>
+    /// <returns>The randomness.</returns>
+    private static byte[] ReadRandomness(IpldMap result, long outputBits)
+    {
+        var randomness = result.Get<IpldBytes>("randomness").Value.ToArray();
         if (randomness.Length != outputBits / 8)
         {
             throw new TwineFormatException(
@@ -194,21 +275,18 @@ internal sealed class QuantumRound
             );
         }
 
-        var timestampText = result.Payload.Get<IpldString>("timestamp").Value;
-        var timestamp = TwinePulse.ParseTimestamp(timestampText);
-        return new QuantumResult
-        {
-            Request = request,
-            Precommit = precommit,
-            ResultPulse = result,
-            DataHash = dataHash,
-            SeedChain = seedChain,
-            SeedLength = (int)seedLength,
-            SeedCount = (int)count,
-            ParamsHash = paramsHash,
-            Randomness = randomness,
-            Timestamp = timestamp,
-        };
+        return randomness;
+    }
+
+    /// <summary>
+    /// Reads the time the randomness pulse was published.
+    /// </summary>
+    /// <param name="result">The payload of the randomness pulse.</param>
+    /// <returns>The timestamp of the pulse.</returns>
+    private static DateTimeOffset ReadTimestamp(IpldMap result)
+    {
+        var timestampText = result.Get<IpldString>("timestamp").Value;
+        return TwinePulse.ParseTimestamp(timestampText);
     }
 
     /// <summary>
