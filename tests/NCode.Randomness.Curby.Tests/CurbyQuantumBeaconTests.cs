@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Net;
 using NCode.Randomness.Curby.Http;
 using NCode.Randomness.Curby.Tests.Fixtures;
 using NCode.Randomness.Curby.Tests.TestTwine;
@@ -50,6 +51,170 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         );
     }
 
+    [Fact]
+    public async Task GetPulseAsync_WithBuiltRound_ReturnsItsRandomness()
+    {
+        using var builder = new QuantumRoundBuilder();
+        var round = ServeBuilt(builder);
+        using var beacon = Create();
+
+        var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
+
+        Assert.Equal(builder.Round, pulse.Round);
+        Assert.Equal(builder.Quantum.ChainCid.ToString(), pulse.Chain);
+        Assert.Equal(round.Result.Cid.ToString(), pulse.Id);
+        Assert.Equal(round.Randomness, pulse.Randomness);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheResponseIsThreePulsesBack_Succeeds()
+    {
+        using var builder = new QuantumRoundBuilder { BellPulsesAfterResponse = 3 };
+        var round = ServeBuilt(builder);
+        using var beacon = Create();
+
+        var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
+
+        Assert.Equal(round.Randomness, pulse.Randomness);
+        Assert.Contains(BellPulsePath(builder, round, 0), Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheResponseIsElevenPulsesBack_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder { BellPulsesAfterResponse = 10 };
+        ServeBuilt(builder);
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains("within 10 Bell pulses", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheRoundFailed_IsNotFound()
+    {
+        const string reason = "the Bell test failed";
+        using var builder = new QuantumRoundBuilder();
+        ServeChains(builder);
+        Server.Serve(RoundPathOf(builder.Round), builder.ErrorRoundJson(reason));
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains(reason, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheRoundIsIncomplete_IsNotFound()
+    {
+        using var builder = new QuantumRoundBuilder();
+        var round = builder.Build();
+        ServeChains(builder);
+        Server.Serve(RoundPathOf(builder.Round), $"[{round.Request.Json},{round.Precommit.Json}]");
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains("has not completed", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenNoRoundIsPublished_IsNotFound()
+    {
+        using var builder = new QuantumRoundBuilder();
+        ServeChains(builder);
+        Server.Serve(RoundPathOf(builder.Round), "[]");
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains("has not published round", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheServerAnswersAnotherRound_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder();
+        var round = ServeBuilt(builder);
+        Server.Serve(RoundPathOf(builder.Round + 1), round.RoundJson);
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
+            beacon.GetPulseAsync(builder.Round + 1, token)
+        );
+
+        Assert.Contains(
+            $"answered round {builder.Round + 1} with round {builder.Round}",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheParametersAreMissing_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder();
+        ServeBuilt(builder, serveParameters: false);
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains("parameters of round", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheServerSwapsABellPulse_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder();
+        var round = ServeBuilt(builder);
+        Server.Serve(BellPulsePath(builder, round, 1), round.BellPulses[0].Json);
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains("answered pulse", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheServerFails_IsUnavailable()
+    {
+        using var builder = new QuantumRoundBuilder();
+        Options.QuantumChainId = builder.Quantum.ChainCid.ToString();
+        Server.Answer("/chains/" + builder.Quantum.ChainCid, HttpStatusCode.ServiceUnavailable);
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.Unavailable, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.IsType<HttpRequestException>(exception.InnerException);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WithNegativeRound_IsNotFound()
+    {
+        using var beacon = Create();
+
+        await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
+            beacon.GetPulseAsync(-1, token)
+        );
+
+        Assert.Empty(Server.Requests);
+    }
+
     #endregion
 
     #region GetLatestPulseAsync Tests
@@ -80,6 +245,39 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Assert.Equal([LatestPath], Server.Requests);
     }
 
+    [Fact]
+    public async Task GetLatestPulseAsync_WhenTheRoundFailed_IsUnavailable()
+    {
+        const string reason = "the Bell test failed";
+        using var builder = new QuantumRoundBuilder();
+        ServeChains(builder);
+        Server.Serve(LatestPath, builder.ErrorRoundJson(reason));
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(
+            BeaconError.Unavailable,
+            beacon.GetLatestPulseAsync
+        );
+
+        Assert.Contains(reason, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetLatestPulseAsync_WhenThereIsNoRound_IsUnavailable()
+    {
+        using var builder = new QuantumRoundBuilder();
+        ServeChains(builder);
+        Server.Serve(LatestPath, "[]");
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(
+            BeaconError.Unavailable,
+            beacon.GetLatestPulseAsync
+        );
+
+        Assert.Contains("no latest round", exception.Message, StringComparison.Ordinal);
+    }
+
     #endregion
 
     private static void AssertRound(BeaconPulse pulse)
@@ -96,6 +294,68 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         SeedChainPath
         + "/pulses/"
         + TwineVerificationTests.Document(CurbyQuantumFixtures.SeedPulse(index)).Cid;
+
+    private static string RoundPathOf(long round) => "/curbyq/round/" + round;
+
+    private static string BellPulsePath(
+        QuantumRoundBuilder builder,
+        BuiltQuantumRound round,
+        int index
+    ) => "/chains/" + builder.Bell.ChainCid + "/pulses/" + round.BellPulses[index].Cid;
+
+    private static async Task<BeaconException> AssertBeaconErrorAsync(
+        BeaconError error,
+        Func<CancellationToken, ValueTask<BeaconPulse>> fetch
+    )
+    {
+        var exception = await Assert.ThrowsAsync<BeaconException>(async () =>
+            await fetch(CancellationToken.None)
+        );
+        Assert.Equal(error, exception.Error);
+        Assert.Equal(CurbyDefaults.QuantumBeaconName, exception.Beacon);
+        return exception;
+    }
+
+    // Pins the builder's three chains and serves them.
+    private void ServeChains(QuantumRoundBuilder builder)
+    {
+        Options.QuantumChainId = builder.Quantum.ChainCid.ToString();
+        Options.BellChainId = builder.Bell.ChainCid.ToString();
+        Server
+            .Serve("/chains/" + builder.Quantum.ChainCid, builder.Quantum.ChainJson)
+            .Serve("/chains/" + builder.Bell.ChainCid, builder.Bell.ChainJson)
+            .Serve("/chains/" + builder.Seed.ChainCid, builder.Seed.ChainJson);
+    }
+
+    // Serves a built round: its chains, the round and latest round, every Bell and seed pulse, and the parameters.
+    private BuiltQuantumRound ServeBuilt(QuantumRoundBuilder builder, bool serveParameters = true)
+    {
+        var round = builder.Build();
+        ServeChains(builder);
+        Server
+            .Serve(RoundPathOf(builder.Round), round.RoundJson)
+            .Serve(LatestPath, round.RoundJson);
+        for (var i = 0; i < round.BellPulses.Count; i++)
+        {
+            Server.Serve(BellPulsePath(builder, round, i), round.BellPulses[i].Json);
+        }
+
+        foreach (var (json, cid) in round.SeedPulses)
+        {
+            Server.Serve("/chains/" + builder.Seed.ChainCid + "/pulses/" + cid, json);
+        }
+
+        if (serveParameters)
+        {
+            Server.Serve(
+                RoundPathOf(builder.Round) + "/params",
+                round.Parameters,
+                "application/octet-stream"
+            );
+        }
+
+        return round;
+    }
 
     private void ServeCurbyQ()
     {
