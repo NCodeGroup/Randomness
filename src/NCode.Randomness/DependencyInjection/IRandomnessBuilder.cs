@@ -6,7 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace NCode.Randomness;
 
 /// <summary>
-/// Adds beacons and other parts to the services <c>AddRandomness()</c> registered.
+/// Adds beacons and other parts to the randomness services that <c>AddRandomness()</c> registers or a
+/// <see cref="RandomnessHost"/> builds.
 /// </summary>
 public interface IRandomnessBuilder
 {
