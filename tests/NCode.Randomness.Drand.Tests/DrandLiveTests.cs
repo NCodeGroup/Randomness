@@ -42,7 +42,8 @@ public class DrandLiveTests
 
         var pulse = await beacon.GetPulseAsync(1000, CancellationToken.None);
 
-        var randomness = Convert.ToHexStringLower(pulse.Randomness.ToArray());
+        var randomnessBytes = pulse.Randomness.ToArray();
+        var randomness = Convert.ToHexStringLower(randomnessBytes);
 
         Assert.Equal(DrandFixtures.FirstRandomness, randomness);
     }

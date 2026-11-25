@@ -16,8 +16,10 @@ public class G1HashToCurveTests
     public void HashToField_WithEmptyMessage_ReturnsRfcVector()
     {
         var u = G1HashToCurve.HashToField([], Domain);
-        var first = Convert.ToHexStringLower(u[0].ToArray());
-        var second = Convert.ToHexStringLower(u[1].ToArray());
+        var firstBytes = u[0].ToArray();
+        var secondBytes = u[1].ToArray();
+        var first = Convert.ToHexStringLower(firstBytes);
+        var second = Convert.ToHexStringLower(secondBytes);
 
         Assert.Equal(2, u.Length);
         Assert.Equal(
@@ -49,8 +51,10 @@ public class G1HashToCurveTests
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes(message);
         var point = G1HashToCurve.Hash(bytes, Domain);
-        var actualX = Convert.ToHexStringLower(point.X.ToArray());
-        var actualY = Convert.ToHexStringLower(point.Y.ToArray());
+        var xBytes = point.X.ToArray();
+        var yBytes = point.Y.ToArray();
+        var actualX = Convert.ToHexStringLower(xBytes);
+        var actualY = Convert.ToHexStringLower(yBytes);
 
         Assert.Equal(x, actualX);
         Assert.Equal(y, actualY);
@@ -75,8 +79,10 @@ public class G1HashToCurveTests
     {
         var element = FieldElements.FromHex(u);
         var point = G1HashToCurve.MapToCurve(element);
-        var actualX = Convert.ToHexStringLower(point.X.ToArray());
-        var actualY = Convert.ToHexStringLower(point.Y.ToArray());
+        var xBytes = point.X.ToArray();
+        var yBytes = point.Y.ToArray();
+        var actualX = Convert.ToHexStringLower(xBytes);
+        var actualY = Convert.ToHexStringLower(yBytes);
 
         Assert.Equal(x, actualX);
         Assert.Equal(y, actualY);

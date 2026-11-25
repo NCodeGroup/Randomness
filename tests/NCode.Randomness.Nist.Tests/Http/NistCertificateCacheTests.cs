@@ -33,7 +33,8 @@ public sealed class NistCertificateCacheTests : IDisposable
 
     private void ServeCurrent()
     {
-        var certificate = Encoding.UTF8.GetString(NistFixtures.Certificate("5b6386e6"));
+        var certificateBytes = NistFixtures.Certificate("5b6386e6");
+        var certificate = Encoding.UTF8.GetString(certificateBytes);
         Server.Serve(CurrentRoute, certificate, "text/plain");
     }
 

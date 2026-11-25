@@ -103,7 +103,8 @@ public sealed class NistBeaconTests : IDisposable
     {
         ServeNist();
         var pulse = NistFixtures.Pulse(1484768);
-        var certificate = Encoding.UTF8.GetString(NistFixtures.Certificate("e692b0f6"));
+        var certificateBytes = NistFixtures.Certificate("e692b0f6");
+        var certificate = Encoding.UTF8.GetString(certificateBytes);
         Server
             .Serve(PulsePath + (NistFixtures.LatestIndex - 1), pulse)
             .Serve(CertificatePath + NistFixtures.PreviousCertificateId, certificate, "text/plain");
@@ -349,8 +350,10 @@ public sealed class NistBeaconTests : IDisposable
     {
         var pulse = NistFixtures.Pulse(1484769);
         var predecessor = NistFixtures.Pulse(1484768);
-        var rotated = Encoding.UTF8.GetString(NistFixtures.Certificate("528943a5"));
-        var previous = Encoding.UTF8.GetString(NistFixtures.Certificate("e692b0f6"));
+        var rotatedBytes = NistFixtures.Certificate("528943a5");
+        var rotated = Encoding.UTF8.GetString(rotatedBytes);
+        var previousBytes = NistFixtures.Certificate("e692b0f6");
+        var previous = Encoding.UTF8.GetString(previousBytes);
         Server
             .Serve(PulsePath + "1484769", pulse)
             .Serve(PulsePath + "1484768", predecessor)
@@ -433,7 +436,8 @@ public sealed class NistBeaconTests : IDisposable
     {
         var latest = NistFixtures.Pulse(NistFixtures.LatestIndex);
         var predecessor = NistFixtures.Pulse(NistFixtures.LatestIndex - 1);
-        var certificate = Encoding.UTF8.GetString(NistFixtures.Certificate("5b6386e6"));
+        var certificateBytes = NistFixtures.Certificate("5b6386e6");
+        var certificate = Encoding.UTF8.GetString(certificateBytes);
         Server
             .Serve(PulsePath + "last", latest)
             .Serve(PulsePath + (NistFixtures.LatestIndex - 1), predecessor)

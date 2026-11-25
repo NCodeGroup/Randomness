@@ -103,7 +103,8 @@ public sealed class NistApiTests : IDisposable
         var document = await api.GetPulseAsync(PulsePath, CancellationToken.None);
 
         Assert.NotNull(document);
-        Assert.Equal(1022, document.Value.GetString()?.Length);
+        var text = document.Value.GetString();
+        Assert.Equal(1022, text?.Length);
     }
 
     [Theory]
