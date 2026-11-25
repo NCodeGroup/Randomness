@@ -45,7 +45,7 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
     /// </summary>
     /// <param name="value">The value to check.</param>
     /// <returns><see langword="true"/> when the value is a certificate identifier.</returns>
-    private static bool IsCertificateId(string? value)
+    internal static bool IsCertificateId(string? value)
     {
         if (value is null || value.Length != CertificateIdLength)
         {
