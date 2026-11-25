@@ -1,9 +1,11 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using NCode.Randomness.Drand.Rounds;
 
@@ -48,14 +50,32 @@ public class DrandRandomnessBuilderExtensionsTests
     [Fact]
     public async Task AddDrandBeacon_Always_RegistersTheNamedClientWithItsResilience()
     {
+        using var handler = new CountingHandler();
         var services = new ServiceCollection();
         services.AddRandomness().AddDrandBeacon();
+        services
+            .AddHttpClient(DrandDefaults.HttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => handler);
+        HttpStandardResilienceOptions? resilience = null;
+        services.PostConfigureAll<HttpStandardResilienceOptions>(options =>
+        {
+            options.Retry.Delay = TimeSpan.Zero;
+            resilience = options;
+        });
         await using var provider = services.BuildServiceProvider();
         var factory = provider.GetRequiredService<IHttpClientFactory>();
-
         using var client = factory.CreateClient(DrandDefaults.HttpClientName);
+        var address = new Uri("https://beacon.example/");
 
-        Assert.NotNull(client);
+        using var response = await client.GetAsync(address, CancellationToken.None);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal(3, handler.Requests);
+        Assert.NotNull(resilience);
+        Assert.Equal(TimeSpan.FromSeconds(10), resilience.AttemptTimeout.Timeout);
+        Assert.Equal(TimeSpan.FromSeconds(25), resilience.TotalRequestTimeout.Timeout);
+        Assert.Equal(2, resilience.Retry.MaxRetryAttempts);
+        Assert.Equal(TimeSpan.FromSeconds(60), resilience.CircuitBreaker.SamplingDuration);
     }
 
     [Fact]
@@ -150,4 +170,25 @@ public class DrandRandomnessBuilderExtensionsTests
     }
 
     #endregion
+
+    /// <summary>
+    /// A primary handler that counts its requests and answers each with 503.
+    /// </summary>
+    private sealed class CountingHandler : HttpMessageHandler
+    {
+        /// <summary>
+        /// Gets the number of requests the handler has received.
+        /// </summary>
+        public int Requests { get; private set; }
+
+        /// <inheritdoc />
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken
+        )
+        {
+            Requests++;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+        }
+    }
 }
