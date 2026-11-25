@@ -143,11 +143,11 @@ internal sealed class CurbyBeacon : IRandomnessBeacon, IDisposable
         }
     }
 
-    private static bool IsMalformed(Exception exception, CancellationToken cancellationToken) =>
+    internal static bool IsMalformed(Exception exception, CancellationToken cancellationToken) =>
         exception is not (BeaconException or ObjectDisposedException or OperationCanceledException)
         && !IsOutage(exception, cancellationToken);
 
-    private static bool IsOutage(Exception exception, CancellationToken cancellationToken) =>
+    internal static bool IsOutage(Exception exception, CancellationToken cancellationToken) =>
         exception is not BeaconException
         && (
             exception is HttpRequestException or TimeoutException or IOException
