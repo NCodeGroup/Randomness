@@ -20,37 +20,10 @@ namespace NCode.Randomness;
 /// </remarks>
 public sealed class RandomnessHost : IAsyncDisposable
 {
+    /// <summary>
+    /// Gets how long stopping the hosted services may take: the generic host's default shutdown timeout.
+    /// </summary>
     private static TimeSpan ShutdownTimeout { get; } = TimeSpan.FromSeconds(30);
-
-    private int _disposed;
-
-    private RandomnessHost(ServiceProvider provider, ImmutableArray<IHostedService> hostedServices)
-    {
-        Provider = provider;
-        HostedServices = hostedServices;
-        SecureRandom = provider.GetRequiredService<ISecureRandom>();
-        BeaconStatus = provider.GetRequiredService<IBeaconStatus>();
-        VerifiableRandomFactory = provider.GetRequiredService<IVerifiableRandomFactory>();
-    }
-
-    private ServiceProvider Provider { get; }
-
-    private ImmutableArray<IHostedService> HostedServices { get; }
-
-    /// <summary>
-    /// Gets the secure generator.
-    /// </summary>
-    public ISecureRandom SecureRandom { get; }
-
-    /// <summary>
-    /// Gets the health of the beacon collection.
-    /// </summary>
-    public IBeaconStatus BeaconStatus { get; }
-
-    /// <summary>
-    /// Gets the factory for reproducible draws.
-    /// </summary>
-    public IVerifiableRandomFactory VerifiableRandomFactory { get; }
 
     /// <summary>
     /// Creates a builder with default options. Add beacons to it, such as with <c>AddCurbyBeacon()</c>; with none,
@@ -119,22 +92,37 @@ public sealed class RandomnessHost : IAsyncDisposable
         }
         catch (Exception startFailure)
         {
-            await CleanUpAfterFailedStartAsync(provider, started, startFailure)
+            using var timeout = new CancellationTokenSource(ShutdownTimeout);
+            await CleanUpAfterFailedStartAsync(provider, started, startFailure, timeout.Token)
                 .ConfigureAwait(false);
             throw;
         }
     }
 
-    // The start failure is the cause the caller needs, so a stop failure must not hide it or leave the provider alive.
+    /// <summary>
+    /// Stops the services a failed start started and disposes the provider.
+    /// </summary>
+    /// <remarks>
+    /// The start failure is the cause the caller needs, so a stop failure never hides it, and the provider is
+    /// disposed whatever fails.
+    /// </remarks>
+    /// <param name="provider">The provider to dispose.</param>
+    /// <param name="started">The services the start started, in start order.</param>
+    /// <param name="startFailure">The failure that ended the start.</param>
+    /// <param name="cancellationToken">Bounds how long the stops may take.</param>
+    /// <exception cref="AggregateException">
+    /// A service failed to stop; it holds the start failure first, then the stop failures.
+    /// </exception>
     private static async ValueTask CleanUpAfterFailedStartAsync(
         ServiceProvider provider,
         IReadOnlyList<IHostedService> started,
-        Exception startFailure
+        Exception startFailure,
+        CancellationToken cancellationToken
     )
     {
         try
         {
-            await StopAsync(started).ConfigureAwait(false);
+            await StopAsync(started, cancellationToken).ConfigureAwait(false);
         }
         catch (AggregateException stopFailure)
         {
@@ -145,6 +133,80 @@ public sealed class RandomnessHost : IAsyncDisposable
             await provider.DisposeAsync().ConfigureAwait(false);
         }
     }
+
+    /// <summary>
+    /// Stops the services in reverse order, calling every one even when an earlier stop throws.
+    /// </summary>
+    /// <param name="services">The services to stop, in start order.</param>
+    /// <param name="cancellationToken">Bounds how long the stops may take.</param>
+    /// <exception cref="AggregateException">One or more services failed to stop; it holds every failure.</exception>
+    private static async ValueTask StopAsync(
+        IReadOnlyList<IHostedService> services,
+        CancellationToken cancellationToken
+    )
+    {
+        List<Exception>? failures = null;
+        for (var index = services.Count - 1; index >= 0; index--)
+        {
+            try
+            {
+                await services[index].StopAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                (failures ??= []).Add(exception);
+            }
+        }
+
+        if (failures is not null)
+        {
+            throw new AggregateException(failures);
+        }
+    }
+
+    /// <summary>
+    /// 1 once <see cref="DisposeAsync"/> has run; set with <see cref="Interlocked"/>.
+    /// </summary>
+    private int _disposed;
+
+    /// <summary>
+    /// Creates the host over a started provider and the hosted services it started, in start order.
+    /// </summary>
+    /// <param name="provider">The provider the services were resolved from.</param>
+    /// <param name="hostedServices">The started services, in start order.</param>
+    private RandomnessHost(ServiceProvider provider, ImmutableArray<IHostedService> hostedServices)
+    {
+        Provider = provider;
+        HostedServices = hostedServices;
+        SecureRandom = provider.GetRequiredService<ISecureRandom>();
+        BeaconStatus = provider.GetRequiredService<IBeaconStatus>();
+        VerifiableRandomFactory = provider.GetRequiredService<IVerifiableRandomFactory>();
+    }
+
+    /// <summary>
+    /// Gets the provider that owns the generator and the beacon services.
+    /// </summary>
+    private ServiceProvider Provider { get; }
+
+    /// <summary>
+    /// Gets the started hosted services, in start order.
+    /// </summary>
+    private ImmutableArray<IHostedService> HostedServices { get; }
+
+    /// <summary>
+    /// Gets the secure generator.
+    /// </summary>
+    public ISecureRandom SecureRandom { get; }
+
+    /// <summary>
+    /// Gets the health of the beacon collection.
+    /// </summary>
+    public IBeaconStatus BeaconStatus { get; }
+
+    /// <summary>
+    /// Gets the factory for reproducible draws.
+    /// </summary>
+    public IVerifiableRandomFactory VerifiableRandomFactory { get; }
 
     /// <summary>
     /// Stops the beacon collection, waiting up to 30 seconds, and disposes the generator, zeroing its state. A second
@@ -160,35 +222,14 @@ public sealed class RandomnessHost : IAsyncDisposable
             return;
         }
 
+        using var timeout = new CancellationTokenSource(ShutdownTimeout);
         try
         {
-            await StopAsync(HostedServices).ConfigureAwait(false);
+            await StopAsync(HostedServices, timeout.Token).ConfigureAwait(false);
         }
         finally
         {
             await Provider.DisposeAsync().ConfigureAwait(false);
-        }
-    }
-
-    private static async ValueTask StopAsync(IReadOnlyList<IHostedService> services)
-    {
-        using var timeout = new CancellationTokenSource(ShutdownTimeout);
-        var failures = new List<Exception>();
-        for (var index = services.Count - 1; index >= 0; index--)
-        {
-            try
-            {
-                await services[index].StopAsync(timeout.Token).ConfigureAwait(false);
-            }
-            catch (Exception exception)
-            {
-                failures.Add(exception);
-            }
-        }
-
-        if (failures.Count != 0)
-        {
-            throw new AggregateException(failures);
         }
     }
 }

@@ -12,8 +12,14 @@ namespace NCode.Randomness;
 /// </summary>
 public sealed class RandomnessHostBuilder : IRandomnessBuilder
 {
+    /// <summary>
+    /// 1 once <see cref="BuildAsync"/> has run; set with <see cref="Interlocked"/>.
+    /// </summary>
     private int _built;
 
+    /// <summary>
+    /// Creates an empty builder; <see cref="RandomnessHost.CreateBuilder()"/> adds the randomness services to it.
+    /// </summary>
     internal RandomnessHostBuilder() { }
 
     /// <summary>
@@ -35,7 +41,8 @@ public sealed class RandomnessHostBuilder : IRandomnessBuilder
     /// </exception>
     /// <exception cref="OptionsValidationException">A setting is invalid.</exception>
     /// <exception cref="AggregateException">
-    /// A hosted service failed to start and one it had started failed to stop; the start failure comes first.
+    /// A registered service can't be constructed, or a hosted service failed to start and one it had started failed to
+    /// stop; for a failed start, the start failure comes first.
     /// </exception>
     public async ValueTask<RandomnessHost> BuildAsync(CancellationToken cancellationToken)
     {
