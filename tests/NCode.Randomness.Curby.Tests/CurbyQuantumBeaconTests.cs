@@ -148,7 +148,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         ServeBuilt(builder);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -167,7 +167,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Func<CancellationToken, ValueTask<BeaconPulse>> fetch = token =>
             beacon.GetPulseAsync(builder.Round, token);
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             fetch,
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -190,7 +190,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Func<CancellationToken, ValueTask<BeaconPulse>> fetch = token =>
             beacon.GetPulseAsync(builder.Round, token);
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             fetch,
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -216,7 +216,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Func<CancellationToken, ValueTask<BeaconPulse>> fetch = token =>
             beacon.GetPulseAsync(builder.Round, token);
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             fetch,
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -263,7 +263,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         ServeBuilt(builder);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -280,7 +280,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         ServeBuilt(builder);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -301,7 +301,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         ServeBuilt(builder);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -323,7 +323,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Options.BellChainId = builder.Seed.ChainCid.ToString();
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -344,7 +344,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Server.Serve(roundPath, errorRoundJson);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.PulseNotFound,
@@ -364,7 +364,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Server.Serve(roundPath, $"[{round.Request.Json},{round.Precommit.Json}]");
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.PulseNotFound,
@@ -383,7 +383,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Server.Serve(roundPath, "[]");
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.PulseNotFound,
@@ -402,7 +402,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Server.Serve(nextRoundPath, round.RoundJson);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round + 1, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -423,7 +423,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         ServeBuilt(builder, serveParameters: false);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -442,7 +442,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Server.Serve(bellPulsePath, round.BellPulses[0].Json);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.InvalidPulse,
@@ -460,7 +460,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Server.Answer("/chains/" + builder.Quantum.ChainCid, HttpStatusCode.ServiceUnavailable);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.Unavailable,
@@ -480,7 +480,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Server.Fail(roundPath, corrupt);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(builder.Round, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.Unavailable,
@@ -495,7 +495,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         var beacon = Create();
 
-        await TwineTestServices.AssertBeaconErrorAsync(
+        await BeaconAssert.AssertBeaconErrorAsync(
             token => beacon.GetPulseAsync(-1, token),
             CurbyDefaults.QuantumBeaconName,
             BeaconError.PulseNotFound,
@@ -574,7 +574,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Server.Serve(LatestPath, errorRoundJson);
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             beacon.GetLatestPulseAsync,
             CurbyDefaults.QuantumBeaconName,
             BeaconError.Unavailable,
@@ -592,7 +592,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         Server.Serve(LatestPath, "[]");
         var beacon = Create();
 
-        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
             beacon.GetLatestPulseAsync,
             CurbyDefaults.QuantumBeaconName,
             BeaconError.Unavailable,

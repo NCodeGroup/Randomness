@@ -16,6 +16,18 @@ public class TwineVerificationTests
 
     private static DateTimeOffset Start { get; } = new(2026, 11, 25, 0, 0, 0, TimeSpan.Zero);
 
+    internal static TwineDocument Document(string json) =>
+        TwineDocument.Parse(JsonElement.Parse(json));
+
+    internal static TwineChain VerifyCurbyChain()
+    {
+        var chainDocument = Document(CurbyFixtures.Chain);
+        return TwineChain.Verify(chainDocument, Pinned, RngFamily);
+    }
+
+    private static List<JsonElement> RoundPulses() =>
+        [.. JsonElement.Parse(CurbyQuantumFixtures.RoundJson).EnumerateArray()];
+
     #region CURBy Fixture Tests
 
     [Fact]
@@ -546,16 +558,4 @@ public class TwineVerificationTests
     }
 
     #endregion
-
-    internal static TwineDocument Document(string json) =>
-        TwineDocument.Parse(JsonElement.Parse(json));
-
-    private static List<JsonElement> RoundPulses() =>
-        [.. JsonElement.Parse(CurbyQuantumFixtures.RoundJson).EnumerateArray()];
-
-    private static TwineChain VerifyCurbyChain()
-    {
-        var chainDocument = Document(CurbyFixtures.Chain);
-        return TwineChain.Verify(chainDocument, Pinned, RngFamily);
-    }
 }

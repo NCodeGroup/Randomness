@@ -14,13 +14,6 @@ public class TwineSignedPulseTests
 
     private static DateTimeOffset Start { get; } = new(2026, 11, 25, 0, 0, 0, TimeSpan.Zero);
 
-    private static TwineChain VerifyCurbyChain()
-    {
-        var document = TwineVerificationTests.Document(CurbyFixtures.Chain);
-        var chainCid = Cid.Parse(CurbyFixtures.ChainId);
-        return TwineChain.Verify(document, chainCid, "rng");
-    }
-
     private static TwineChain VerifyBuilderChain(TwineBuilder builder)
     {
         var document = TwineVerificationTests.Document(builder.ChainJson);
@@ -32,7 +25,7 @@ public class TwineSignedPulseTests
     [Fact]
     public void Verify_WithCurbyPulse_ReadsLinksMixinsAndPayload()
     {
-        using var chain = VerifyCurbyChain();
+        using var chain = TwineVerificationTests.VerifyCurbyChain();
         var quantum = Cid.Parse(CurbyQuantumFixtures.ChainId);
         var pulseJson = CurbyFixtures.Pulse(1620423);
         var document = TwineVerificationTests.Document(pulseJson);
@@ -58,7 +51,7 @@ public class TwineSignedPulseTests
     [Fact]
     public void Verify_WithPulseOfAnotherChain_Throws()
     {
-        using var curby = VerifyCurbyChain();
+        using var curby = TwineVerificationTests.VerifyCurbyChain();
         using var builder = new TwineBuilder();
         var pulse = builder.Pulses(1, Start)[0];
         var document = TwineVerificationTests.Document(pulse.Json);
@@ -118,7 +111,7 @@ public class TwineSignedPulseTests
     [Fact]
     public void VerifyPrecededBy_WithConsecutiveCurbyPulses_Succeeds()
     {
-        using var chain = VerifyCurbyChain();
+        using var chain = TwineVerificationTests.VerifyCurbyChain();
         var firstJson = CurbyFixtures.Pulse(1620422);
         var firstDocument = TwineVerificationTests.Document(firstJson);
         var secondJson = CurbyFixtures.Pulse(1620423);
@@ -134,7 +127,7 @@ public class TwineSignedPulseTests
     [Fact]
     public void VerifyPrecededBy_WithAPulseTwoRoundsEarlier_Throws()
     {
-        using var chain = VerifyCurbyChain();
+        using var chain = TwineVerificationTests.VerifyCurbyChain();
         var earlierJson = CurbyFixtures.Pulse(1620421);
         var earlierDocument = TwineVerificationTests.Document(earlierJson);
         var pulseJson = CurbyFixtures.Pulse(1620423);

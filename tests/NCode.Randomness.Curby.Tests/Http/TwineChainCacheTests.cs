@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Net;
+using Microsoft.Extensions.Options;
 using NCode.Randomness.Curby.Http;
 using NCode.Randomness.Curby.Tests.Fixtures;
 using NCode.Randomness.Curby.Tests.TestTwine;
@@ -20,7 +21,7 @@ public sealed class TwineChainCacheTests : IDisposable
     public TwineChainCacheTests()
     {
         var curbyOptions = new CurbyBeaconOptions();
-        var options = Microsoft.Extensions.Options.Options.Create(curbyOptions);
+        var options = Options.Create(curbyOptions);
         var api = new TwineApi(Server, options);
         Cache = new TwineChainCache(api);
     }
