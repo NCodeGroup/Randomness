@@ -8,7 +8,8 @@ namespace NCode.Randomness.Curby.Http;
 
 /// <summary>
 /// Fetches and verifies Twine chains once, keyed by CID and expected family. Both CURBy beacons share one instance.
-/// Chains come only from pinned CIDs or CIDs in signed pulses, so the cache stays small.
+/// Chains come only from pinned CIDs or CIDs in signed pulses, so the cache stays small. The cache has one gate per
+/// chain, so one beacon's slow chain fetch never delays another's (ADR-1002).
 /// </summary>
 internal sealed class TwineChainCache(TwineApi api) : IDisposable
 {
@@ -16,7 +17,7 @@ internal sealed class TwineChainCache(TwineApi api) : IDisposable
 
     private ConcurrentDictionary<(Cid, string?), TwineChain> Chains { get; } = new();
 
-    private SemaphoreSlim Gate { get; } = new(1, 1);
+    private ConcurrentDictionary<(Cid, string?), SemaphoreSlim> Gates { get; } = new();
 
     /// <summary>
     /// Returns the verified chain with the CID <paramref name="cid"/>, fetching it on first use.
@@ -39,7 +40,8 @@ internal sealed class TwineChainCache(TwineApi api) : IDisposable
             return cached;
         }
 
-        await Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var gate = Gates.GetOrAdd(key, static _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             if (Chains.TryGetValue(key, out var raced))
@@ -56,7 +58,7 @@ internal sealed class TwineChainCache(TwineApi api) : IDisposable
         }
         finally
         {
-            Gate.Release();
+            gate.Release();
         }
     }
 
@@ -68,6 +70,9 @@ internal sealed class TwineChainCache(TwineApi api) : IDisposable
             chain.Dispose();
         }
 
-        Gate.Dispose();
+        foreach (var gate in Gates.Values)
+        {
+            gate.Dispose();
+        }
     }
 }
