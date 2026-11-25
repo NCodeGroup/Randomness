@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 namespace NCode.Randomness.Curby.Twine;
 
 /// <summary>
-/// SHA3-512: the platform's implementation where the operating system provides one, and the managed
+/// SHA3-512 and SHAKE256: the platform's implementation where the operating system provides one, and the managed
 /// <see cref="Keccak"/> sponge elsewhere, such as on Windows before Windows 11 24H2 and Windows Server 2025.
 /// </summary>
 internal static class Sha3
@@ -22,6 +22,18 @@ internal static class Sha3
         else
         {
             Keccak.Sha3_512(source, destination);
+        }
+    }
+
+    public static void Shake256(ReadOnlySpan<byte> source, Span<byte> destination)
+    {
+        if (System.Security.Cryptography.Shake256.IsSupported)
+        {
+            System.Security.Cryptography.Shake256.HashData(source, destination);
+        }
+        else
+        {
+            Keccak.Shake256(source, destination);
         }
     }
 
