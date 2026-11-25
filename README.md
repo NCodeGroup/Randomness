@@ -146,9 +146,9 @@ var winner = entrants[draw.NextInteger(0, entrants.Length)];
 ```
 
 [docs/draws.md](docs/draws.md) gives the procedure, the exact algorithm, and a short reference implementation in
-Python that reproduces any draw without .NET. To check a published CURBy draw without the network,
-`CurbyPulseVerifier` verifies its saved chain, pulse and predecessor documents against the pinned chain and returns the
-pulse to derive the draw from.
+Python that reproduces any draw without .NET. To check a published draw without the network, the beacon adapter's
+verifier, `CurbyPulseVerifier`, `CurbyQuantumRoundVerifier`, `NistPulseVerifier` or `DrandRoundVerifier`, verifies the
+documents the beacon served for the round against its pinned anchor and returns the pulse to derive the draw from.
 
 ## Security Model
 

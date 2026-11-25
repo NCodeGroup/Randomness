@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <Description>The drand adapter for NCode.Randomness: fetches rounds of the League of Entropy's quicknet chain and verifies their BLS12-381 threshold signatures against the pinned group public key before any byte is used.</Description>
+    <Description>The drand adapter for NCode.Randomness: fetches rounds of the League of Entropy's quicknet chain, or takes saved round documents offline, and verifies their BLS12-381 threshold signatures against the pinned group public key before any byte is used.</Description>
     <PackageTags>random randomness-beacon drand league-of-entropy bls12-381 cryptography</PackageTags>
   </PropertyGroup>
   <ItemGroup>

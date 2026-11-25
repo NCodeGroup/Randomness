@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <Description>The CURBy (CU Randomness Beacon, University of Colorado Boulder) adapter for NCode.Randomness: fetches pulses of the CURBy-RNG Twine chain, or takes saved pulse documents offline, and verifies their content identifiers, RS256 signatures and precommitments against a pinned chain before any byte is used.</Description>
+    <Description>The CURBy (CU Randomness Beacon, University of Colorado Boulder) adapter for NCode.Randomness: fetches pulses of the CURBy-RNG Twine chain and rounds of the CURBy-Q chain, or takes their saved documents offline, and verifies their content identifiers, RS256 signatures and precommitments against pinned chains before any byte is used.</Description>
     <PackageTags>random randomness-beacon curby twine quantum bell-test cryptography</PackageTags>
   </PropertyGroup>
   <ItemGroup>
