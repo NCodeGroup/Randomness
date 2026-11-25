@@ -17,26 +17,6 @@ internal sealed record NistPulseBuilder
 {
     private static readonly DateTimeOffset Epoch = new(2026, 11, 25, 12, 0, 0, TimeSpan.Zero);
 
-    public long ChainIndex { get; init; } = 2;
-
-    public long PulseIndex { get; init; } = 1;
-
-    public string Version { get; init; } = "2.0";
-
-    public uint CipherSuite { get; init; }
-
-    public DateTimeOffset Timestamp { get; init; } = Epoch;
-
-    public byte[] LocalRandomValue { get; init; } = new byte[64];
-
-    public byte[] Previous { get; init; } = new byte[64];
-
-    public byte[] Precommitment { get; init; } = new byte[64];
-
-    public bool IncludeExternal { get; init; } = true;
-
-    public Action<JsonObject>? AfterSigning { get; init; }
-
     public static NistPulseBuilder For(long index)
     {
         var next = LocalRandom(index + 1);
@@ -62,6 +42,35 @@ internal sealed record NistPulseBuilder
         var node = JsonNode.Parse(json);
         return Convert.FromHexString((string?)node?["pulse"]?["outputValue"] ?? string.Empty);
     }
+
+    private static JsonElement Parse(JsonNode node)
+    {
+        var json = node.ToJsonString();
+        return JsonElement.Parse(
+            json,
+            new JsonDocumentOptions { MaxDepth = 16, AllowDuplicateProperties = false }
+        );
+    }
+
+    public long ChainIndex { get; init; } = 2;
+
+    public long PulseIndex { get; init; } = 1;
+
+    public string Version { get; init; } = "2.0";
+
+    public uint CipherSuite { get; init; }
+
+    public DateTimeOffset Timestamp { get; init; } = Epoch;
+
+    public byte[] LocalRandomValue { get; init; } = new byte[64];
+
+    public byte[] Previous { get; init; } = new byte[64];
+
+    public byte[] Precommitment { get; init; } = new byte[64];
+
+    public bool IncludeExternal { get; init; } = true;
+
+    public Action<JsonObject>? AfterSigning { get; init; }
 
     public string Build(NistTestSigner signer)
     {
@@ -115,14 +124,5 @@ internal sealed record NistPulseBuilder
 
         AfterSigning?.Invoke(pulse);
         return new JsonObject { ["pulse"] = pulse }.ToJsonString();
-    }
-
-    private static JsonElement Parse(JsonNode node)
-    {
-        var json = node.ToJsonString();
-        return JsonElement.Parse(
-            json,
-            new JsonDocumentOptions { MaxDepth = 16, AllowDuplicateProperties = false }
-        );
     }
 }

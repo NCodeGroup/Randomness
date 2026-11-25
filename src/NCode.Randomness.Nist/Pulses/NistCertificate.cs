@@ -20,33 +20,25 @@ internal sealed class NistCertificate : IDisposable
     private static UTF8Encoding Utf8 { get; } =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
-    private NistCertificate(byte[] id, RSA key, DateTimeOffset notBefore, DateTimeOffset notAfter)
+    /// <summary>
+    /// Loads an X.509 certificate from its DER encoding.
+    /// </summary>
+    /// <param name="der">The DER encoding of the certificate.</param>
+    /// <returns>The certificate, which the caller disposes.</returns>
+    /// <exception cref="NistFormatException">The bytes are not a valid X.509 certificate.</exception>
+    private static X509Certificate2 Load(byte[] der)
     {
-        Id = id;
-        Key = key;
-        NotBefore = notBefore;
-        NotAfter = notAfter;
+        try
+        {
+            return X509CertificateLoader.LoadCertificate(der);
+        }
+        catch (CryptographicException exception)
+        {
+            throw new NistFormatException(
+                $"The certificate is not valid X.509: {exception.Message}"
+            );
+        }
     }
-
-    /// <summary>
-    /// Gets the certificate's identifier: the SHA-512 of its DER encoding.
-    /// </summary>
-    public byte[] Id { get; }
-
-    /// <summary>
-    /// Gets the certificate's RSA public key, which this instance owns.
-    /// </summary>
-    public RSA Key { get; }
-
-    /// <summary>
-    /// Gets the start of the certificate's validity, in UTC.
-    /// </summary>
-    public DateTimeOffset NotBefore { get; }
-
-    /// <summary>
-    /// Gets the end of the certificate's validity, in UTC.
-    /// </summary>
-    public DateTimeOffset NotAfter { get; }
 
     /// <summary>
     /// Parses a PEM certificate and checks that it hashes to <paramref name="expectedId"/>.
@@ -96,42 +88,56 @@ internal sealed class NistCertificate : IDisposable
             );
         }
 
-        X509Certificate2 certificate;
-        try
+        using var certificate = Load(der);
+        var key = certificate.GetRSAPublicKey();
+        if (key is null)
         {
-            certificate = X509CertificateLoader.LoadCertificate(der);
+            throw new NistFormatException("The certificate holds no RSA key.");
         }
-        catch (CryptographicException exception)
+
+        if (key.KeySize < MinimumKeyBits)
         {
+            var bits = key.KeySize;
+            key.Dispose();
             throw new NistFormatException(
-                $"The certificate is not valid X.509: {exception.Message}"
+                $"The certificate's RSA key has {bits} bits; at least {MinimumKeyBits} are required."
             );
         }
 
-        using (certificate)
-        {
-            var key = certificate.GetRSAPublicKey();
-            if (key is null)
-            {
-                throw new NistFormatException("The certificate holds no RSA key.");
-            }
-
-            if (key.KeySize < MinimumKeyBits)
-            {
-                var bits = key.KeySize;
-                key.Dispose();
-                throw new NistFormatException(
-                    $"The certificate's RSA key has {bits} bits; at least {MinimumKeyBits} are required."
-                );
-            }
-
-            var notBeforeUtc = certificate.NotBefore.ToUniversalTime();
-            var notBefore = new DateTimeOffset(notBeforeUtc);
-            var notAfterUtc = certificate.NotAfter.ToUniversalTime();
-            var notAfter = new DateTimeOffset(notAfterUtc);
-            return new NistCertificate(id, key, notBefore, notAfter);
-        }
+        var notBeforeUtc = certificate.NotBefore.ToUniversalTime();
+        var notBefore = new DateTimeOffset(notBeforeUtc);
+        var notAfterUtc = certificate.NotAfter.ToUniversalTime();
+        var notAfter = new DateTimeOffset(notAfterUtc);
+        return new NistCertificate(id, key, notBefore, notAfter);
     }
+
+    private NistCertificate(byte[] id, RSA key, DateTimeOffset notBefore, DateTimeOffset notAfter)
+    {
+        Id = id;
+        Key = key;
+        NotBefore = notBefore;
+        NotAfter = notAfter;
+    }
+
+    /// <summary>
+    /// Gets the certificate's identifier: the SHA-512 of its DER encoding.
+    /// </summary>
+    public byte[] Id { get; }
+
+    /// <summary>
+    /// Gets the certificate's RSA public key, which this instance owns.
+    /// </summary>
+    public RSA Key { get; }
+
+    /// <summary>
+    /// Gets the start of the certificate's validity, in UTC.
+    /// </summary>
+    public DateTimeOffset NotBefore { get; }
+
+    /// <summary>
+    /// Gets the end of the certificate's validity, in UTC.
+    /// </summary>
+    public DateTimeOffset NotAfter { get; }
 
     /// <summary>
     /// Disposes the certificate's key.

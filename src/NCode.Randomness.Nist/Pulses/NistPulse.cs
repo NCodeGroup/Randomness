@@ -26,95 +26,6 @@ internal sealed class NistPulse
     private static UTF8Encoding Utf8 { get; } =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
-    private NistPulse(
-        string version,
-        uint cipherSuite,
-        byte[] certificateId,
-        long chainIndex,
-        long pulseIndex,
-        DateTimeOffset timestamp,
-        byte[] localRandomValue,
-        byte[] previous,
-        byte[] precommitment,
-        byte[] signature,
-        byte[] output,
-        byte[] signedBytes
-    )
-    {
-        Version = version;
-        CipherSuite = cipherSuite;
-        CertificateId = certificateId;
-        ChainIndex = chainIndex;
-        PulseIndex = pulseIndex;
-        Timestamp = timestamp;
-        LocalRandomValue = localRandomValue;
-        Previous = previous;
-        Precommitment = precommitment;
-        Signature = signature;
-        Output = output;
-        SignedBytes = signedBytes;
-    }
-
-    /// <summary>
-    /// Gets the pulse format version, such as <c>2.0</c>.
-    /// </summary>
-    public string Version { get; }
-
-    /// <summary>
-    /// Gets the cipher suite that signed the pulse and hashed its output.
-    /// </summary>
-    public uint CipherSuite { get; }
-
-    /// <summary>
-    /// Gets the identifier of the certificate that signed the pulse: the SHA-512 of its DER encoding.
-    /// </summary>
-    public byte[] CertificateId { get; }
-
-    /// <summary>
-    /// Gets the index of the chain the pulse belongs to.
-    /// </summary>
-    public long ChainIndex { get; }
-
-    /// <summary>
-    /// Gets the index of the pulse within its chain.
-    /// </summary>
-    public long PulseIndex { get; }
-
-    /// <summary>
-    /// Gets the time the pulse was issued, in UTC.
-    /// </summary>
-    public DateTimeOffset Timestamp { get; }
-
-    /// <summary>
-    /// Gets the 64-byte random value the beacon committed to in the previous pulse.
-    /// </summary>
-    public byte[] LocalRandomValue { get; }
-
-    /// <summary>
-    /// Gets the output value of the previous pulse, as this pulse lists it.
-    /// </summary>
-    public byte[] Previous { get; }
-
-    /// <summary>
-    /// Gets the hash the beacon commits the next pulse's local random value to.
-    /// </summary>
-    public byte[] Precommitment { get; }
-
-    /// <summary>
-    /// Gets the signature over <see cref="SignedBytes"/>.
-    /// </summary>
-    public byte[] Signature { get; }
-
-    /// <summary>
-    /// Gets the 64-byte output value the pulse claims: the SHA-512 of the signed bytes followed by the signature.
-    /// </summary>
-    public byte[] Output { get; }
-
-    /// <summary>
-    /// Gets the bytes the signature covers, rebuilt from the signed members in the order the beacon signs them.
-    /// </summary>
-    public byte[] SignedBytes { get; }
-
     /// <summary>
     /// Parses a pulse document and rebuilds the bytes its signature covers.
     /// </summary>
@@ -174,126 +85,6 @@ internal sealed class NistPulse
             output,
             signedBytes
         );
-    }
-
-    /// <summary>
-    /// Checks that the pulse is a version 2.0, cipher suite 0 pulse that <paramref name="certificate"/> signed while
-    /// it was valid: the signature verifies over <see cref="SignedBytes"/> and the output is the SHA-512 of the signed
-    /// bytes followed by the signature.
-    /// </summary>
-    /// <param name="certificate">The pinned certificate the pulse names.</param>
-    /// <exception cref="NistFormatException">The pulse does not verify.</exception>
-    public void Verify(NistCertificate certificate)
-    {
-        ArgumentNullException.ThrowIfNull(certificate);
-        if (!string.Equals(Version, SupportedVersion, StringComparison.Ordinal))
-        {
-            throw new NistFormatException(
-                $"The NIST pulse version '{Version}' is not supported; only '{SupportedVersion}' is."
-            );
-        }
-
-        if (CipherSuite != SupportedCipherSuite)
-        {
-            throw new NistFormatException(
-                $"Cipher suite {CipherSuite} is not supported; only {SupportedCipherSuite} (RSA PKCS #1 v1.5 with SHA-512) is."
-            );
-        }
-
-        if (!CryptographicOperations.FixedTimeEquals(CertificateId, certificate.Id))
-        {
-            throw new NistFormatException(
-                $"Pulse {PulseIndex} names another certificate than the one pinned for it."
-            );
-        }
-
-        if (Timestamp < certificate.NotBefore || Timestamp > certificate.NotAfter)
-        {
-            throw new NistFormatException(
-                $"Pulse {PulseIndex} is dated outside the validity of its certificate."
-            );
-        }
-
-        var expectedLength = certificate.Key.KeySize / 8;
-        if (Signature.Length != expectedLength)
-        {
-            throw new NistFormatException(
-                $"The signature has {Signature.Length} bytes, not {expectedLength}."
-            );
-        }
-
-        bool verified;
-        try
-        {
-            verified = certificate.Key.VerifyData(
-                SignedBytes,
-                Signature,
-                HashAlgorithmName.SHA512,
-                RSASignaturePadding.Pkcs1
-            );
-        }
-        catch (CryptographicException)
-        {
-            verified = false;
-        }
-
-        if (!verified)
-        {
-            throw new NistFormatException($"The signature of pulse {PulseIndex} does not verify.");
-        }
-
-        using var outputHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA512);
-        outputHash.AppendData(SignedBytes);
-        outputHash.AppendData(Signature);
-        Span<byte> hash = stackalloc byte[HashLength];
-        outputHash.GetHashAndReset(hash);
-        if (!CryptographicOperations.FixedTimeEquals(hash, Output))
-        {
-            throw new NistFormatException(
-                $"The output value of pulse {PulseIndex} is not the hash of its signed bytes and signature."
-            );
-        }
-    }
-
-    /// <summary>
-    /// Checks that this pulse directly follows <paramref name="predecessor"/> on the same chain, lists its output
-    /// as the previous value, and that its local random value is the one <paramref name="predecessor"/> committed
-    /// to: SHA-512(local random value) equals the predecessor's precommitment. The beacon therefore fixed this
-    /// pulse's random value a pulse before it published the pulse.
-    /// </summary>
-    /// <param name="predecessor">The verified pulse before this one.</param>
-    /// <exception cref="NistFormatException">This pulse does not follow <paramref name="predecessor"/>.</exception>
-    public void VerifyFollows(NistPulse predecessor)
-    {
-        ArgumentNullException.ThrowIfNull(predecessor);
-        if (predecessor.ChainIndex != ChainIndex || predecessor.PulseIndex != PulseIndex - 1)
-        {
-            throw new NistFormatException(
-                $"Pulse {predecessor.PulseIndex} of chain {predecessor.ChainIndex} does not precede pulse {PulseIndex} of chain {ChainIndex}."
-            );
-        }
-
-        if (predecessor.Timestamp >= Timestamp)
-        {
-            throw new NistFormatException(
-                $"Pulse {predecessor.PulseIndex} is not earlier than pulse {PulseIndex}."
-            );
-        }
-
-        if (!CryptographicOperations.FixedTimeEquals(Previous, predecessor.Output))
-        {
-            throw new NistFormatException(
-                $"Pulse {PulseIndex} does not chain to the output value of pulse {predecessor.PulseIndex}."
-            );
-        }
-
-        var localRandomHash = SHA512.HashData(LocalRandomValue);
-        if (!CryptographicOperations.FixedTimeEquals(localRandomHash, predecessor.Precommitment))
-        {
-            throw new NistFormatException(
-                $"The local random value of pulse {PulseIndex} does not match the precommitment of pulse {predecessor.PulseIndex}."
-            );
-        }
     }
 
     private static void WriteExternal(ArrayBufferWriter<byte> signed, JsonElement pulse)
@@ -513,5 +304,214 @@ internal sealed class NistPulse
         var span = signed.GetSpan(length);
         var written = Utf8.GetBytes(value, span);
         signed.Advance(written);
+    }
+
+    private NistPulse(
+        string version,
+        uint cipherSuite,
+        byte[] certificateId,
+        long chainIndex,
+        long pulseIndex,
+        DateTimeOffset timestamp,
+        byte[] localRandomValue,
+        byte[] previous,
+        byte[] precommitment,
+        byte[] signature,
+        byte[] output,
+        byte[] signedBytes
+    )
+    {
+        Version = version;
+        CipherSuite = cipherSuite;
+        CertificateId = certificateId;
+        ChainIndex = chainIndex;
+        PulseIndex = pulseIndex;
+        Timestamp = timestamp;
+        LocalRandomValue = localRandomValue;
+        Previous = previous;
+        Precommitment = precommitment;
+        Signature = signature;
+        Output = output;
+        SignedBytes = signedBytes;
+    }
+
+    /// <summary>
+    /// Gets the pulse format version, such as <c>2.0</c>.
+    /// </summary>
+    public string Version { get; }
+
+    /// <summary>
+    /// Gets the cipher suite that signed the pulse and hashed its output.
+    /// </summary>
+    public uint CipherSuite { get; }
+
+    /// <summary>
+    /// Gets the identifier of the certificate that signed the pulse: the SHA-512 of its DER encoding.
+    /// </summary>
+    public byte[] CertificateId { get; }
+
+    /// <summary>
+    /// Gets the index of the chain the pulse belongs to.
+    /// </summary>
+    public long ChainIndex { get; }
+
+    /// <summary>
+    /// Gets the index of the pulse within its chain.
+    /// </summary>
+    public long PulseIndex { get; }
+
+    /// <summary>
+    /// Gets the time the pulse was issued, in UTC.
+    /// </summary>
+    public DateTimeOffset Timestamp { get; }
+
+    /// <summary>
+    /// Gets the 64-byte random value the beacon committed to in the previous pulse.
+    /// </summary>
+    public byte[] LocalRandomValue { get; }
+
+    /// <summary>
+    /// Gets the output value of the previous pulse, as this pulse lists it.
+    /// </summary>
+    public byte[] Previous { get; }
+
+    /// <summary>
+    /// Gets the hash the beacon commits the next pulse's local random value to.
+    /// </summary>
+    public byte[] Precommitment { get; }
+
+    /// <summary>
+    /// Gets the signature over <see cref="SignedBytes"/>.
+    /// </summary>
+    public byte[] Signature { get; }
+
+    /// <summary>
+    /// Gets the 64-byte output value the pulse claims: the SHA-512 of the signed bytes followed by the signature.
+    /// </summary>
+    public byte[] Output { get; }
+
+    /// <summary>
+    /// Gets the bytes the signature covers, rebuilt from the signed members in the order the beacon signs them.
+    /// </summary>
+    public byte[] SignedBytes { get; }
+
+    /// <summary>
+    /// Checks that the pulse is a version 2.0, cipher suite 0 pulse that <paramref name="certificate"/> signed while
+    /// it was valid: the signature verifies over <see cref="SignedBytes"/> and the output is the SHA-512 of the signed
+    /// bytes followed by the signature.
+    /// </summary>
+    /// <param name="certificate">The pinned certificate the pulse names.</param>
+    /// <exception cref="NistFormatException">The pulse does not verify.</exception>
+    public void Verify(NistCertificate certificate)
+    {
+        ArgumentNullException.ThrowIfNull(certificate);
+        if (!string.Equals(Version, SupportedVersion, StringComparison.Ordinal))
+        {
+            throw new NistFormatException(
+                $"The NIST pulse version '{Version}' is not supported; only '{SupportedVersion}' is."
+            );
+        }
+
+        if (CipherSuite != SupportedCipherSuite)
+        {
+            throw new NistFormatException(
+                $"Cipher suite {CipherSuite} is not supported; only {SupportedCipherSuite} (RSA PKCS #1 v1.5 with SHA-512) is."
+            );
+        }
+
+        if (!CryptographicOperations.FixedTimeEquals(CertificateId, certificate.Id))
+        {
+            throw new NistFormatException(
+                $"Pulse {PulseIndex} names another certificate than the one pinned for it."
+            );
+        }
+
+        if (Timestamp < certificate.NotBefore || Timestamp > certificate.NotAfter)
+        {
+            throw new NistFormatException(
+                $"Pulse {PulseIndex} is dated outside the validity of its certificate."
+            );
+        }
+
+        var expectedLength = certificate.Key.KeySize / 8;
+        if (Signature.Length != expectedLength)
+        {
+            throw new NistFormatException(
+                $"The signature has {Signature.Length} bytes, not {expectedLength}."
+            );
+        }
+
+        bool verified;
+        try
+        {
+            verified = certificate.Key.VerifyData(
+                SignedBytes,
+                Signature,
+                HashAlgorithmName.SHA512,
+                RSASignaturePadding.Pkcs1
+            );
+        }
+        catch (CryptographicException)
+        {
+            verified = false;
+        }
+
+        if (!verified)
+        {
+            throw new NistFormatException($"The signature of pulse {PulseIndex} does not verify.");
+        }
+
+        using var outputHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA512);
+        outputHash.AppendData(SignedBytes);
+        outputHash.AppendData(Signature);
+        Span<byte> hash = stackalloc byte[HashLength];
+        outputHash.GetHashAndReset(hash);
+        if (!CryptographicOperations.FixedTimeEquals(hash, Output))
+        {
+            throw new NistFormatException(
+                $"The output value of pulse {PulseIndex} is not the hash of its signed bytes and signature."
+            );
+        }
+    }
+
+    /// <summary>
+    /// Checks that this pulse directly follows <paramref name="predecessor"/> on the same chain, lists its output
+    /// as the previous value, and that its local random value is the one <paramref name="predecessor"/> committed
+    /// to: SHA-512(local random value) equals the predecessor's precommitment. The beacon therefore fixed this
+    /// pulse's random value a pulse before it published the pulse.
+    /// </summary>
+    /// <param name="predecessor">The verified pulse before this one.</param>
+    /// <exception cref="NistFormatException">This pulse does not follow <paramref name="predecessor"/>.</exception>
+    public void VerifyFollows(NistPulse predecessor)
+    {
+        ArgumentNullException.ThrowIfNull(predecessor);
+        if (predecessor.ChainIndex != ChainIndex || predecessor.PulseIndex != PulseIndex - 1)
+        {
+            throw new NistFormatException(
+                $"Pulse {predecessor.PulseIndex} of chain {predecessor.ChainIndex} does not precede pulse {PulseIndex} of chain {ChainIndex}."
+            );
+        }
+
+        if (predecessor.Timestamp >= Timestamp)
+        {
+            throw new NistFormatException(
+                $"Pulse {predecessor.PulseIndex} is not earlier than pulse {PulseIndex}."
+            );
+        }
+
+        if (!CryptographicOperations.FixedTimeEquals(Previous, predecessor.Output))
+        {
+            throw new NistFormatException(
+                $"Pulse {PulseIndex} does not chain to the output value of pulse {predecessor.PulseIndex}."
+            );
+        }
+
+        var localRandomHash = SHA512.HashData(LocalRandomValue);
+        if (!CryptographicOperations.FixedTimeEquals(localRandomHash, predecessor.Precommitment))
+        {
+            throw new NistFormatException(
+                $"The local random value of pulse {PulseIndex} does not match the precommitment of pulse {predecessor.PulseIndex}."
+            );
+        }
     }
 }

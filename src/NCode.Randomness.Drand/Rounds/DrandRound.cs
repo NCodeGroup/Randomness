@@ -24,34 +24,6 @@ internal sealed class DrandRound
     /// </summary>
     internal static ReadOnlySpan<byte> Domain => "BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_"u8;
 
-    private DrandRound(long round, byte[] signature, byte[] randomness, DateTimeOffset timestamp)
-    {
-        Round = round;
-        Signature = signature;
-        Randomness = randomness;
-        Timestamp = timestamp;
-    }
-
-    /// <summary>
-    /// Gets the number of the round.
-    /// </summary>
-    public long Round { get; }
-
-    /// <summary>
-    /// Gets the 48-byte compressed G1 signature of the round.
-    /// </summary>
-    public byte[] Signature { get; }
-
-    /// <summary>
-    /// Gets the 32-byte randomness of the round: the SHA-256 of its signature.
-    /// </summary>
-    public byte[] Randomness { get; }
-
-    /// <summary>
-    /// Gets the time the round is due, in UTC.
-    /// </summary>
-    public DateTimeOffset Timestamp { get; }
-
     /// <summary>
     /// Writes the message the group signs for a round: the SHA-256 of the round number as 8 big-endian bytes.
     /// </summary>
@@ -185,4 +157,32 @@ internal sealed class DrandRound
             return false;
         }
     }
+
+    private DrandRound(long round, byte[] signature, byte[] randomness, DateTimeOffset timestamp)
+    {
+        Round = round;
+        Signature = signature;
+        Randomness = randomness;
+        Timestamp = timestamp;
+    }
+
+    /// <summary>
+    /// Gets the number of the round.
+    /// </summary>
+    public long Round { get; }
+
+    /// <summary>
+    /// Gets the 48-byte compressed G1 signature of the round.
+    /// </summary>
+    public byte[] Signature { get; }
+
+    /// <summary>
+    /// Gets the 32-byte randomness of the round: the SHA-256 of its signature.
+    /// </summary>
+    public byte[] Randomness { get; }
+
+    /// <summary>
+    /// Gets the time the round is due, in UTC.
+    /// </summary>
+    public DateTimeOffset Timestamp { get; }
 }

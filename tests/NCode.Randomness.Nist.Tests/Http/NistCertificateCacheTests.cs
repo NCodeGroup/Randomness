@@ -15,6 +15,8 @@ public sealed class NistCertificateCacheTests : IDisposable
     private static string CurrentRoute { get; } =
         "/beacon/2.0/certificate/" + NistFixtures.CurrentCertificateId;
 
+    private static byte[] Id(string hex) => Convert.FromHexString(hex);
+
     private StubNistServer Server { get; } = new();
 
     private List<IDisposable> Disposables { get; } = [];
@@ -28,8 +30,6 @@ public sealed class NistCertificateCacheTests : IDisposable
 
         Server.Dispose();
     }
-
-    private static byte[] Id(string hex) => Convert.FromHexString(hex);
 
     private void ServeCurrent()
     {

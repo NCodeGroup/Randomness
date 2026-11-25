@@ -70,6 +70,34 @@ public class NistPulseTests
             ? array[int.Parse(segment, CultureInfo.InvariantCulture)]
             : parent?[segment];
 
+    private static NistPulse ParseBuilt(string json)
+    {
+        var document = JsonElement.Parse(
+            json,
+            new JsonDocumentOptions { MaxDepth = 16, AllowDuplicateProperties = false }
+        );
+        return NistPulse.Parse(document);
+    }
+
+    private static (NistPulse Predecessor, NistPulse Pulse) BuiltPair(
+        NistTestSigner signer,
+        Func<NistPulseBuilder, NistPulseBuilder>? alter
+    )
+    {
+        var predecessorJson = NistPulseBuilder.For(10).Build(signer);
+        var previous = NistPulseBuilder.OutputOf(predecessorJson);
+        var builder = NistPulseBuilder.For(11) with { Previous = previous };
+        if (alter is not null)
+        {
+            builder = alter(builder);
+        }
+
+        var predecessor = ParseBuilt(predecessorJson);
+        var pulseJson = builder.Build(signer);
+        var pulse = ParseBuilt(pulseJson);
+        return (predecessor, pulse);
+    }
+
     public static TheoryData<string, string?, string> BrokenDocuments =>
         new()
         {
@@ -480,32 +508,4 @@ public class NistPulseTests
     }
 
     #endregion
-
-    private static NistPulse ParseBuilt(string json)
-    {
-        var document = JsonElement.Parse(
-            json,
-            new JsonDocumentOptions { MaxDepth = 16, AllowDuplicateProperties = false }
-        );
-        return NistPulse.Parse(document);
-    }
-
-    private static (NistPulse Predecessor, NistPulse Pulse) BuiltPair(
-        NistTestSigner signer,
-        Func<NistPulseBuilder, NistPulseBuilder>? alter
-    )
-    {
-        var predecessorJson = NistPulseBuilder.For(10).Build(signer);
-        var previous = NistPulseBuilder.OutputOf(predecessorJson);
-        var builder = NistPulseBuilder.For(11) with { Previous = previous };
-        if (alter is not null)
-        {
-            builder = alter(builder);
-        }
-
-        var predecessor = ParseBuilt(predecessorJson);
-        var pulseJson = builder.Build(signer);
-        var pulse = ParseBuilt(pulseJson);
-        return (predecessor, pulse);
-    }
 }
