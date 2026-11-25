@@ -371,6 +371,107 @@ public class QuantumRoundTests
 
     #endregion
 
+    #region IsBellResponse Tests
+
+    [Fact]
+    public void IsBellResponse_WithCurbyQResponse_ReturnsTrue()
+    {
+        var result = FixtureResult();
+        using var bell = FixtureBellChain();
+        var response = TwineSignedPulse.Verify(
+            TwineVerificationTests.Document(CurbyQuantumFixtures.BellPulse(59313)),
+            bell
+        );
+
+        Assert.True(result.IsBellResponse(response));
+    }
+
+    [Fact]
+    public void IsBellResponse_WithStatusPulse_ReturnsFalse()
+    {
+        using var builder = new QuantumRoundBuilder();
+        var built = builder.Build();
+        var result = BuiltResult(builder, built);
+        var status = BuiltBellPulse(builder, built, 1);
+
+        Assert.False(result.IsBellResponse(status));
+    }
+
+    [Fact]
+    public void IsBellResponse_WithResponseToAnotherRequest_ReturnsFalse()
+    {
+        using var builder = new QuantumRoundBuilder();
+        var result = BuiltResult(builder, builder.Build());
+        using var bell = FixtureBellChain();
+        var response = TwineSignedPulse.Verify(
+            TwineVerificationTests.Document(CurbyQuantumFixtures.BellPulse(59313)),
+            bell
+        );
+
+        Assert.False(result.IsBellResponse(response));
+    }
+
+    [Fact]
+    public void IsBellResponse_WithAnotherDataHash_Throws()
+    {
+        using var builder = new QuantumRoundBuilder { BellResponseDataHash = new string('b', 128) };
+        var built = builder.Build();
+        var result = BuiltResult(builder, built);
+        var response = BuiltBellPulse(builder, built, 0);
+
+        var exception = Assert.Throws<TwineFormatException>(() => result.IsBellResponse(response));
+
+        Assert.Contains(
+            "carries another data hash than the precommit",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    #endregion
+
+    private static QuantumResult FixtureResult()
+    {
+        using var chain = TwineChain.Verify(
+            TwineVerificationTests.Document(CurbyQuantumFixtures.Chain),
+            Cid.Parse(CurbyQuantumFixtures.ChainId),
+            "diqrng"
+        );
+        var round = QuantumRound.Verify(Documents(CurbyQuantumFixtures.RoundJson), chain);
+        return Assert.IsType<QuantumResult>(round.Result);
+    }
+
+    private static TwineChain FixtureBellChain() =>
+        TwineChain.Verify(
+            TwineVerificationTests.Document(CurbyQuantumFixtures.BellChain),
+            Cid.Parse(CurbyQuantumFixtures.BellChainId),
+            "bell"
+        );
+
+    private static QuantumResult BuiltResult(QuantumRoundBuilder builder, BuiltQuantumRound built)
+    {
+        using var chain = VerifyChain(builder);
+        var round = QuantumRound.Verify(Documents(built.RoundJson), chain);
+        return Assert.IsType<QuantumResult>(round.Result);
+    }
+
+    private static TwineSignedPulse BuiltBellPulse(
+        QuantumRoundBuilder builder,
+        BuiltQuantumRound built,
+        int index
+    )
+    {
+        using var chain = TwineChain.Verify(
+            TwineVerificationTests.Document(builder.Bell.ChainJson),
+            builder.Bell.ChainCid,
+            "bell"
+        );
+        return TwineSignedPulse.Verify(
+            TwineVerificationTests.Document(built.BellPulses[index].Json),
+            chain
+        );
+    }
+
     private static void AssertRefused(QuantumRoundBuilder builder, string expected)
     {
         var documents = Documents(builder.Build().RoundJson);

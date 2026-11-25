@@ -3,6 +3,7 @@
 
 using System.Collections.Frozen;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NCode.Randomness.Curby.Twine;
 
@@ -21,4 +22,17 @@ internal sealed class IpldMap(ImmutableArray<KeyValuePair<string, IpldNode>> ent
         Lookup.TryGetValue(key, out var value)
             ? value.As<T>(key)
             : throw new TwineFormatException($"The field '{key}' is missing.");
+
+    public bool TryGet<T>(string key, [NotNullWhen(true)] out T? value)
+        where T : IpldNode
+    {
+        if (Lookup.TryGetValue(key, out var node) && node is T typed)
+        {
+            value = typed;
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
 }

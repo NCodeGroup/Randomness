@@ -58,4 +58,31 @@ internal sealed class QuantumResult(
     public byte[] Randomness { get; } = randomness;
 
     public DateTimeOffset Timestamp { get; } = timestamp;
+
+    /// <summary>
+    /// Returns whether <paramref name="pulse"/>, a pulse of the Bell chain, is the response to this round's request:
+    /// its payload links the request in <c>ref</c> and holds a <c>dataHash</c>, which must be the precommit's.
+    /// </summary>
+    /// <param name="pulse">The Bell pulse to examine.</param>
+    public bool IsBellResponse(TwineSignedPulse pulse)
+    {
+        ArgumentNullException.ThrowIfNull(pulse);
+        if (
+            !pulse.Payload.TryGet<IpldLink>("ref", out var reference)
+            || !reference.Cid.Equals(Request.Cid)
+            || !pulse.Payload.TryGet<IpldString>("dataHash", out var hash)
+        )
+        {
+            return false;
+        }
+
+        if (!string.Equals(hash.Value, DataHash, StringComparison.Ordinal))
+        {
+            throw new TwineFormatException(
+                $"The Bell response {pulse.Cid} carries another data hash than the precommit."
+            );
+        }
+
+        return true;
+    }
 }

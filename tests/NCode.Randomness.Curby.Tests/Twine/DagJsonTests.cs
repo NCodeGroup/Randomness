@@ -116,6 +116,26 @@ public class DagJsonTests
         );
     }
 
+    [Fact]
+    public void TryGet_WithMissingOrMistypedField_ReturnsFalse()
+    {
+        var map = Assert.IsType<IpldMap>(Read("""{"a":1}"""));
+
+        Assert.False(map.TryGet<IpldInteger>("b", out var missing));
+        Assert.Null(missing);
+        Assert.False(map.TryGet<IpldString>("a", out var mistyped));
+        Assert.Null(mistyped);
+    }
+
+    [Fact]
+    public void TryGet_WithField_ReturnsIt()
+    {
+        var map = Assert.IsType<IpldMap>(Read("""{"a":1}"""));
+
+        Assert.True(map.TryGet<IpldInteger>("a", out var value));
+        Assert.Equal(1, value.Value);
+    }
+
     #endregion
 
     private static IpldNode Read(string json) => DagJson.Read(JsonElement.Parse(json));
