@@ -92,7 +92,8 @@ internal static class ExpandMessageXmd
             hash.GetHashAndReset(previous);
 
             var offset = (index - 1) * OutputBytes;
-            previous[..Math.Min(OutputBytes, length - offset)].CopyTo(destination[offset..]);
+            var count = Math.Min(OutputBytes, length - offset);
+            previous[..count].CopyTo(destination[offset..]);
         }
     }
 }

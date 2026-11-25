@@ -58,13 +58,17 @@ public class NistRandomnessBuilderExtensionsTests
 
         using var response = await client.GetAsync(address, CancellationToken.None);
 
+        var expectedAttemptTimeout = TimeSpan.FromSeconds(10);
+        var expectedTotalTimeout = TimeSpan.FromSeconds(25);
+        var expectedSamplingDuration = TimeSpan.FromSeconds(60);
+
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         Assert.Equal(3, handler.Requests);
         Assert.NotNull(resilience);
-        Assert.Equal(TimeSpan.FromSeconds(10), resilience.AttemptTimeout.Timeout);
-        Assert.Equal(TimeSpan.FromSeconds(25), resilience.TotalRequestTimeout.Timeout);
+        Assert.Equal(expectedAttemptTimeout, resilience.AttemptTimeout.Timeout);
+        Assert.Equal(expectedTotalTimeout, resilience.TotalRequestTimeout.Timeout);
         Assert.Equal(2, resilience.Retry.MaxRetryAttempts);
-        Assert.Equal(TimeSpan.FromSeconds(60), resilience.CircuitBreaker.SamplingDuration);
+        Assert.Equal(expectedSamplingDuration, resilience.CircuitBreaker.SamplingDuration);
     }
 
     [Fact]

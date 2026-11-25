@@ -141,7 +141,8 @@ public sealed class TwineChainCacheTests : IDisposable
             await Cache.GetAsync(cid, "rng", CancellationToken.None)
         );
         Server.Serve(ChainPath, CurbyFixtures.Chain);
-        Time.Advance(TimeSpan.FromSeconds(59));
+        var beforeTheDelay = TimeSpan.FromSeconds(59);
+        Time.Advance(beforeTheDelay);
 
         var exception = await Assert.ThrowsAsync<TwineFormatException>(async () =>
             await Cache.GetAsync(cid, "rng", CancellationToken.None)
@@ -159,7 +160,8 @@ public sealed class TwineChainCacheTests : IDisposable
             await Cache.GetAsync(cid, "rng", CancellationToken.None)
         );
         Server.Serve(ChainPath, CurbyFixtures.Chain);
-        Time.Advance(TimeSpan.FromMinutes(1));
+        var retryDelay = TimeSpan.FromMinutes(1);
+        Time.Advance(retryDelay);
 
         var chain = await Cache.GetAsync(cid, "rng", CancellationToken.None);
 
@@ -177,9 +179,10 @@ public sealed class TwineChainCacheTests : IDisposable
 
         var pending = Cache.GetAsync(cid, "rng", CancellationToken.None).AsTask();
         Time.Advance(TwineChainCache.FetchTimeout);
+        var bound = TimeSpan.FromSeconds(10);
         // The real 10-second bound only stops a broken fetch from hanging the run; it ends in a TimeoutException,
         // which fails the assertion.
-        var bounded = pending.WaitAsync(TimeSpan.FromSeconds(10));
+        var bounded = pending.WaitAsync(bound);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => bounded);
     }

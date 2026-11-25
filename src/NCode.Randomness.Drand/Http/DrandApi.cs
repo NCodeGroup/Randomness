@@ -125,13 +125,11 @@ internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconO
             var buffer = ArrayPool<byte>.Shared.Rent(ChunkBytes);
             try
             {
+                var chunk = buffer.AsMemory(0, ChunkBytes);
                 int read;
                 while (
-                    (
-                        read = await stream
-                            .ReadAsync(buffer.AsMemory(0, ChunkBytes), cancellationToken)
-                            .ConfigureAwait(false)
-                    ) > 0
+                    (read = await stream.ReadAsync(chunk, cancellationToken).ConfigureAwait(false))
+                    > 0
                 )
                 {
                     if (body.Length + read > limit)
