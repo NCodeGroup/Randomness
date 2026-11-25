@@ -52,8 +52,8 @@ The beacon refuses a round unless it passes the checks CURBy's own client librar
 - the round's parameters hash to the randomness pulse's `paramsHash`, and SHAKE256 of the seed pulse's digest, expanded
   to the precommitment's `seedLength` bits, equals the parameters' `seed`.
 
-The beacon does not verify the Bell-test certificate or the Trevisan extraction in process. The extractor is GPL-licensed
-code with no specification, and a round needs about 9 MB of raw Bell data, so
+The beacon does not verify the Bell-test certificate or the Trevisan extraction in process. The extractor is
+GPL-licensed code with no specification, and a round needs about 9 MB of raw Bell data, so
 [ADR-1007](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)
 leaves them to CURBy's [`curby_verify`](https://github.com/buff-beacon-project/curby_verify) tool, which checks a
 round with `docker compose run --rm verify <round>`. The round number of a draw's pulse is the one to give it. Those

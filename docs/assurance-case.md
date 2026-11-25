@@ -63,7 +63,8 @@ network, the beacon API, any mirror, and the beacon operator's future behavior a
 
 - **Known answers:** the HMAC_DRBG passes the 32 SHA-512 vectors of NIST CAVP; the managed SHA3-512 matches an
   independent implementation and the platform's, as does the managed SHAKE256; the Twine verifier accepts documents
-  CURBy served, CURBy-Q's included, and recomputes their CIDs; draws match a reference implementation that shares no code with the library.
+  CURBy served, CURBy-Q's included, and recomputes their CIDs; draws match a reference implementation that shares no
+  code with the library.
 - **Negative tests:** each verification rule is broken in isolation with documents signed by a test key: wrong pin,
   wrong chain, bad or foreign signature, disallowed JWS headers, broken precommitment, wrong ordering, malformed
   payloads; and each acceptance rule (rollback, equivocation, staleness).

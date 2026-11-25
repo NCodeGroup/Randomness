@@ -8,8 +8,8 @@
 ## Context
 
 CURBy-Q is CURBy's quantum chain: a DIRNG round turns the data of a Bell experiment into 512 bits through a Trevisan
-extractor. It publishes through Twine, like CURBy-RNG ([ADR-1003](1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md)).
-Facts read from `https://api.entwine.me` on 2026-11-25:
+extractor. It publishes through Twine, like CURBy-RNG
+([ADR-1003](1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md)). Facts read from `https://api.entwine.me` on 2026-11-25:
 
 - Three chains take part, each signing with RS256 and a 4096-bit key. The CURBy-Q chain has the specification
   `twine/1.0.x/diqrng/1.0.x`; the Bell chain ("NIST-bell-experiment") `twine/1.0.x/bell/1.0.x`; the seed chain
@@ -44,7 +44,8 @@ GPL-2.0-or-later, as NIST modified it; the repositories that hold the modified c
 as far as CURBy's client does and as far as the served data allows, without the extraction.
 
 - **The beacon.** `AddCurbyQuantumBeacon()` registers it under the name `curby-q`. It shares the Twine verification
-  code, the named `HttpClient` and the settings section `RandomnessBeacons:Curby`; `CurbyBeaconOptions` has `QuantumChainId` and `BellChainId` for its chains. The core does not change.
+  code, the named `HttpClient` and the settings section `RandomnessBeacons:Curby`; `CurbyBeaconOptions` has
+  `QuantumChainId` and `BellChainId` for its chains. The core does not change.
 - **The pulse.** A round's `BeaconPulse` has the DIRNG round number as `Round`, the randomness pulse's CID as `Id`, the
   CURBy-Q chain's CID as `Chain`, the randomness pulse's timestamp as `Timestamp` and its `randomness` (the extractor's
   512 bits) as `Randomness`.
