@@ -31,22 +31,34 @@ public sealed class CurbyPulseVerifier
     /// <exception cref="ArgumentException"><paramref name="chainId"/> is not a Twine content identifier.</exception>
     public CurbyPulseVerifier(string chainId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(chainId);
+        PinnedChain = ParseChainId(chainId, nameof(chainId));
+    }
+
+    private Cid PinnedChain { get; }
+
+    /// <summary>
+    /// Parses a chain identifier a verifier's constructor takes.
+    /// </summary>
+    /// <param name="chainId">The content identifier (CID) of the chain to pin.</param>
+    /// <param name="parameterName">The name of the constructor parameter that holds <paramref name="chainId"/>.</param>
+    /// <returns>The parsed identifier.</returns>
+    /// <exception cref="ArgumentException"><paramref name="chainId"/> is not a Twine content identifier.</exception>
+    internal static Cid ParseChainId(string chainId, string parameterName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(chainId, parameterName);
         try
         {
-            PinnedChain = Cid.Parse(chainId);
+            return Cid.Parse(chainId);
         }
         catch (TwineFormatException exception)
         {
             throw new ArgumentException(
                 $"'{chainId}' is not a Twine content identifier: {exception.Message}",
-                nameof(chainId),
+                parameterName,
                 exception
             );
         }
     }
-
-    private Cid PinnedChain { get; }
 
     /// <summary>
     /// Verifies a pulse against the pinned chain and returns it as the CURBy beacon returns it.

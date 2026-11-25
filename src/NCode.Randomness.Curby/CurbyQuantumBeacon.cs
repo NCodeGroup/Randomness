@@ -98,7 +98,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
         try
         {
             var chain = await Chains
-                .GetAsync(QuantumChain, "diqrng", cancellationToken)
+                .GetAsync(QuantumChain, CurbyQuantumRoundVerifier.QuantumFamily, cancellationToken)
                 .ConfigureAwait(false);
             var documents = await Api.GetDocumentsAsync(path, cancellationToken)
                 .ConfigureAwait(false);
@@ -156,15 +156,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
                 );
             result.VerifySeed(seed, parameters);
 
-            var chainId = chain.Cid.ToString();
-            var pulse = new BeaconPulse(
-                Name,
-                chainId,
-                verified.Number,
-                resultId,
-                result.Timestamp,
-                result.Randomness
-            );
+            var pulse = CurbyQuantumRoundVerifier.ToBeaconPulse(chain, verified.Number, result);
             Volatile.Write(ref _last, pulse);
             return pulse;
         }
@@ -191,7 +183,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
     )
     {
         var bell = await Chains
-            .GetAsync(BellChain, "bell", cancellationToken)
+            .GetAsync(BellChain, CurbyQuantumRoundVerifier.BellFamily, cancellationToken)
             .ConfigureAwait(false);
         var walk = new QuantumBellWalk(result, bell);
         bool answered;
