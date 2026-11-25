@@ -34,7 +34,9 @@ public sealed class TokenService(ISecureRandom random)
 ```
 
 For a key, call `Fill` with a `stackalloc` or pinned span and clear it with `CryptographicOperations.ZeroMemory` after
-use, rather than keeping it in the `byte[]` that `GetBytes` returns.
+use, rather than keeping it in the `byte[]` that `GetBytes` returns. A key that outlives one method belongs in a pinned
+buffer that is zeroed on dispose, such as one from [NCode.Buffers](https://www.nuget.org/packages/NCode.Buffers/)'
+`BufferFactory.Rent(32, isSensitive: true, out Span<byte> key)`.
 
 Beacon adapters implement `IRandomnessBeacon` and register with `AddBeacon<TBeacon>()`. The repository's README and
 `docs/` folder hold the full guide, the draw specification and the decision records.
