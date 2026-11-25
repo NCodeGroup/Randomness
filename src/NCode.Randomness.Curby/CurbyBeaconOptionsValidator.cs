@@ -43,6 +43,28 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
             );
         }
 
+        try
+        {
+            Cid.Parse(options.QuantumChainId ?? string.Empty);
+        }
+        catch (TwineFormatException exception)
+        {
+            failures.Add(
+                $"{Prefix}{nameof(options.QuantumChainId)} is not a Twine content identifier: {exception.Message}"
+            );
+        }
+
+        try
+        {
+            Cid.Parse(options.BellChainId ?? string.Empty);
+        }
+        catch (TwineFormatException exception)
+        {
+            failures.Add(
+                $"{Prefix}{nameof(options.BellChainId)} is not a Twine content identifier: {exception.Message}"
+            );
+        }
+
         if (options.MaxResponseBytes < 1024)
         {
             failures.Add($"{Prefix}{nameof(options.MaxResponseBytes)} must be at least 1024.");

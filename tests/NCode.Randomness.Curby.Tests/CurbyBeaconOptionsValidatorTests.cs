@@ -56,6 +56,34 @@ public class CurbyBeaconOptionsValidatorTests
     }
 
     [Fact]
+    public void Validate_WithMalformedQuantumChain_Fails()
+    {
+        var options = new CurbyBeaconOptions { QuantumChainId = "not-a-cid" };
+
+        var result = new CurbyBeaconOptionsValidator().Validate(null, options);
+
+        Assert.Contains(
+            "RandomnessBeacons:Curby:QuantumChainId",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public void Validate_WithMalformedBellChain_Fails()
+    {
+        var options = new CurbyBeaconOptions { BellChainId = "not-a-cid" };
+
+        var result = new CurbyBeaconOptionsValidator().Validate(null, options);
+
+        Assert.Contains(
+            "RandomnessBeacons:Curby:BellChainId",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
     public void Validate_WithTinyResponseLimit_Fails()
     {
         var options = new CurbyBeaconOptions { MaxResponseBytes = 10 };

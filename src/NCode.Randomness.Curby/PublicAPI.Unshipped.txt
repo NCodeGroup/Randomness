@@ -10,11 +10,15 @@ const NCode.Randomness.Curby.CurbyDefaults.RngChainId = "bafyriqci6f3st2mg7gq733
 NCode.Randomness.Curby.CurbyBeaconOptions
 NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.get -> System.Uri!
 NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.set -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.BellChainId.get -> string!
+NCode.Randomness.Curby.CurbyBeaconOptions.BellChainId.set -> void
 NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.get -> string!
 NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.set -> void
 NCode.Randomness.Curby.CurbyBeaconOptions.CurbyBeaconOptions() -> void
 NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.get -> int
 NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.set -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.get -> string!
+NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.set -> void
 NCode.Randomness.Curby.CurbyDefaults
 NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions
 NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)
