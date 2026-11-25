@@ -3,10 +3,12 @@
     <Project Path="src/NCode.Randomness/NCode.Randomness.csproj" />
     <Project Path="src/NCode.Randomness.Curby/NCode.Randomness.Curby.csproj" />
     <Project Path="src/NCode.Randomness.Nist/NCode.Randomness.Nist.csproj" />
+    <Project Path="src/NCode.Randomness.Drand/NCode.Randomness.Drand.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/NCode.Randomness.Tests/NCode.Randomness.Tests.csproj" />
     <Project Path="tests/NCode.Randomness.Curby.Tests/NCode.Randomness.Curby.Tests.csproj" />
     <Project Path="tests/NCode.Randomness.Nist.Tests/NCode.Randomness.Nist.Tests.csproj" />
+    <Project Path="tests/NCode.Randomness.Drand.Tests/NCode.Randomness.Drand.Tests.csproj" />
   </Folder>
 </Solution>

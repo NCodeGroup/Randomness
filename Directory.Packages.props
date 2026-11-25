@@ -28,6 +28,7 @@
       Include="Microsoft.Extensions.Options.ConfigurationExtensions"
       Version="11.0.0"
     />
+    <PackageVersion Include="Neo.Cryptography.BLS12_381" Version="3.9.0" />
   </ItemGroup>
 
   <!-- Test-only packages. -->
