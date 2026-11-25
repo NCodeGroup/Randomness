@@ -22,6 +22,10 @@ NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.set -> void
 NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.get -> string!
 NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.set -> void
 NCode.Randomness.Curby.CurbyDefaults
+NCode.Randomness.Curby.CurbyPulseVerifier
+NCode.Randomness.Curby.CurbyPulseVerifier.CurbyPulseVerifier() -> void
+NCode.Randomness.Curby.CurbyPulseVerifier.CurbyPulseVerifier(string! chainId) -> void
+NCode.Randomness.Curby.CurbyPulseVerifier.Verify(System.ReadOnlySpan<byte> chain, System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor) -> NCode.Randomness.BeaconPulse!
 NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions
 NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)
 NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon() -> NCode.Randomness.IRandomnessBuilder!
