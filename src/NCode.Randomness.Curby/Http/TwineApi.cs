@@ -50,6 +50,14 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
         }
     }
 
+    /// <summary>
+    /// Creates the exception that refuses a response body larger than the limit.
+    /// </summary>
+    /// <param name="limit">The most bytes a response body may have.</param>
+    /// <returns>The exception to throw.</returns>
+    private static TwineFormatException TooLarge(int limit) =>
+        new($"The Twine API answered with more than {limit} bytes.");
+
     private IHttpClientFactory Clients { get; } = clients;
 
     private CurbyBeaconOptions Options { get; } = options.Value;
@@ -179,7 +187,7 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
         var limit = Options.MaxResponseBytes;
         if (content.Headers.ContentLength > limit)
         {
-            throw new TwineFormatException($"The Twine API answered with more than {limit} bytes.");
+            throw TooLarge(limit);
         }
 
         var stream = await content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -198,9 +206,7 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
                 {
                     if (body.Length + read > limit)
                     {
-                        throw new TwineFormatException(
-                            $"The Twine API answered with more than {limit} bytes."
-                        );
+                        throw TooLarge(limit);
                     }
 
                     body.Write(buffer, 0, read);

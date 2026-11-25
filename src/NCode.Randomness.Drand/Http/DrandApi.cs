@@ -61,6 +61,14 @@ internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconO
     }
 
     /// <summary>
+    /// Creates the exception that refuses a response body larger than the limit.
+    /// </summary>
+    /// <param name="limit">The most bytes a response body may have.</param>
+    /// <returns>The exception to throw.</returns>
+    private static DrandFormatException TooLarge(int limit) =>
+        new($"drand answered with more than {limit} bytes.");
+
+    /// <summary>
     /// Gets the factory that creates the HTTP client for each request.
     /// </summary>
     private IHttpClientFactory Clients { get; } = clients;
@@ -134,7 +142,7 @@ internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconO
         var limit = Options.MaxResponseBytes;
         if (content.Headers.ContentLength > limit)
         {
-            throw new DrandFormatException($"drand answered with more than {limit} bytes.");
+            throw TooLarge(limit);
         }
 
         var stream = await content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -153,9 +161,7 @@ internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconO
                 {
                     if (body.Length + read > limit)
                     {
-                        throw new DrandFormatException(
-                            $"drand answered with more than {limit} bytes."
-                        );
+                        throw TooLarge(limit);
                     }
 
                     body.Write(buffer, 0, read);

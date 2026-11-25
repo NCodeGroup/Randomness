@@ -60,6 +60,14 @@ internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOpt
     }
 
     /// <summary>
+    /// Creates the exception that refuses a response body larger than the limit.
+    /// </summary>
+    /// <param name="limit">The most bytes a response body may have.</param>
+    /// <returns>The exception to throw.</returns>
+    private static NistFormatException TooLarge(int limit) =>
+        new($"NIST answered with more than {limit} bytes.");
+
+    /// <summary>
     /// Gets the factory that creates the HTTP client for each request.
     /// </summary>
     private IHttpClientFactory Clients { get; } = clients;
@@ -164,7 +172,7 @@ internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOpt
         var limit = Options.MaxResponseBytes;
         if (content.Headers.ContentLength > limit)
         {
-            throw new NistFormatException($"NIST answered with more than {limit} bytes.");
+            throw TooLarge(limit);
         }
 
         var stream = await content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -183,9 +191,7 @@ internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOpt
                 {
                     if (body.Length + read > limit)
                     {
-                        throw new NistFormatException(
-                            $"NIST answered with more than {limit} bytes."
-                        );
+                        throw TooLarge(limit);
                     }
 
                     body.Write(buffer, 0, read);
