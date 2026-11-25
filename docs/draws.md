@@ -32,6 +32,26 @@ A draw's values are public to everyone who reads the pulse. Never derive a key, 
 If the beacon never publishes the committed round, the procedure you committed to in step 1 decides what happens, such
 as taking the first published round after it.
 
+## Checking a CURBy Draw Offline
+
+A CURBy draw can be checked without the network from three documents saved as the Twine API serves them: the chain
+(`https://api.entwine.me/chains/<chain>`), the pulse (`.../chains/<chain>/pulses/<round>`) and its predecessor
+(`.../chains/<chain>/pulses/<round - 1>`). Publish or archive them with the result, so the draw stays checkable after
+CURBy stops serving the round. `CurbyPulseVerifier`, in `NCode.Randomness.Curby`, makes every check the CURBy beacon
+makes against the pinned chain and returns the pulse the beacon returns for that round
+([ADR-1013](decisions/1013-supplied-curby-documents-are-verified-offline-by-the-beacons-own-checks.md)):
+
+```csharp
+var pulse = new CurbyPulseVerifier().Verify(
+    File.ReadAllBytes("chain.json"),
+    File.ReadAllBytes("pulse-1620423.json"),
+    File.ReadAllBytes("pulse-1620422.json"));
+using var draw = VerifiableRandom.Create(pulse, "example-raffle-2026-11-25");
+```
+
+It throws a `BeaconException` with `InvalidPulse` when any check fails. `VerifiableRandom.Create` verifies nothing
+itself, so pass it only a pulse a beacon or a verifier returned.
+
 ## The Algorithm
 
 All lengths are counts of bytes. `LP(x)` is the 4-byte big-endian length of `x` followed by `x`; text is UTF-8.
