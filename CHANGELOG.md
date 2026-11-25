@@ -38,7 +38,7 @@ product does.
   documents a caller supplies, without the network, by the CURBy beacon's own checks against the pinned chain, and
   returns the pulse `VerifiableRandom.Create` derives a published draw from
   ([#3](https://github.com/NCodeGroup/Randomness/issues/3),
-  [ADR-1013](docs/decisions/1013-supplied-curby-documents-are-verified-offline-by-the-beacons-own-checks.md)).
+  [ADR-1013](docs/decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)).
 - `NCode.Randomness.Nist`: the NIST Randomness Beacon 2.0 beacon, `AddNistBeacon()`, named `nist`, over chain 2 of
   `https://beacon.nist.gov/beacon/2.0/`, with settings in `RandomnessBeacons:Nist`
   ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
@@ -60,7 +60,7 @@ product does.
   signature is canonical RS256 by the chain's key, and every salt matches its precommitment, so no server can change
   a pulse's randomness without breaking a check
   ([#3](https://github.com/NCodeGroup/Randomness/issues/3),
-  [ADR-1013](docs/decisions/1013-supplied-curby-documents-are-verified-offline-by-the-beacons-own-checks.md)).
+  [ADR-1013](docs/decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)).
 - CURBy-Q rounds are verified before use: the chain hashes to a pinned content identifier, every pulse of the round is
   signed by its key and follows the one before, a pulse of the pinned Bell chain answers the request with the
   precommitted data hash before the precommit, and the seed expands by SHAKE256 from the seed-chain pulse after the

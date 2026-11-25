@@ -39,7 +39,7 @@ A CURBy draw can be checked without the network from three documents saved as th
 (`.../chains/<chain>/pulses/<round - 1>`). Publish or archive them with the result, so the draw stays checkable after
 CURBy stops serving the round. `CurbyPulseVerifier`, in `NCode.Randomness.Curby`, makes every check the CURBy beacon
 makes against the pinned chain and returns the pulse the beacon returns for that round
-([ADR-1013](decisions/1013-supplied-curby-documents-are-verified-offline-by-the-beacons-own-checks.md)):
+([ADR-1013](decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)):
 
 ```csharp
 var pulse = new CurbyPulseVerifier().Verify(
