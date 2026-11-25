@@ -9,10 +9,10 @@ namespace NCode.Randomness.Drand.Tests.Rounds;
 
 public class DrandChainTests
 {
-    #region Constants Tests
+    #region Quicknet Property Tests
 
     [Fact]
-    public void Info_WithSavedDocument_MatchesConstants()
+    public void Quicknet_Defaults_MatchTheSavedInfoDocument()
     {
         var info = JsonElement.Parse(DrandFixtures.Info);
         var publicKey = info.GetProperty("public_key").GetString();
@@ -27,10 +27,6 @@ public class DrandChainTests
         Assert.Equal(DrandDefaults.GenesisTime, genesisTime);
         Assert.Equal("bls-unchained-g1-rfc9380", scheme);
     }
-
-    #endregion
-
-    #region Quicknet Tests
 
     [Fact]
     public void Quicknet_PublicKey_IsNotIdentityAndIsInSubgroup()
@@ -49,6 +45,16 @@ public class DrandChainTests
         Assert.Equal(DrandDefaults.ChainHash, chain.Hash);
         Assert.Equal(DrandDefaults.GenesisTime, chain.GenesisTime);
         Assert.Equal(DrandDefaults.Period, chain.Period);
+    }
+
+    #endregion
+
+    #region MaxRound Property Tests
+
+    [Fact]
+    public void MaxRound_OfQuicknet_IsTheLastRepresentableRound()
+    {
+        Assert.Equal(83_903_165_811L, DrandChain.Quicknet.MaxRound);
     }
 
     #endregion
@@ -74,13 +80,14 @@ public class DrandChainTests
     }
 
     [Fact]
-    public void TimeOf_WithMaxRound_Succeeds()
+    public void TimeOf_WithMaxRound_ReturnsItsTime()
     {
+        var expected = new DateTimeOffset(9999, 12, 31, 23, 59, 57, TimeSpan.Zero);
         var chain = DrandChain.Quicknet;
 
         var actual = chain.TimeOf(chain.MaxRound);
 
-        Assert.True(actual <= DateTimeOffset.MaxValue);
+        Assert.Equal(expected, actual);
     }
 
     [Fact]

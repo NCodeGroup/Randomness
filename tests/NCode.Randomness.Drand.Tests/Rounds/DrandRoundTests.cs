@@ -124,17 +124,26 @@ public class DrandRoundTests
     }
 
     [Fact]
-    public void Verify_WithTestChainRound_VerifiesOnTestChainOnly()
+    public void Verify_WithTestChainRound_VerifiesOnItsChain()
     {
         var text = DrandTestChain.Json(5);
         var json = Parse(text);
 
         var round = DrandRound.Verify(json, DrandTestChain.Chain);
+
+        Assert.Equal(5, round.Round);
+    }
+
+    [Fact]
+    public void Verify_WithTestChainRoundOnQuicknet_Throws()
+    {
+        var text = DrandTestChain.Json(5);
+        var json = Parse(text);
+
         var exception = Assert.Throws<DrandFormatException>(() =>
             DrandRound.Verify(json, DrandChain.Quicknet)
         );
 
-        Assert.Equal(5, round.Round);
         Assert.Contains("does not verify", exception.Message, StringComparison.Ordinal);
     }
 
