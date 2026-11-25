@@ -48,4 +48,5 @@ defaults, after checking that:
 - `https://beacon.nist.gov/beacon/2.0/certificate/<id>` is NIST's `engine.beacon.nist.gov` certificate; and
 - the SHA-512 hash of its DER encoding is the identifier.
 
-The pulses 1925734 to 1996051 are signed by a certificate whose identifier is not pinned, so the beacon refuses them.
+The pulses 1925734 to 1996050 name a certificate that does not verify them, so the beacon refuses them, and it refuses
+pulse 1996051 too, since a pulse is used only with its verified predecessor.

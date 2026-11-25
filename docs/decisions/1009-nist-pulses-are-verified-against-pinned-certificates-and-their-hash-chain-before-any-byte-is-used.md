@@ -52,7 +52,8 @@ the pulse index. Unsigned JSON members are ignored.
 - When NIST rotates its certificate (the current one is valid to 2027-03-20), `nist` refuses pulses signed by the
   unpinned certificate and reports `Degraded` until a release or the host pins the rotated certificate's identifier,
   which the error names.
-- Pulses 1925734–1996051 are refused, because the certificate they name does not verify them.
+- Pulses 1925734–1996050 are refused, because the certificate they name does not verify them,
+  and so is pulse 1996051, because a pulse is used only with its verified predecessor.
 - The adapter carries its own length-prefixed encoder and PEM parsing, tested against pulses and certificates NIST
   served.
 
