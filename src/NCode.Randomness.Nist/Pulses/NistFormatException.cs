@@ -7,4 +7,7 @@ namespace NCode.Randomness.Nist.Pulses;
 /// NIST data that is malformed or fails verification. The beacon reports it as
 /// <see cref="BeaconError.InvalidPulse"/>.
 /// </summary>
-internal sealed class NistFormatException(string message) : Exception(message);
+/// <param name="message">The message that describes the failure.</param>
+/// <param name="innerException">The exception that caused it, if any.</param>
+internal sealed class NistFormatException(string message, Exception? innerException = null)
+    : Exception(message, innerException);

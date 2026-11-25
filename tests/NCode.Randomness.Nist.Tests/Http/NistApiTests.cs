@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Net;
+using System.Text.Json;
 using NCode.Randomness.Nist.Http;
 using NCode.Randomness.Nist.Pulses;
 using NCode.Randomness.Nist.Tests.Fixtures;
@@ -120,6 +121,19 @@ public sealed class NistApiTests : IDisposable
         );
 
         Assert.Contains("malformed JSON", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WithTruncatedJson_KeepsTheParserException()
+    {
+        Server.Serve(PulseRoute, "{");
+        var api = Create();
+
+        var exception = await Assert.ThrowsAsync<NistFormatException>(async () =>
+            await api.GetPulseAsync(PulsePath, CancellationToken.None)
+        );
+
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
     }
 
     [Fact]

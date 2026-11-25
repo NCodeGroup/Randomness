@@ -39,7 +39,8 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
         catch (JsonException exception)
         {
             throw new TwineFormatException(
-                $"The Twine API answered with malformed JSON: {exception.Message}"
+                $"The Twine API answered with malformed JSON: {exception.Message}",
+                exception
             );
         }
     }

@@ -355,9 +355,12 @@ internal sealed class NistPulse
         {
             return Convert.FromHexString(text);
         }
-        catch (FormatException)
+        catch (FormatException exception)
         {
-            throw new NistFormatException($"The NIST member '{path ?? name}' is not hexadecimal.");
+            throw new NistFormatException(
+                $"The NIST member '{path ?? name}' is not hexadecimal.",
+                exception
+            );
         }
     }
 
@@ -409,9 +412,12 @@ internal sealed class NistPulse
         {
             length = Utf8.GetByteCount(value);
         }
-        catch (EncoderFallbackException)
+        catch (EncoderFallbackException exception)
         {
-            throw new NistFormatException("A NIST pulse text member is not valid UTF-8.");
+            throw new NistFormatException(
+                "A NIST pulse text member is not valid UTF-8.",
+                exception
+            );
         }
 
         WriteUInt32(signed, (uint)length);

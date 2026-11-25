@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Net;
+using System.Text.Json;
 using NCode.Randomness.Drand.Http;
 using NCode.Randomness.Drand.Rounds;
 using NCode.Randomness.Drand.Tests.Fixtures;
@@ -123,6 +124,19 @@ public sealed class DrandApiTests : IDisposable
         );
 
         Assert.Contains("malformed JSON", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetAsync_WithTruncatedJson_KeepsTheParserException()
+    {
+        Server.Serve(Route, "{");
+        var api = Create();
+
+        var exception = await Assert.ThrowsAsync<DrandFormatException>(async () =>
+            await api.GetAsync(Path, CancellationToken.None)
+        );
+
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
     }
 
     [Fact]

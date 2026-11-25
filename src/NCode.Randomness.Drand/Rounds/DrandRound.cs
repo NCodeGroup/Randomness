@@ -61,9 +61,12 @@ internal sealed class DrandRound
         {
             point = G1Affine.FromCompressed(signature);
         }
-        catch (FormatException)
+        catch (FormatException exception)
         {
-            throw new DrandFormatException($"The signature of round {round} is not a point of G1.");
+            throw new DrandFormatException(
+                $"The signature of round {round} is not a point of G1.",
+                exception
+            );
         }
 
         if (point.IsIdentity)

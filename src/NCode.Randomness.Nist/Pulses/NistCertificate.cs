@@ -35,7 +35,8 @@ internal sealed class NistCertificate : IDisposable
         catch (CryptographicException exception)
         {
             throw new NistFormatException(
-                $"The certificate is not valid X.509: {exception.Message}"
+                $"The certificate is not valid X.509: {exception.Message}",
+                exception
             );
         }
     }
@@ -57,9 +58,9 @@ internal sealed class NistCertificate : IDisposable
         {
             text = Utf8.GetString(body);
         }
-        catch (DecoderFallbackException)
+        catch (DecoderFallbackException exception)
         {
-            throw new NistFormatException("The certificate is not UTF-8 text.");
+            throw new NistFormatException("The certificate is not UTF-8 text.", exception);
         }
 
         if (!PemEncoding.TryFind(text, out var fields))

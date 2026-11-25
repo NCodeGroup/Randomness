@@ -41,7 +41,8 @@ internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconO
         catch (JsonException exception)
         {
             throw new DrandFormatException(
-                $"drand answered with malformed JSON: {exception.Message}"
+                $"drand answered with malformed JSON: {exception.Message}",
+                exception
             );
         }
     }

@@ -39,7 +39,8 @@ internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOpt
         catch (JsonException exception)
         {
             throw new NistFormatException(
-                $"NIST answered with malformed JSON: {exception.Message}"
+                $"NIST answered with malformed JSON: {exception.Message}",
+                exception
             );
         }
     }
