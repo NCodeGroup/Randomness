@@ -1,6 +1,6 @@
 # 1005. Twine verification is implemented in the adapter without an IPLD dependency
 
-- **Status:** Accepted
+- **Status:** Accepted (amended by 1007)
 - **Date:** 2026-11-25
 - **Deciders:** NCode Group maintainers
 
