@@ -1,7 +1,7 @@
 # 1007. CURBy-Q rounds are verified as CURBy's client verifies them, and their extraction is left to curby_verify
 
 - **Status:** Accepted
-- **Date:** 2026-11-24
+- **Date:** 2026-11-25
 - **Deciders:** NCode Group maintainers
 - **Amends:** 1005
 
