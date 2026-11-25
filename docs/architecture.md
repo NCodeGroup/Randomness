@@ -20,7 +20,7 @@ flowchart LR
         OS["Operating system CSPRNG"]
     end
     subgraph Adapters
-        Curby["NCode.Randomness.Curby<br/>CurbyBeacon + Twine verification"]
+        Curby["NCode.Randomness.Curby<br/>CurbyBeacon + CurbyQuantumBeacon + Twine verification"]
         Other["Other vendor adapters"]
     end
     CurbyApi[("api.entwine.me<br/>CURBy Twine chains")]
@@ -48,7 +48,7 @@ flowchart LR
 | `IRandomnessBeacon`, `BeaconPulse`, `BeaconException` | The port a vendor adapter implements, its verified output and its failures ([beacon-adapters.md](beacon-adapters.md)). |
 | `Draws/VerifiableRandom`, `IVerifiableRandomFactory` | Reproducible draws, `ncode-randomness-draw/1` ([draws.md](draws.md)). |
 | `HealthChecks/BeaconHealthCheck` | Reports a beacon outage as `Degraded`. |
-| `NCode.Randomness.Curby` | The CURBy adapter: the Twine HTTP client and the verification of chains and pulses ([ADR-1003](decisions/1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md), [ADR-1005](decisions/1005-twine-verification-is-implemented-in-the-adapter-without-an-ipld-dependency.md)). |
+| `NCode.Randomness.Curby` | The CURBy adapter: the Twine HTTP client and the verification of chains and pulses, and the CURBy-Q rounds ([ADR-1007](decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md), [ADR-1003](decisions/1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md), [ADR-1005](decisions/1005-twine-verification-is-implemented-in-the-adapter-without-an-ipld-dependency.md)). |
 
 ## Design Rules
 
