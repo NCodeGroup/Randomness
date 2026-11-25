@@ -18,6 +18,7 @@ public class CurbyBeaconOptionsValidatorTests
     [Theory]
     [InlineData("http://api.entwine.me/")]
     [InlineData("https://api.entwine.me/v1")]
+    [InlineData("https://user:secret@api.entwine.me/")]
     [InlineData("https://api.entwine.me/?x=1")]
     [InlineData("https://api.entwine.me/#x")]
     public void Validate_WithUnsafeBaseAddress_Fails(string address)

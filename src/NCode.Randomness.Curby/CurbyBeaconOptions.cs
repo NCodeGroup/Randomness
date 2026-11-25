@@ -14,9 +14,10 @@ public sealed class CurbyBeaconOptions
     public const string SectionName = "RandomnessBeacons:Curby";
 
     /// <summary>
-    /// Gets or sets the base address of the Twine HTTP API, an absolute <c>https</c> URL ending in <c>/</c>. The default
-    /// is <see cref="CurbyDefaults.BaseAddress"/>. A mirror serves the same data: every document is verified against
-    /// <see cref="ChainId"/>, so a mirror can withhold pulses but never forge one.
+    /// Gets or sets the base address of the Twine HTTP API, an absolute <c>https</c> URL ending in <c>/</c>, with no
+    /// user info, query or fragment. The default is <see cref="CurbyDefaults.BaseAddress"/>. A mirror serves the same
+    /// data: every document is verified against <see cref="ChainId"/>, so a mirror can withhold pulses but never forge
+    /// one.
     /// </summary>
     public Uri BaseAddress { get; set; } = new(CurbyDefaults.BaseAddress);
 

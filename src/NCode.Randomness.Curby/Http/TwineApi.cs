@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Collections.Immutable;
 using System.Net;
 using System.Text.Json;
@@ -13,9 +14,12 @@ namespace NCode.Randomness.Curby.Http;
 /// Reads Twine documents and raw bytes from the HTTP API: one expected media type per request, no redirects, and the
 /// body read under a byte limit while it streams, since <c>Content-Length</c> is only a hint.
 /// </summary>
+// Copied on purpose into NistApi in NCode.Randomness.Nist and DrandApi in NCode.Randomness.Drand: independently
+// versioned packages never share a type, so a fix to one copy belongs in the others.
 internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconOptions> options)
 {
     private const string JsonMediaType = "application/json";
+    private const int ChunkBytes = 16 * 1024;
     private const string OctetStreamMediaType = "application/octet-stream";
 
     private static JsonDocumentOptions ParseOptions { get; } = new() { MaxDepth = 32 };
@@ -176,23 +180,34 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
         await using (stream.ConfigureAwait(false))
         {
             using var body = new MemoryStream();
-            var buffer = new byte[16 * 1024];
-            int read;
-            while (
-                (read = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0
-            )
+            var buffer = ArrayPool<byte>.Shared.Rent(ChunkBytes);
+            try
             {
-                if (body.Length + read > limit)
+                int read;
+                while (
+                    (
+                        read = await stream
+                            .ReadAsync(buffer.AsMemory(0, ChunkBytes), cancellationToken)
+                            .ConfigureAwait(false)
+                    ) > 0
+                )
                 {
-                    throw new TwineFormatException(
-                        $"The Twine API answered with more than {limit} bytes."
-                    );
+                    if (body.Length + read > limit)
+                    {
+                        throw new TwineFormatException(
+                            $"The Twine API answered with more than {limit} bytes."
+                        );
+                    }
+
+                    body.Write(buffer, 0, read);
                 }
 
-                body.Write(buffer, 0, read);
+                return body.ToArray();
             }
-
-            return body.ToArray();
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
         }
     }
 }

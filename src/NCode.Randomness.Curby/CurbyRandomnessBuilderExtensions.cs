@@ -202,6 +202,8 @@ public static class CurbyRandomnessBuilderExtensions
         }
     }
 
+    // Copied on purpose into NistRandomnessBuilderExtensions in NCode.Randomness.Nist and
+    // DrandRandomnessBuilderExtensions in NCode.Randomness.Drand: a fix to one copy belongs in the others.
     private static void ConfigureResilience(HttpStandardResilienceOptions options)
     {
         options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);
