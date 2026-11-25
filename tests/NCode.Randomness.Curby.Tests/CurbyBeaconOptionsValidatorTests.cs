@@ -108,6 +108,16 @@ public class CurbyBeaconOptionsValidatorTests
         Assert.True(result.Succeeded);
     }
 
+    [Fact]
+    public void Validate_WithLongestChainRetryDelay_Succeeds()
+    {
+        var options = new CurbyBeaconOptions { ChainRetryDelay = TimeSpan.FromDays(1) };
+
+        var result = new CurbyBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
     [Theory]
     [InlineData(999, "00:00:00.9990000")]
     [InlineData(86_400_001, "1.00:00:00.0010000")]

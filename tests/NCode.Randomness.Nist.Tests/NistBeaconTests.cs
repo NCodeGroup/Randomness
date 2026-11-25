@@ -418,6 +418,27 @@ public sealed class NistBeaconTests : IDisposable
     }
 
     [Fact]
+    public async Task GetPulseAsync_WithIndexTwo_ReturnsIt()
+    {
+        var signer = new NistTestSigner();
+        Pin(signer);
+        var first = NistPulseBuilder.For(1).Build(signer);
+        var firstOutput = NistPulseBuilder.OutputOf(first);
+        var secondBuilder = NistPulseBuilder.For(2) with { Previous = firstOutput };
+        var second = secondBuilder.Build(signer);
+        ServeSigner(signer).Serve(PulsePath + "2", second).Serve(PulsePath + "1", first);
+        var beacon = Create();
+
+        var pulse = await beacon.GetPulseAsync(2, CancellationToken.None);
+
+        Assert.Equal(2, pulse.Round);
+        Assert.Equal(
+            [PulsePath + "2", CertificatePath + signer.IdHex, PulsePath + "1"],
+            Server.Requests
+        );
+    }
+
+    [Fact]
     public async Task GetPulseAsync_WhenServerAnswersAnotherPulse_IsInvalid()
     {
         ServeNist();

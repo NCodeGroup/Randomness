@@ -107,6 +107,21 @@ public class NistBeaconOptionsValidatorTests
     }
 
     [Fact]
+    public void Validate_WithLongCertificateId_Fails()
+    {
+        var longId = ValidId + "a";
+        var options = new NistBeaconOptions { CertificateIds = [ValidId, longId] };
+
+        var result = new NistBeaconOptionsValidator().Validate(null, options);
+
+        Assert.Contains(
+            "RandomnessBeacons:Nist:CertificateIds:1 is not a certificate identifier",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
     public void Validate_WithNonHexCertificateId_Fails()
     {
         var options = new NistBeaconOptions { CertificateIds = ['g' + ValidId[1..]] };
@@ -183,6 +198,16 @@ public class NistBeaconOptionsValidatorTests
     public void Validate_WithShortestCertificateRetryDelay_Succeeds()
     {
         var options = new NistBeaconOptions { CertificateRetryDelay = TimeSpan.FromSeconds(1) };
+
+        var result = new NistBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public void Validate_WithLongestCertificateRetryDelay_Succeeds()
+    {
+        var options = new NistBeaconOptions { CertificateRetryDelay = TimeSpan.FromDays(1) };
 
         var result = new NistBeaconOptionsValidator().Validate(null, options);
 
