@@ -52,6 +52,7 @@ product does.
 - The CURBy and NIST adapters fetch each chain or certificate once for every caller, under its own 30-second timeout,
   and remember a failed fetch for `RandomnessBeacons:Curby:ChainRetryDelay` or
   `RandomnessBeacons:Nist:CertificateRetryDelay` (default 1 minute) before they try it again.
+- The `NCode.Randomness` package's readme links each beacon adapter package on nuget.org.
 
 ### Security
 

@@ -1,7 +1,8 @@
 # NCode.Randomness
 
 Cryptographically secure random numbers for .NET, strengthened by public randomness beacons such as
-[CURBy](https://random.colorado.edu/), and reproducible draws that anyone can check against a beacon pulse.
+[CURBy](https://random.colorado.edu/), the [NIST Randomness Beacon](https://beacon.nist.gov/) and
+[drand](https://drand.love/), and reproducible draws that anyone can check against a beacon pulse.
 
 - **`ISecureRandom`**: an NIST SP 800-90A HMAC_DRBG (HMAC-SHA-512) per processor, seeded and reseeded from the
   operating system's CSPRNG, with every verified beacon pulse mixed in as additional input. Its output is at least as
@@ -38,5 +39,15 @@ use, rather than keeping it in the `byte[]` that `GetBytes` returns. A key that 
 buffer that is zeroed on dispose, such as one from [NCode.Buffers](https://www.nuget.org/packages/NCode.Buffers/)'
 `BufferFactory.Rent(32, isSensitive: true, out Span<byte> key)`.
 
-Beacon adapters implement `IRandomnessBeacon` and register with `AddBeacon<TBeacon>()`. The repository's README and
-`docs/` folder hold the full guide, the draw specification and the decision records.
+Each beacon has an adapter package of its own, which verifies every pulse against a pinned trust anchor before any
+byte is used:
+
+| Package | Beacon |
+|---|---|
+| [NCode.Randomness.Curby](https://www.nuget.org/packages/NCode.Randomness.Curby/) | CURBy's CURBy-RNG and CURBy-Q chains, verified against pinned chains |
+| [NCode.Randomness.Nist](https://www.nuget.org/packages/NCode.Randomness.Nist/) | The NIST Randomness Beacon 2.0, verified against pinned certificates and its hash chain |
+| [NCode.Randomness.Drand](https://www.nuget.org/packages/NCode.Randomness.Drand/) | drand's quicknet chain, verified against the League of Entropy's pinned BLS key |
+
+Other beacon adapters implement `IRandomnessBeacon` and register with `AddBeacon<TBeacon>()`. The
+[repository](https://github.com/NCodeGroup/Randomness) holds the full guide, the draw specification and the decision
+records.
