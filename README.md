@@ -79,8 +79,9 @@ finally
 ```
 
 A key that outlives one method belongs in a pinned buffer that is zeroed on dispose, such as one from
-[NCode.Buffers](https://www.nuget.org/packages/NCode.Buffers/)' `BufferFactory.Rent(32, isSensitive: true, out Span<byte> key)`.
-`Fill` takes any span, so the two packages work together without either depending on the other.
+[NCode.Buffers](https://www.nuget.org/packages/NCode.Buffers/)'
+`BufferFactory.Rent(32, isSensitive: true, out Span<byte> key)`. `Fill` takes any span, so the two packages work
+together without either depending on the other.
 
 Every value is unbiased: integer ranges use rejection sampling, never a modulo. One generic method covers every
 integer type, from `byte` to `UInt128`:
