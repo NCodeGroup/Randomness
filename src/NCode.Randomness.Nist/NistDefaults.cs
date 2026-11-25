@@ -33,8 +33,8 @@ public static class NistDefaults
 
     /// <summary>
     /// Gets the identifiers, oldest first, of the certificates NIST signs chain 2 with. An identifier is the SHA-512
-    /// hash of a certificate's DER encoding in lowercase hex, so pinning it pins the certificate and its key: no server,
-    /// mirror or TLS certificate can substitute another.
+    /// hash of a certificate's DER encoding in lowercase hex, so pinning it pins the certificate and its key: no
+    /// server, mirror or TLS certificate can substitute another.
     /// </summary>
     public static ImmutableArray<string> CertificateIds { get; } =
     [

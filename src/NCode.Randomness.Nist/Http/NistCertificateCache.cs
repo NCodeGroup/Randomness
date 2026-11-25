@@ -17,7 +17,8 @@ internal sealed class NistCertificateCache(NistApi api, IOptions<NistBeaconOptio
     : IDisposable
 {
     /// <summary>
-    /// Returns the pinned identifiers in lowercase: the configured ones, or <see cref="NistDefaults.CertificateIds"/> when none are configured.
+    /// Returns the pinned identifiers in lowercase: the configured ones, or
+    /// <see cref="NistDefaults.CertificateIds"/> when none are configured.
     /// </summary>
     /// <param name="configured">The configured identifiers, which the options validator has checked.</param>
     /// <returns>The identifiers to trust.</returns>

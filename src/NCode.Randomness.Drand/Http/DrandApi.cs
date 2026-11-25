@@ -13,7 +13,8 @@ namespace NCode.Randomness.Drand.Http;
 /// Reads rounds from the drand HTTP API: one expected media type per request, no redirects, and the body read under a
 /// byte limit while it streams, since <c>Content-Length</c> is only a hint.
 /// </summary>
-// Copied on purpose from TwineApi in NCode.Randomness.Curby, as NistApi in NCode.Randomness.Nist is: independently versioned packages never share a type, so a fix to one copy belongs in the others.
+// Copied on purpose from TwineApi in NCode.Randomness.Curby, as NistApi in NCode.Randomness.Nist is: independently
+// versioned packages never share a type, so a fix to one copy belongs in the others.
 internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconOptions> options)
 {
     private const string JsonMediaType = "application/json";

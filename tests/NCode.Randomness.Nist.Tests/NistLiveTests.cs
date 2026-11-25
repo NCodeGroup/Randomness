@@ -8,7 +8,8 @@ using NCode.Randomness.Nist.Tests.Fixtures;
 namespace NCode.Randomness.Nist.Tests;
 
 /// <summary>
-/// End-to-end checks against the real NIST Randomness Beacon, run only on request (see <see cref="LiveFactAttribute"/>).
+/// End-to-end checks against the real NIST Randomness Beacon, run only on request (see
+/// <see cref="LiveFactAttribute"/>).
 /// </summary>
 public class NistLiveTests
 {

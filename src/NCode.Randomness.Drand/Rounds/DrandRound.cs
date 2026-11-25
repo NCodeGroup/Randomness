@@ -108,7 +108,8 @@ internal sealed class DrandRound
     /// <param name="json">The round document.</param>
     /// <param name="chain">The pinned chain.</param>
     /// <returns>The round number.</returns>
-    /// <exception cref="DrandFormatException">The <c>round</c> member is missing or not a round of the chain.</exception>
+    /// <exception cref="DrandFormatException">The <c>round</c> member is missing or not a round of the chain.
+    /// </exception>
     private static long ReadRound(JsonElement json, DrandChain chain)
     {
         if (!json.TryGetProperty("round", out var member))
@@ -134,7 +135,8 @@ internal sealed class DrandRound
     /// </summary>
     /// <param name="json">The round document.</param>
     /// <returns>The 48-byte compressed signature.</returns>
-    /// <exception cref="DrandFormatException">The <c>signature</c> member is missing or not 48 bytes of hexadecimal.</exception>
+    /// <exception cref="DrandFormatException">The <c>signature</c> member is missing or not 48 bytes of hexadecimal.
+    /// </exception>
     private static byte[] ReadSignature(JsonElement json)
     {
         if (!json.TryGetProperty("signature", out var member))

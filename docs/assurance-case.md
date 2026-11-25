@@ -49,8 +49,8 @@ mirror, and the beacon operator's future behavior are not.
 - **Complete mediation:** every pulse passes the adapter's verification and the tracker's acceptance before the pool
   sees it.
 - **Least privilege:** adapters only read public HTTPS endpoints; no credential is needed or stored.
-- **Open design:** the algorithms are standard (SP 800-90A, FIPS 202, RFC 7515, RFC 8017, RFC 9380) and the draw algorithm is published
-  with a reference implementation.
+- **Open design:** the algorithms are standard (SP 800-90A, FIPS 202, RFC 7515, RFC 8017, RFC 9380) and the draw
+  algorithm is published with a reference implementation.
 
 ## Common Weaknesses Countered
 
@@ -65,8 +65,8 @@ mirror, and the beacon operator's future behavior are not.
 - **Known answers:** the HMAC_DRBG passes the 32 SHA-512 vectors of NIST CAVP; the managed SHA3-512 matches an
   independent implementation and the platform's, as does the managed SHAKE256; the Twine verifier accepts documents
   CURBy served, CURBy-Q's included, and recomputes their CIDs; NIST pulses across a certificate rotation verify;
-  the hash to curve matches the RFC 9380 vectors and drand's rounds verify; draws match a reference implementation that shares no
-  code with the library.
+  the hash to curve matches the RFC 9380 vectors and drand's rounds verify; draws match a reference implementation
+  that shares no code with the library.
 - **Negative tests:** each verification rule is broken in isolation with documents signed by a test key: wrong pin,
   wrong chain, bad or foreign signature, disallowed JWS headers, broken precommitment, wrong ordering, malformed
   payloads, unpinned NIST certificates, broken NIST links and precommitments, and foreign and identity BLS signatures;

@@ -107,7 +107,8 @@ public static class NistRandomnessBuilderExtensions
     /// circuit-breaker sampling window.
     /// </summary>
     /// <param name="options">The resilience options of the named client.</param>
-    // Copied on purpose from CurbyRandomnessBuilderExtensions in NCode.Randomness.Curby, as DrandRandomnessBuilderExtensions in NCode.Randomness.Drand copies it: a fix to one copy belongs in the others.
+    // Copied on purpose from CurbyRandomnessBuilderExtensions in NCode.Randomness.Curby, as
+    // DrandRandomnessBuilderExtensions in NCode.Randomness.Drand copies it: a fix to one copy belongs in the others.
     private static void ConfigureResilience(HttpStandardResilienceOptions options)
     {
         options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);

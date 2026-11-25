@@ -148,7 +148,8 @@ internal static class G1Isogeny
     /// <param name="leading">
     /// The top coefficient to start from: zero when every coefficient is listed, one for a monic polynomial.
     /// </param>
-    /// <param name="coefficients">The listed coefficients, where index <c>i</c> is the coefficient of <c>x^i</c>.</param>
+    /// <param name="coefficients">The listed coefficients, where index <c>i</c> is the coefficient of <c>x^i</c>.
+    /// </param>
     /// <param name="x">The point at which to evaluate.</param>
     /// <returns>The value of the polynomial at <paramref name="x"/>.</returns>
     private static Fp Horner(Fp leading, ImmutableArray<Fp> coefficients, Fp x)

@@ -13,7 +13,8 @@ namespace NCode.Randomness.Nist.Http;
 /// Reads pulses and certificates from the NIST HTTP API: one expected media type per request, no redirects, and the
 /// body read under a byte limit while it streams, since <c>Content-Length</c> is only a hint.
 /// </summary>
-// Copied on purpose from TwineApi in NCode.Randomness.Curby, as DrandApi in NCode.Randomness.Drand is: independently versioned packages never share a type, so a fix to one copy belongs in the others.
+// Copied on purpose from TwineApi in NCode.Randomness.Curby, as DrandApi in NCode.Randomness.Drand is: independently
+// versioned packages never share a type, so a fix to one copy belongs in the others.
 internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOptions> options)
 {
     private const string JsonMediaType = "application/json";

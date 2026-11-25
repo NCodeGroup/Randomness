@@ -4,7 +4,8 @@
 namespace NCode.Randomness.Drand;
 
 /// <summary>
-/// Settings for the drand beacon, bound from the <c>RandomnessBeacons:Drand</c> configuration section, beside the <c>Randomness</c> section of the core options, whose strict binding refuses any key it does not know.
+/// Settings for the drand beacon, bound from the <c>RandomnessBeacons:Drand</c> configuration section, beside the
+/// <c>Randomness</c> section of the core options, whose strict binding refuses any key it does not know.
 /// </summary>
 public sealed class DrandBeaconOptions
 {

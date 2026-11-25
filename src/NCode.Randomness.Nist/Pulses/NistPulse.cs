@@ -92,7 +92,8 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="signed">The signed bytes to append to.</param>
     /// <param name="pulse">The <c>pulse</c> object.</param>
-    /// <exception cref="NistFormatException">The member is not an object or one of its members is malformed.</exception>
+    /// <exception cref="NistFormatException">The member is not an object or one of its members is malformed.
+    /// </exception>
     private static void WriteExternal(ArrayBufferWriter<byte> signed, JsonElement pulse)
     {
         if (
@@ -215,7 +216,8 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="parent">The object that holds the member.</param>
     /// <param name="name">The name of the member.</param>
-    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report
+    /// <paramref name="name"/>.</param>
     /// <returns>The member.</returns>
     /// <exception cref="NistFormatException">The member is missing.</exception>
     private static JsonElement ReadMember(JsonElement parent, string name, string? path = null)
@@ -233,7 +235,8 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="parent">The object that holds the member.</param>
     /// <param name="name">The name of the member.</param>
-    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report
+    /// <paramref name="name"/>.</param>
     /// <returns>The raw text of the member.</returns>
     /// <exception cref="NistFormatException">The member is missing or not a string.</exception>
     private static string ReadString(JsonElement parent, string name, string? path = null)
@@ -252,7 +255,8 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="parent">The object that holds the member.</param>
     /// <param name="name">The name of the member.</param>
-    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report
+    /// <paramref name="name"/>.</param>
     /// <returns>The value of the member.</returns>
     /// <exception cref="NistFormatException">The member is missing or not an unsigned 32-bit integer.</exception>
     private static uint ReadUInt32(JsonElement parent, string name, string? path = null)
@@ -297,7 +301,8 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="parent">The object that holds the member.</param>
     /// <param name="name">The name of the member.</param>
-    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report
+    /// <paramref name="name"/>.</param>
     /// <returns>The decoded 64 bytes.</returns>
     /// <exception cref="NistFormatException">The member is missing, not hexadecimal or not 64 bytes.</exception>
     private static byte[] ReadHash(JsonElement parent, string name, string? path = null)
@@ -339,7 +344,8 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="parent">The object that holds the member.</param>
     /// <param name="name">The name of the member.</param>
-    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report
+    /// <paramref name="name"/>.</param>
     /// <returns>The decoded bytes, of any length.</returns>
     /// <exception cref="NistFormatException">The member is missing, not a string or not hexadecimal.</exception>
     private static byte[] ReadHexBytes(JsonElement parent, string name, string? path)
