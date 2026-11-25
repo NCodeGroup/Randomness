@@ -10,6 +10,7 @@ namespace NCode.Randomness.Drand.Http;
 /// <summary>
 /// Classifies the exceptions a drand API fetch can throw, so the beacon reports them alike.
 /// </summary>
+// Copied on purpose from TwineErrors in NCode.Randomness.Curby, as NistErrors in NCode.Randomness.Nist is: independently versioned packages never share a type, so a fix to one copy belongs in the others.
 internal static class DrandErrors
 {
     private const string Source = "drand";

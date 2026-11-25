@@ -20,6 +20,7 @@ internal sealed class DrandBeaconOptionsValidator : IValidateOptions<DrandBeacon
         ArgumentNullException.ThrowIfNull(options);
         var failures = new List<string>();
         var address = options.BaseAddress;
+        // The BaseAddress rule is copied on purpose from CurbyBeaconOptionsValidator in NCode.Randomness.Curby, as NistBeaconOptionsValidator in NCode.Randomness.Nist copies it: a fix to one copy belongs in the others.
         if (
             address is null
             || !address.IsAbsoluteUri

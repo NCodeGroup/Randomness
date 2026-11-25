@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
@@ -12,9 +13,11 @@ namespace NCode.Randomness.Drand.Http;
 /// Reads rounds from the drand HTTP API: one expected media type per request, no redirects, and the body read under a
 /// byte limit while it streams, since <c>Content-Length</c> is only a hint.
 /// </summary>
+// Copied on purpose from TwineApi in NCode.Randomness.Curby, as NistApi in NCode.Randomness.Nist is: independently versioned packages never share a type, so a fix to one copy belongs in the others.
 internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconOptions> options)
 {
     private const string JsonMediaType = "application/json";
+    private const int ChunkBytes = 16 * 1024;
 
     // The API answers 425 Too Early for a round that is not yet due.
     private const HttpStatusCode TooEarly = (HttpStatusCode)425;
@@ -117,21 +120,34 @@ internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconO
         await using (stream.ConfigureAwait(false))
         {
             using var body = new MemoryStream();
-            var buffer = new byte[16 * 1024];
-            int read;
-            while (
-                (read = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0
-            )
+            var buffer = ArrayPool<byte>.Shared.Rent(ChunkBytes);
+            try
             {
-                if (body.Length + read > limit)
+                int read;
+                while (
+                    (
+                        read = await stream
+                            .ReadAsync(buffer.AsMemory(0, ChunkBytes), cancellationToken)
+                            .ConfigureAwait(false)
+                    ) > 0
+                )
                 {
-                    throw new DrandFormatException($"drand answered with more than {limit} bytes.");
+                    if (body.Length + read > limit)
+                    {
+                        throw new DrandFormatException(
+                            $"drand answered with more than {limit} bytes."
+                        );
+                    }
+
+                    body.Write(buffer, 0, read);
                 }
 
-                body.Write(buffer, 0, read);
+                return body.ToArray();
             }
-
-            return body.ToArray();
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
         }
     }
 }
