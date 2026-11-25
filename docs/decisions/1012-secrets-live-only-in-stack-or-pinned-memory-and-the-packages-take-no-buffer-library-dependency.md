@@ -3,14 +3,16 @@
 - **Status:** Accepted
 - **Date:** 2026-11-25
 - **Deciders:** NCode Group maintainers
+- **Refines:** project-template ADR-0112, whose rules 2 and 3 rent transient buffers from `ArrayPool<T>.Shared` and
+  clear secret material on release
 
 ## Context
 
 NCode.Randomness makes keys and holds the state of the generator that makes them
 ([ADR-1001](1001-the-secure-generator-is-a-sharded-buffered-hmac-drbg-reseeded-from-the-operating-system.md)).
 Managed memory can leak a secret in two ways: the garbage collector's compacting phase moves an unpinned array and
-leaves the old bytes in memory it never clears, and an array returned to `ArrayPool<T>.Shared` goes to the next
-renter anywhere in the process. [NCode.Buffers](https://www.nuget.org/packages/NCode.Buffers/) (5.5.0, read
+leaves the old bytes in freed memory until an allocation reuses it, and an array returned to `ArrayPool<T>.Shared` goes
+to the next renter anywhere in the process. [NCode.Buffers](https://www.nuget.org/packages/NCode.Buffers/) (5.5.0, read
 2026-11-25) packages pinned, pooled buffers that zero themselves on dispose, and depends on Nerdbank.Streams. The
 generator's key, value and output buffer are pinned arrays, and its seeds are `stackalloc` memory, each cleared with
 `CryptographicOperations.ZeroMemory`. The adapters pool only public data: response bodies and the bytes a pulse's
@@ -28,8 +30,8 @@ The packages take no dependency on a buffer library, NCode.Buffers included. The
 `BufferFactory.Rent(32, isSensitive: true, out Span<byte> key)`. `GetBytes` returns an ordinary array for values that
 aren't secret, and its documentation steers a key to `Fill`.
 
-For secret material, this rule wins over the project template's C# rule, which rents transient buffers from
-`ArrayPool<T>.Shared` and clears the ones that held secret material.
+For secret material, this rule wins over the project template's C# rule and ADR-0112, which rent transient buffers from
+`ArrayPool<T>.Shared` and clear the ones that held secret material.
 
 ## Options considered
 
@@ -58,6 +60,8 @@ For secret material, this rule wins over the project template's C# rule, which r
 
 ## References
 
+- [project-template ADR-0112](project-template/0112-binary-data-uses-spans-pooled-buffers-and-cleared-secrets.md): the
+  template's rule for binary data that this record refines for secrets.
 - `src/NCode.Randomness/Generation/HmacDrbg.cs`, `src/NCode.Randomness/Generation/DrbgShard.cs`.
 - [ADR-1000](1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md): secrets come
   only from `ISecureRandom`.
