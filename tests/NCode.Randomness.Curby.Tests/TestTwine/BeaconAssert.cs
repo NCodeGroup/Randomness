@@ -6,6 +6,8 @@ namespace NCode.Randomness.Curby.Tests.TestTwine;
 /// <summary>
 /// Assertions the beacon tests share.
 /// </summary>
+// Copied on purpose into NCode.Randomness.Nist.Tests and NCode.Randomness.Drand.Tests: each test project stands
+// alone, so a fix to one copy belongs in the others.
 internal static class BeaconAssert
 {
     /// <summary>

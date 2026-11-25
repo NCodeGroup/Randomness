@@ -15,7 +15,19 @@ internal sealed class StubTwineServer : HttpMessageHandler, IHttpClientFactory
     private Dictionary<string, Func<HttpResponseMessage>> Routes { get; } =
         new(StringComparer.Ordinal);
 
+    private Dictionary<string, Task> Holds { get; } = new(StringComparer.Ordinal);
+
     public List<string> Requests { get; } = [];
+
+    /// <summary>
+    /// Makes requests for <paramref name="path"/> wait until <paramref name="release"/> completes, or until their token
+    /// is cancelled.
+    /// </summary>
+    public StubTwineServer Hold(string path, Task release)
+    {
+        Holds[path] = release;
+        return this;
+    }
 
     public StubTwineServer Serve(string path, string json, string mediaType = "application/json")
     {
@@ -41,7 +53,7 @@ internal sealed class StubTwineServer : HttpMessageHandler, IHttpClientFactory
 
     public HttpClient CreateClient(string name) => new(this, disposeHandler: false);
 
-    protected override Task<HttpResponseMessage> SendAsync(
+    protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken
     )
@@ -49,9 +61,13 @@ internal sealed class StubTwineServer : HttpMessageHandler, IHttpClientFactory
         cancellationToken.ThrowIfCancellationRequested();
         var path = request.RequestUri?.AbsolutePath ?? string.Empty;
         Requests.Add(path);
-        var response = Routes.TryGetValue(path, out var route)
+        if (Holds.TryGetValue(path, out var release))
+        {
+            await release.WaitAsync(cancellationToken);
+        }
+
+        return Routes.TryGetValue(path, out var route)
             ? route()
             : new HttpResponseMessage(HttpStatusCode.NotFound);
-        return Task.FromResult(response);
     }
 }

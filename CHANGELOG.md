@@ -29,6 +29,17 @@ product does.
   `RandomnessBeacons:Curby`
   ([#1](https://github.com/NCodeGroup/Randomness/issues/1),
   [ADR-1007](docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)).
+- `NCode.Randomness.Nist`: the NIST Randomness Beacon 2.0 beacon, `AddNistBeacon()`, named `nist`, over chain 2 of
+  `https://beacon.nist.gov/beacon/2.0/`, with settings in `RandomnessBeacons:Nist`
+  ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
+  [ADR-1009](docs/decisions/1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md)).
+- `NCode.Randomness.Drand`: the drand beacon, `AddDrandBeacon()`, named `drand`, over the League of Entropy's quicknet
+  chain, with settings in `RandomnessBeacons:Drand`
+  ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
+  [ADR-1010](docs/decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md)).
+- The CURBy and NIST adapters fetch each chain or certificate once for every caller, under its own 30-second timeout,
+  and remember a failed fetch for `RandomnessBeacons:Curby:ChainRetryDelay` or
+  `RandomnessBeacons:Nist:CertificateRetryDelay` (default 1 minute) before they try it again.
 
 ### Security
 
@@ -44,6 +55,17 @@ product does.
   only out of process, by CURBy's `curby_verify`
   ([#1](https://github.com/NCodeGroup/Randomness/issues/1),
   [ADR-1007](docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)).
+- NIST pulses are verified before use: the certificate hashes to a pinned identifier and covers the pulse's timestamp,
+  the RSA signature verifies over the pulse's signed fields, the output value is the hash of those fields and the
+  signature, and the pulse chains to its predecessor's output and matches its precommitment
+  ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
+  [ADR-1009](docs/decisions/1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md)).
+- drand rounds are verified before use: the BLS signature of the round number, hashed to the curve as RFC 9380
+  specifies, verifies against the pinned quicknet group key, and the randomness is the SHA-256 of that signature
+  ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
+  [ADR-1010](docs/decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md)).
+- Each beacon adapter's `BaseAddress` must be an absolute `https` URL ending in `/`, with no user info, query or
+  fragment, so no credential written into a configured address reaches a logged request.
 - Pulses that roll back, switch chains, reuse an accepted round with other content, or are out of date by their
   timestamp are refused.
 - Dependency injection registers the secure generator only as `ISecureRandom`, never as the plain `IRandomSource`, and

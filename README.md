@@ -1,8 +1,9 @@
 # NCode.Randomness
 
 Cryptographically secure random numbers for .NET, strengthened by public randomness beacons such as
-[CURBy](https://random.colorado.edu/), the University of Colorado Boulder's randomness beacon, and reproducible draws
-that anyone can check against a beacon pulse.
+[CURBy](https://random.colorado.edu/), the University of Colorado Boulder's randomness beacon, the
+[NIST Randomness Beacon](https://beacon.nist.gov/) and [drand](https://drand.love/), and reproducible draws that anyone
+can check against a beacon pulse.
 
 [//]: # "Badges: to show the CI status, add this line below, with the repository's owner and name:"
 [//]: # "[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)"
@@ -31,6 +32,8 @@ Boulder only stops the extra diversification.
 |---|---|
 | `NCode.Randomness` | The secure generator, typed values and ranges, the beacon port, the background collector, draws, a health check and metrics |
 | `NCode.Randomness.Curby` | The CURBy adapter: pulses of the CURBy-RNG chain and rounds of the CURBy-Q chain, each verified against a pinned chain |
+| `NCode.Randomness.Nist` | The NIST Randomness Beacon 2.0 adapter: pulses verified against pinned certificates and their hash chain |
+| `NCode.Randomness.Drand` | The drand adapter: quicknet rounds verified against the League of Entropy's pinned BLS key |
 
 ## Quick Start
 
@@ -41,6 +44,9 @@ builder.Services
     .AddCurbyBeacon(builder.Configuration.GetSection(CurbyBeaconOptions.SectionName));
 builder.Services.AddHealthChecks().AddRandomnessBeacons("ready");
 ```
+
+Add `.AddNistBeacon()` and `.AddDrandBeacon()` to register the NIST and drand beacons as well, so no beacon is trusted
+alone.
 
 Inject `ISecureRandom` wherever a secret is made:
 
@@ -119,6 +125,13 @@ Python that reproduces any draw without .NET.
   bits. The Bell-test certificate and the Trevisan extraction are not verified in process; CURBy's `curby_verify` tool
   audits them
   ([ADR-1007](docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)).
+- Every NIST pulse is verified before use: its certificate must hash to a pinned identifier and cover the pulse's
+  timestamp, its RSA signature must verify over the signed fields, its output must be the hash of those fields and the
+  signature, and it must chain to its predecessor's output and match the predecessor's precommitment
+  ([ADR-1009](docs/decisions/1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md)).
+- Every drand round is verified before use: the BLS signature of the round number, hashed to the curve as RFC 9380
+  specifies, must verify against the pinned quicknet group key, and the randomness is the SHA-256 of that signature
+  ([ADR-1010](docs/decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md)).
 - Documents must hold only the members Twine defines and signatures must be canonically encoded, so a server cannot
   grind a pulse's randomness without breaking its signature or hash.
 - Pulses that roll back, switch chains, equivocate or are out of date are refused

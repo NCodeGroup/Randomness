@@ -10,6 +10,8 @@ namespace NCode.Randomness.Curby.Http;
 /// <summary>
 /// Classifies the exceptions a Twine API fetch can throw, so every beacon over the Twine API reports them alike.
 /// </summary>
+// Copied on purpose into NistErrors in NCode.Randomness.Nist and DrandErrors in NCode.Randomness.Drand: independently
+// versioned packages never share a type, so a fix to one copy belongs in the others.
 internal static class TwineErrors
 {
     /// <summary>

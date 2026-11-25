@@ -313,6 +313,19 @@ public class TwineVerificationTests
     }
 
     [Fact]
+    public void Verify_WithHeaderThatIsNotJson_KeepsTheJsonException()
+    {
+        using var builder = new TwineBuilder(header: "{");
+        var chainDocument = Document(builder.ChainJson);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily)
+        );
+
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
+    }
+
+    [Fact]
     public void Verify_WithHeaderNamingTypeAndKey_Succeeds()
     {
         using var builder = new TwineBuilder(header: """{"alg":"RS256","typ":"JWT","kid":"1"}""");

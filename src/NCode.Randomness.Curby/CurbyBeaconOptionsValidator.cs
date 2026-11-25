@@ -14,6 +14,21 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
     private const string Prefix = CurbyBeaconOptions.SectionName + ":";
 
     /// <summary>
+    /// The fewest bytes, 1024, that the response size limit may allow.
+    /// </summary>
+    private const int MinResponseBytes = 1024;
+
+    /// <summary>
+    /// Gets the shortest time, one second, that a failed chain fetch may be remembered.
+    /// </summary>
+    private static TimeSpan MinRetryDelay { get; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// Gets the longest time, one day, that a failed chain fetch may be remembered.
+    /// </summary>
+    private static TimeSpan MaxRetryDelay { get; } = TimeSpan.FromDays(1);
+
+    /// <summary>
     /// Adds a failure when a chain identifier setting is not a Twine content identifier.
     /// </summary>
     /// <param name="failures">The failures found so far.</param>
@@ -36,17 +51,20 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
         ArgumentNullException.ThrowIfNull(options);
         var failures = new List<string>();
         var address = options.BaseAddress;
+        // The BaseAddress rule is copied on purpose into NistBeaconOptionsValidator in NCode.Randomness.Nist and
+        // DrandBeaconOptionsValidator in NCode.Randomness.Drand: a fix to one copy belongs in the others.
         if (
             address is null
             || !address.IsAbsoluteUri
             || address.Scheme != Uri.UriSchemeHttps
             || !address.AbsolutePath.EndsWith('/')
+            || address.UserInfo.Length > 0
             || address.Query.Length > 0
             || address.Fragment.Length > 0
         )
         {
             failures.Add(
-                $"{Prefix}{nameof(options.BaseAddress)} must be an absolute https URL ending in '/', with no query or fragment."
+                $"{Prefix}{nameof(options.BaseAddress)} must be an absolute https URL ending in '/', with no user info, query or fragment."
             );
         }
 
@@ -54,9 +72,18 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
         CheckChainId(failures, nameof(options.QuantumChainId), options.QuantumChainId);
         CheckChainId(failures, nameof(options.BellChainId), options.BellChainId);
 
-        if (options.MaxResponseBytes < 1024)
+        if (options.MaxResponseBytes < MinResponseBytes)
         {
-            failures.Add($"{Prefix}{nameof(options.MaxResponseBytes)} must be at least 1024.");
+            failures.Add(
+                $"{Prefix}{nameof(options.MaxResponseBytes)} must be at least {MinResponseBytes}."
+            );
+        }
+
+        if (options.ChainRetryDelay < MinRetryDelay || options.ChainRetryDelay > MaxRetryDelay)
+        {
+            failures.Add(
+                $"{Prefix}{nameof(options.ChainRetryDelay)} must be between {MinRetryDelay} and {MaxRetryDelay}; it is {options.ChainRetryDelay}."
+            );
         }
 
         return failures.Count == 0
