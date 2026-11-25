@@ -112,10 +112,14 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
         var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
 
-        var bellPulsePath = BellPulsePath(builder, round, 0);
+        var expected = new List<string>();
+        for (var i = 3; i >= 0; i--)
+        {
+            expected.Add(BellPulsePath(builder, round, i));
+        }
 
         Assert.Equal(round.Randomness, pulse.Randomness);
-        Assert.Contains(bellPulsePath, Server.Requests);
+        Assert.Equal(expected, BellPulseRequests(builder));
     }
 
     [Fact]
@@ -127,10 +131,14 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
         var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
 
-        var bellResponsePath = BellPulsePath(builder, round, 0);
+        var expected = new List<string>();
+        for (var i = 9; i >= 0; i--)
+        {
+            expected.Add(BellPulsePath(builder, round, i));
+        }
 
         Assert.Equal(round.Randomness, pulse.Randomness);
-        Assert.Contains(bellResponsePath, Server.Requests);
+        Assert.Equal(expected, BellPulseRequests(builder));
     }
 
     [Fact]
@@ -596,6 +604,16 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
     #endregion
 
+    // The requests for the pulses of the builder's Bell chain, in the order they were made.
+    private List<string> BellPulseRequests(QuantumRoundBuilder builder)
+    {
+        var prefix = "/chains/" + builder.Bell.ChainCid + "/pulses/";
+        return
+        [
+            .. Server.Requests.Where(path => path.StartsWith(prefix, StringComparison.Ordinal)),
+        ];
+    }
+
     // Pins the builder's three chains and serves them.
     private void ServeChains(QuantumRoundBuilder builder)
     {
@@ -635,7 +653,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
     private void ServeCurbyQ()
     {
-        var bellResponse = CurbyQuantumFixtures.BellPulse(59313);
+        var bellResponse = CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex);
         Server
             .Serve(ChainPath, CurbyQuantumFixtures.Chain)
             .Serve(RoundPath, CurbyQuantumFixtures.RoundJson)
@@ -644,14 +662,13 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
             .Serve(BellChainPath + "/pulses/" + CurbyQuantumFixtures.BellResponseId, bellResponse)
             .Serve(SeedChainPath, CurbyQuantumFixtures.SeedChain)
             .Serve(ParametersPath, CurbyQuantumFixtures.Parameters, "application/octet-stream");
-        foreach (
-            var index in new[]
-            {
-                CurbyQuantumFixtures.ThirdSeedPulseIndex,
-                CurbyQuantumFixtures.SecondSeedPulseIndex,
-                CurbyQuantumFixtures.FirstSeedPulseIndex,
-            }
-        )
+        long[] indexes =
+        [
+            CurbyQuantumFixtures.ThirdSeedPulseIndex,
+            CurbyQuantumFixtures.SecondSeedPulseIndex,
+            CurbyQuantumFixtures.FirstSeedPulseIndex,
+        ];
+        foreach (var index in indexes)
         {
             var seedPulsePath = SeedPulsePath(index);
             var seedPulse = CurbyQuantumFixtures.SeedPulse(index);

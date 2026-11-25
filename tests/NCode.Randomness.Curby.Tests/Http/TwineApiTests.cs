@@ -10,7 +10,7 @@ namespace NCode.Randomness.Curby.Tests.Http;
 
 public sealed class TwineApiTests : IDisposable
 {
-    private const string Path = "/curbyq/round/28297";
+    private static string Path { get; } = "/curbyq/round/" + CurbyQuantumFixtures.Round;
 
     private StubTwineServer Server { get; } = new();
 

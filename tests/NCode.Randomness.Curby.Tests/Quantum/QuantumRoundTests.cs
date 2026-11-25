@@ -518,6 +518,7 @@ public class QuantumRoundTests
 
     [Theory]
     [InlineData(128)]
+    [InlineData(248)]
     [InlineData(260)]
     public void Verify_WithOutputLengthOutOfRange_Throws(int outputBits)
     {
@@ -531,7 +532,37 @@ public class QuantumRoundTests
             },
         };
 
-        AssertRefused(builder, $"The output length {outputBits} is not a multiple of 8 bits");
+        AssertRefused(
+            builder,
+            $"The output length {outputBits} is not a multiple of 8 bits of at least 256"
+        );
+    }
+
+    [Fact]
+    public void Verify_WithOutputLengthOf256_ReadsIt()
+    {
+        using var builder = new QuantumRoundBuilder
+        {
+            EditRequest = static payload =>
+            {
+                var bits = Ipld.Integer(256);
+                var parameters = Ipld.Map(("nBitsOut", bits));
+                return payload.With("parameters", parameters);
+            },
+            EditResult = static payload =>
+            {
+                var randomness = Ipld.Bytes(new byte[32]);
+                return payload.With("randomness", randomness);
+            },
+        };
+        var built = builder.Build();
+        using var chain = VerifyChain(builder);
+        var documents = Documents(built.RoundJson);
+
+        var round = QuantumRound.Verify(documents, chain);
+
+        var result = Assert.IsType<QuantumResult>(round.Result);
+        Assert.Equal(32, result.Randomness.Length);
     }
 
     [Fact]
@@ -574,7 +605,7 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var bell = FixtureBellChain();
-        var json = CurbyQuantumFixtures.BellPulse(59313);
+        var json = CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex);
         var document = TwineVerificationTests.Document(json);
         var response = TwineSignedPulse.Verify(document, bell);
 
@@ -603,7 +634,7 @@ public class QuantumRoundTests
         var built = builder.Build();
         var result = BuiltResult(builder, built);
         using var bell = FixtureBellChain();
-        var json = CurbyQuantumFixtures.BellPulse(59313);
+        var json = CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex);
         var document = TwineVerificationTests.Document(json);
         var response = TwineSignedPulse.Verify(document, bell);
 

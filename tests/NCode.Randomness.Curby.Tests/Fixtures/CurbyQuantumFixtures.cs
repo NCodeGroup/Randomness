@@ -18,6 +18,7 @@ internal static class CurbyQuantumFixtures
     public const long FirstSeedPulseIndex = 1914066;
     public const long SecondSeedPulseIndex = 1914067;
     public const long ThirdSeedPulseIndex = 1914068;
+    public const long BellResponseIndex = 59313;
     public const string RequestId =
         "bafyriqdxut7znfobli3gwij6iu2yod5ye2bgmgfzvjzyue7sojfc2oquut67i3mazb7abhocg3kdbgm2sxxgnx4gt7wqqtduwy2vch25bsxbw";
     public const string PrecommitId =
