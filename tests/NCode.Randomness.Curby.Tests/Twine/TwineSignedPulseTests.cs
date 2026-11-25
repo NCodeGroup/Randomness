@@ -14,6 +14,19 @@ public class TwineSignedPulseTests
 
     private static DateTimeOffset Start { get; } = new(2026, 11, 25, 0, 0, 0, TimeSpan.Zero);
 
+    private static TwineChain VerifyCurbyChain()
+    {
+        var document = TwineVerificationTests.Document(CurbyFixtures.Chain);
+        var chainCid = Cid.Parse(CurbyFixtures.ChainId);
+        return TwineChain.Verify(document, chainCid, "rng");
+    }
+
+    private static TwineChain VerifyBuilderChain(TwineBuilder builder)
+    {
+        var document = TwineVerificationTests.Document(builder.ChainJson);
+        return TwineChain.Verify(document, builder.ChainCid, "rng");
+    }
+
     #region Verify Tests
 
     [Fact]
@@ -135,17 +148,4 @@ public class TwineSignedPulseTests
     }
 
     #endregion
-
-    private static TwineChain VerifyCurbyChain()
-    {
-        var document = TwineVerificationTests.Document(CurbyFixtures.Chain);
-        var chainCid = Cid.Parse(CurbyFixtures.ChainId);
-        return TwineChain.Verify(document, chainCid, "rng");
-    }
-
-    private static TwineChain VerifyBuilderChain(TwineBuilder builder)
-    {
-        var document = TwineVerificationTests.Document(builder.ChainJson);
-        return TwineChain.Verify(document, builder.ChainCid, "rng");
-    }
 }

@@ -13,6 +13,10 @@ namespace NCode.Randomness.Curby.Tests.Quantum;
 
 public class QuantumRoundTests
 {
+    private const long OldestSeedPulseIndex = 1914066;
+    private const long FirstSeedPulseIndex = 1914067;
+    private const long NewestSeedPulseIndex = 1914068;
+
     private static void AssertSeedRefused(QuantumRoundBuilder builder, string expected)
     {
         var built = builder.Build();
@@ -253,7 +257,11 @@ public class QuantumRoundTests
     {
         using var builder = new QuantumRoundBuilder
         {
-            EditPrecommit = static payload => payload.With("round", Ipld.Integer(8)),
+            EditPrecommit = static payload =>
+            {
+                var round = Ipld.Integer(8);
+                return payload.With("round", round);
+            },
         };
 
         AssertRefused(builder, "The pulses belong to rounds 7 and 8.");
@@ -292,7 +300,11 @@ public class QuantumRoundTests
     {
         using var builder = new QuantumRoundBuilder
         {
-            EditPrecommit = static payload => payload.With("stage", Ipld.Text("randomness")),
+            EditPrecommit = static payload =>
+            {
+                var stage = Ipld.Text("randomness");
+                return payload.With("stage", stage);
+            },
         };
 
         AssertRefused(
@@ -306,7 +318,11 @@ public class QuantumRoundTests
     {
         using var builder = new QuantumRoundBuilder
         {
-            EditPrecommit = static payload => payload.With("stage", Ipld.Text("error")),
+            EditPrecommit = static payload =>
+            {
+                var stage = Ipld.Text("error");
+                return payload.With("stage", stage);
+            },
         };
 
         AssertRefused(
@@ -320,7 +336,11 @@ public class QuantumRoundTests
     {
         using var builder = new QuantumRoundBuilder
         {
-            EditResult = static payload => payload.With("stage", Ipld.Text("request")),
+            EditResult = static payload =>
+            {
+                var stage = Ipld.Text("request");
+                return payload.With("stage", stage);
+            },
         };
 
         AssertRefused(
@@ -335,7 +355,10 @@ public class QuantumRoundTests
         using var builder = new QuantumRoundBuilder
         {
             EditPrecommit = static payload =>
-                payload.With("dataHash", Ipld.Text(new string('A', 128))),
+            {
+                var dataHash = Ipld.Text(new string('A', 128));
+                return payload.With("dataHash", dataHash);
+            },
         };
 
         AssertRefused(
@@ -349,7 +372,11 @@ public class QuantumRoundTests
     {
         using var builder = new QuantumRoundBuilder
         {
-            EditResult = static payload => payload.With("dataHash", Ipld.Text("abc")),
+            EditResult = static payload =>
+            {
+                var dataHash = Ipld.Text("abc");
+                return payload.With("dataHash", dataHash);
+            },
         };
 
         AssertRefused(
@@ -363,7 +390,11 @@ public class QuantumRoundTests
     {
         using var builder = new QuantumRoundBuilder
         {
-            EditResult = static payload => payload.With("paramsHash", Ipld.Text("abc")),
+            EditResult = static payload =>
+            {
+                var paramsHash = Ipld.Text("abc");
+                return payload.With("paramsHash", paramsHash);
+            },
         };
 
         AssertRefused(
@@ -378,7 +409,10 @@ public class QuantumRoundTests
         using var builder = new QuantumRoundBuilder
         {
             EditResult = static payload =>
-                payload.With("dataHash", Ipld.Text(new string('a', 128))),
+            {
+                var dataHash = Ipld.Text(new string('a', 128));
+                return payload.With("dataHash", dataHash);
+            },
         };
 
         AssertRefused(builder, "carries another dataHash than the precommit");
@@ -389,7 +423,11 @@ public class QuantumRoundTests
     {
         using var builder = new QuantumRoundBuilder
         {
-            EditPrecommit = static payload => payload.With("seedAlgorithm", Ipld.Text("sha256")),
+            EditPrecommit = static payload =>
+            {
+                var algorithm = Ipld.Text("sha256");
+                return payload.With("seedAlgorithm", algorithm);
+            },
         };
 
         AssertRefused(builder, "The seed algorithm 'sha256' is not shake256.");
@@ -402,7 +440,9 @@ public class QuantumRoundTests
         {
             EditPrecommit = static payload =>
             {
-                var rule = Ipld.Map(("after", Ipld.Text("other")), ("count", Ipld.Integer(1)));
+                var after = Ipld.Text("other");
+                var count = Ipld.Integer(1);
+                var rule = Ipld.Map(("after", after), ("count", count));
                 return payload.With("rule", rule);
             },
         };
@@ -419,7 +459,9 @@ public class QuantumRoundTests
         {
             EditPrecommit = payload =>
             {
-                var rule = Ipld.Map(("after", Ipld.Text("self")), ("count", Ipld.Integer(count)));
+                var after = Ipld.Text("self");
+                var ruleCount = Ipld.Integer(count);
+                var rule = Ipld.Map(("after", after), ("count", ruleCount));
                 return payload.With("rule", rule);
             },
         };
@@ -450,7 +492,11 @@ public class QuantumRoundTests
     {
         using var builder = new QuantumRoundBuilder
         {
-            EditPrecommit = payload => payload.With("seedLength", Ipld.Integer(seedLength)),
+            EditPrecommit = payload =>
+            {
+                var length = Ipld.Integer(seedLength);
+                return payload.With("seedLength", length);
+            },
         };
 
         AssertRefused(builder, $"The seed length {seedLength} is not a multiple of 8 bits");
@@ -481,7 +527,8 @@ public class QuantumRoundTests
         {
             EditRequest = payload =>
             {
-                var parameters = Ipld.Map(("nBitsOut", Ipld.Integer(outputBits)));
+                var bits = Ipld.Integer(outputBits);
+                var parameters = Ipld.Map(("nBitsOut", bits));
                 return payload.With("parameters", parameters);
             },
         };
@@ -496,7 +543,8 @@ public class QuantumRoundTests
         {
             EditRequest = static payload =>
             {
-                var parameters = Ipld.Map(("nBitsOut", Ipld.Integer(256)));
+                var bits = Ipld.Integer(256);
+                var parameters = Ipld.Map(("nBitsOut", bits));
                 return payload.With("parameters", parameters);
             },
         };
@@ -509,7 +557,11 @@ public class QuantumRoundTests
     {
         using var builder = new QuantumRoundBuilder
         {
-            EditResult = static payload => payload.With("timestamp", Ipld.Text("yesterday")),
+            EditResult = static payload =>
+            {
+                var timestamp = Ipld.Text("yesterday");
+                return payload.With("timestamp", timestamp);
+            },
         };
 
         AssertRefused(builder, "'yesterday' is not an ISO 8601 UTC time");
@@ -586,7 +638,8 @@ public class QuantumRoundTests
         var built = builder.Build();
         var result = BuiltResult(builder, built);
         var dataHash = Ipld.Text(builder.DataHash);
-        var reference = Ipld.Text(result.Request.Cid.ToString());
+        var requestId = result.Request.Cid.ToString();
+        var reference = Ipld.Text(requestId);
         var payload = Ipld.Map(("dataHash", dataHash), ("ref", reference));
         var content = builder.Bell.Content(0, null, payload);
         var sealedPulse = builder.Bell.Seal(content);
@@ -609,9 +662,9 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var newest = FixtureSeedPulse(seedChain, 1914068);
-        var first = FixtureSeedPulse(seedChain, 1914067);
-        var oldest = FixtureSeedPulse(seedChain, 1914066);
+        var newest = FixtureSeedPulse(seedChain, NewestSeedPulseIndex);
+        var first = FixtureSeedPulse(seedChain, FirstSeedPulseIndex);
+        var oldest = FixtureSeedPulse(seedChain, OldestSeedPulseIndex);
 
         var mixesNewest = result.MixesPrecommit(newest);
         var mixesFirst = result.MixesPrecommit(first);
@@ -631,13 +684,13 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var newest = FixtureSeedPulse(seedChain, 1914068);
-        var first = FixtureSeedPulse(seedChain, 1914067);
+        var newest = FixtureSeedPulse(seedChain, NewestSeedPulseIndex);
+        var first = FixtureSeedPulse(seedChain, FirstSeedPulseIndex);
 
         var seed = result.SelectSeed([newest, first]);
         var seedId = seed.Cid.ToString();
 
-        Assert.Equal(1914068, seed.Index);
+        Assert.Equal(NewestSeedPulseIndex, seed.Index);
         Assert.Equal(CurbyQuantumFixtures.SeedPulseId, seedId);
     }
 
@@ -661,7 +714,7 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var first = FixtureSeedPulse(seedChain, 1914067);
+        var first = FixtureSeedPulse(seedChain, FirstSeedPulseIndex);
 
         var exception = Assert.Throws<TwineFormatException>(() => result.SelectSeed([first]));
 
@@ -681,7 +734,7 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var seed = FixtureSeedPulse(seedChain, 1914068);
+        var seed = FixtureSeedPulse(seedChain, NewestSeedPulseIndex);
         var parameters = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters);
 
         result.VerifySeed(seed, parameters);
@@ -692,7 +745,7 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var first = FixtureSeedPulse(seedChain, 1914067);
+        var first = FixtureSeedPulse(seedChain, FirstSeedPulseIndex);
         var parameters = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
@@ -707,7 +760,7 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var seed = FixtureSeedPulse(seedChain, 1914068);
+        var seed = FixtureSeedPulse(seedChain, NewestSeedPulseIndex);
         var parameters = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters + " ");
 
         var exception = Assert.Throws<TwineFormatException>(() =>

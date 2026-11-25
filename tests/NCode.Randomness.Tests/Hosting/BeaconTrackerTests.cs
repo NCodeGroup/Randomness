@@ -165,10 +165,13 @@ public class BeaconTrackerTests
         var options = new RandomnessOptions();
         options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(30);
         var tracker = Create(options, "a", "b");
-        Time.Advance(TimeSpan.FromMinutes(20));
+        var age = TimeSpan.FromMinutes(20);
+        Time.Advance(age);
+        var pulseA = Pulses.Create("a", 5, Pulses.Epoch);
+        var pulseB = Pulses.Create("b", 5, Pulses.Epoch);
 
-        var accepted = tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
-        var refused = tracker.Accept("b", Pulses.Create("b", 5, Pulses.Epoch));
+        var accepted = tracker.Accept("a", pulseA);
+        var refused = tracker.Accept("b", pulseB);
 
         Assert.Null(accepted.Error);
         Assert.Equal(BeaconError.StalePulse, refused.Error);
@@ -180,9 +183,11 @@ public class BeaconTrackerTests
         var options = new RandomnessOptions();
         options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(30);
         var tracker = Create(options, "a");
-        Time.Advance(TimeSpan.FromMinutes(30));
+        var age = TimeSpan.FromMinutes(30);
+        Time.Advance(age);
+        var pulse = Pulses.Create("a", 5, Pulses.Epoch);
 
-        var result = tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
+        var result = tracker.Accept("a", pulse);
 
         Assert.Null(result.Error);
     }
@@ -193,9 +198,13 @@ public class BeaconTrackerTests
         var options = new RandomnessOptions();
         options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(30);
         var tracker = Create(options, "a");
-        Time.Advance(TimeSpan.FromMinutes(30) + TimeSpan.FromTicks(1));
+        var limit = TimeSpan.FromMinutes(30);
+        var tick = TimeSpan.FromTicks(1);
+        var age = limit + tick;
+        Time.Advance(age);
+        var pulse = Pulses.Create("a", 5, Pulses.Epoch);
 
-        var result = tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
+        var result = tracker.Accept("a", pulse);
 
         Assert.Equal(BeaconError.StalePulse, result.Error);
     }
@@ -206,9 +215,11 @@ public class BeaconTrackerTests
         var options = new RandomnessOptions();
         options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(5);
         var tracker = Create(options, "a");
-        Time.Advance(TimeSpan.FromMinutes(6));
+        var age = TimeSpan.FromMinutes(6);
+        Time.Advance(age);
+        var pulse = Pulses.Create("a", 5, Pulses.Epoch);
 
-        var result = tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
+        var result = tracker.Accept("a", pulse);
 
         Assert.Equal(BeaconError.StalePulse, result.Error);
     }
@@ -220,9 +231,11 @@ public class BeaconTrackerTests
         options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(30);
         var tracker = Create(options, "a");
         options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(1);
-        Time.Advance(TimeSpan.FromMinutes(20));
+        var age = TimeSpan.FromMinutes(20);
+        Time.Advance(age);
+        var pulse = Pulses.Create("a", 5, Pulses.Epoch);
 
-        var result = tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
+        var result = tracker.Accept("a", pulse);
 
         Assert.Null(result.Error);
     }
@@ -327,8 +340,16 @@ public class BeaconTrackerTests
 
     #endregion
 
-    private BeaconTracker Create(params string[] names) => Create(new RandomnessOptions(), names);
+    private BeaconTracker Create(params string[] names)
+    {
+        var options = new RandomnessOptions();
+        return Create(options, names);
+    }
 
-    private BeaconTracker Create(RandomnessOptions options, params string[] names) =>
-        new(names.Select(name => new FakeBeacon(name)), Pool, Options.Create(options), Time);
+    private BeaconTracker Create(RandomnessOptions options, params string[] names)
+    {
+        var beacons = names.Select(name => new FakeBeacon(name));
+        var wrapped = Options.Create(options);
+        return new BeaconTracker(beacons, Pool, wrapped, Time);
+    }
 }
