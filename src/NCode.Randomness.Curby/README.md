@@ -28,6 +28,19 @@ timeout, for every caller). Requests use a named `HttpClient`, `CurbyDefaults.Ht
 total timeouts and a circuit breaker; add a proxy or other handlers to it with
 `services.AddHttpClient(CurbyDefaults.HttpClientName)`.
 
+## Verifying Saved Documents
+
+`CurbyPulseVerifier` makes the same checks without the network, on documents a caller supplies: the chain, a pulse
+and its predecessor, each the UTF-8 JSON the Twine API serves. It pins `CurbyDefaults.RngChainId`, or the chain
+identifier its constructor takes, and returns the pulse the beacon returns for that round, or throws a
+`BeaconException` with `InvalidPulse`. Pass the pulse to `VerifiableRandom.Create` to recompute a published draw, as
+[docs/draws.md](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md) describes:
+
+```csharp
+var pulse = new CurbyPulseVerifier().Verify(chainJson, pulseJson, predecessorJson);
+using var draw = VerifiableRandom.Create(pulse, context);
+```
+
 ## CURBy-Q
 
 `AddCurbyQuantumBeacon()` registers a second beacon, `curby-q`, which reads the CURBy-Q (DIRNG) chain. It shares the
