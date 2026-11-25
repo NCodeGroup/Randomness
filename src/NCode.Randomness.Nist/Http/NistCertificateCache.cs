@@ -16,6 +16,17 @@ namespace NCode.Randomness.Nist.Http;
 internal sealed class NistCertificateCache(NistApi api, IOptions<NistBeaconOptions> options)
     : IDisposable
 {
+    /// <summary>
+    /// Returns the pinned identifiers in lowercase: the configured ones, or <see cref="NistDefaults.CertificateIds"/> when none are configured.
+    /// </summary>
+    /// <param name="configured">The configured identifiers, which the options validator has checked.</param>
+    /// <returns>The identifiers to trust.</returns>
+    private static FrozenSet<string> CreatePinnedIds(List<string> configured)
+    {
+        IEnumerable<string> ids = configured.Count == 0 ? NistDefaults.CertificateIds : configured;
+        return ids.Select(static id => id.ToLowerInvariant()).ToFrozenSet(StringComparer.Ordinal);
+    }
+
     private NistApi Api { get; } = api;
 
     private FrozenSet<string> PinnedIds { get; } = CreatePinnedIds(options.Value.CertificateIds);
@@ -25,12 +36,6 @@ internal sealed class NistCertificateCache(NistApi api, IOptions<NistBeaconOptio
 
     private ConcurrentDictionary<string, SemaphoreSlim> Gates { get; } =
         new(StringComparer.Ordinal);
-
-    private static FrozenSet<string> CreatePinnedIds(List<string> configured)
-    {
-        IEnumerable<string> ids = configured.Count == 0 ? NistDefaults.CertificateIds : configured;
-        return ids.Select(static id => id.ToLowerInvariant()).ToFrozenSet(StringComparer.Ordinal);
-    }
 
     /// <summary>
     /// Returns the certificate with the identifier <paramref name="id"/>, fetching it on first use.

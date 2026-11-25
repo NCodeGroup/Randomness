@@ -114,6 +114,20 @@ public class NistBeaconOptionsValidatorTests
     }
 
     [Fact]
+    public void Validate_WithNullCertificateIds_Fails()
+    {
+        var options = new NistBeaconOptions { CertificateIds = null! };
+
+        var result = new NistBeaconOptionsValidator().Validate(null, options);
+
+        Assert.Contains(
+            "RandomnessBeacons:Nist:CertificateIds must not be null; leave it empty to trust the default certificates.",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
     public void Validate_WithRepeatedCertificateIdInTwoCases_Fails()
     {
         var options = new NistBeaconOptions

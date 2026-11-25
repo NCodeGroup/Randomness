@@ -61,23 +61,32 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
             failures.Add($"{Prefix}{nameof(options.ChainIndex)} must be at least 1.");
         }
 
-        var ids = options.CertificateIds ?? [];
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var repeated = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        for (var i = 0; i < ids.Count; ++i)
+        var ids = options.CertificateIds;
+        if (ids is null)
         {
-            var id = ids[i];
-            if (!IsCertificateId(id))
+            failures.Add(
+                $"{Prefix}{nameof(options.CertificateIds)} must not be null; leave it empty to trust the default certificates."
+            );
+        }
+        else
+        {
+            var seen = new HashSet<string>(ids.Count, StringComparer.OrdinalIgnoreCase);
+            var repeated = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < ids.Count; ++i)
             {
-                failures.Add(
-                    $"{Prefix}{nameof(options.CertificateIds)}:{i} is not a certificate identifier: 128 hexadecimal digits."
-                );
-            }
-            else if (!seen.Add(id) && repeated.Add(id))
-            {
-                failures.Add(
-                    $"{Prefix}{nameof(options.CertificateIds)} lists {id} more than once."
-                );
+                var id = ids[i];
+                if (!IsCertificateId(id))
+                {
+                    failures.Add(
+                        $"{Prefix}{nameof(options.CertificateIds)}:{i} is not a certificate identifier: 128 hexadecimal digits."
+                    );
+                }
+                else if (!seen.Add(id) && repeated.Add(id))
+                {
+                    failures.Add(
+                        $"{Prefix}{nameof(options.CertificateIds)} lists {id} more than once."
+                    );
+                }
             }
         }
 
