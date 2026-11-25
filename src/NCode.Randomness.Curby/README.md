@@ -60,8 +60,8 @@ round with `docker compose run --rm verify <round>`. The round number of a draw'
 bytes are only additional input to the generator and never the sole source of a secret, so what stays unverified does
 not weaken one.
 
-CURBy-Q completes a round about every 13 minutes while it runs, longer than the default `Randomness:MaxPulseAge` of 10
-minutes. `AddCurbyQuantumBeacon()` allows `curby-q` pulses up to 30 minutes old through
+CURBy-Q completes a round about every 13 minutes while it runs (as of 2026-11-25), longer than the default
+`Randomness:MaxPulseAge` of 10 minutes. `AddCurbyQuantumBeacon()` allows `curby-q` pulses up to 30 minutes old through
 `Randomness:MaxPulseAgeByBeacon:curby-q`, which a host can set itself, and leaves every other beacon's limit as it is.
 CURBy-Q has published no round since 2025-08-22 (as of 2026-11-25), so while it stays stalled the beacon reports stale
 pulses and the health check reports `Degraded`; draws over published rounds are unaffected.

@@ -67,6 +67,9 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
     /// Fetches the JSON array of documents at <paramref name="path"/>, relative to the base address, or returns an
     /// empty array when the API answers 404.
     /// </summary>
+    /// <param name="path">The path to fetch, relative to the base address.</param>
+    /// <param name="cancellationToken">The token that cancels the request and the read.</param>
+    /// <returns>The documents of the array, or an empty array when the API answers 404.</returns>
     public async ValueTask<ImmutableArray<TwineDocument>> GetDocumentsAsync(
         string path,
         CancellationToken cancellationToken
@@ -101,6 +104,9 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
     /// Fetches the raw bytes at <paramref name="path"/>, relative to the base address, or returns
     /// <see langword="null"/> when the API answers 404.
     /// </summary>
+    /// <param name="path">The path to fetch, relative to the base address.</param>
+    /// <param name="cancellationToken">The token that cancels the request and the read.</param>
+    /// <returns>The response body, or <see langword="null"/> when the API answers 404.</returns>
     public ValueTask<byte[]?> GetBytesAsync(string path, CancellationToken cancellationToken) =>
         GetBodyAsync(path, OctetStreamMediaType, cancellationToken);
 

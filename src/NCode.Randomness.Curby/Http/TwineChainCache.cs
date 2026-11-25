@@ -9,8 +9,9 @@ namespace NCode.Randomness.Curby.Http;
 /// <summary>
 /// Fetches and verifies Twine chains once, keyed by CID and expected family. Both CURBy beacons share one instance.
 /// Chains come only from pinned CIDs or CIDs in signed pulses, so the cache stays small. The cache has one gate per
-/// chain, so one beacon's slow chain fetch never delays another's (ADR-1002).
+/// chain.
 /// </summary>
+// ADR-1002: one beacon's slow chain fetch never delays another's.
 internal sealed class TwineChainCache(TwineApi api) : IDisposable
 {
     private TwineApi Api { get; } = api;

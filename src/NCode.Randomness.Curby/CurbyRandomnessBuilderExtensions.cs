@@ -118,9 +118,9 @@ public static class CurbyRandomnessBuilderExtensions
         /// <summary>
         /// Registers the CURBy-Q beacon with options bound from <paramref name="configuration"/>, such as
         /// <c>configuration.GetSection("RandomnessBeacons:Curby")</c>. An unknown key fails the host at start. It
-        /// allows <c>curby-q</c> pulses up to 30 minutes old, since CURBy-Q completes a round about every 13
-        /// minutes, unless <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> or a longer <c>Randomness:MaxPulseAge</c> is
-        /// set.
+        /// allows <c>curby-q</c> pulses up to 30 minutes old, since a CURBy-Q round takes longer than the default
+        /// <c>Randomness:MaxPulseAge</c>, unless <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> or a longer
+        /// <c>Randomness:MaxPulseAge</c> is set.
         /// </summary>
         /// <param name="configuration">The configuration section to bind.</param>
         /// <returns>The builder, for chaining.</returns>

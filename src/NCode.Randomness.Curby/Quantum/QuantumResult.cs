@@ -22,10 +22,10 @@ internal sealed class QuantumResult
     /// <returns>The seed as the parameters encode it.</returns>
     private static string ReadSeed(ReadOnlySpan<byte> parameters)
     {
-        JsonElement document;
+        JsonElement root;
         try
         {
-            document = JsonElement.Parse(parameters);
+            root = JsonElement.Parse(parameters);
         }
         catch (JsonException exception)
         {
@@ -34,13 +34,13 @@ internal sealed class QuantumResult
             );
         }
 
-        if (document.ValueKind != JsonValueKind.Object)
+        if (root.ValueKind != JsonValueKind.Object)
         {
             throw new TwineFormatException("The round's parameters are not a JSON object.");
         }
 
         JsonElement? seed = null;
-        foreach (var property in document.EnumerateObject())
+        foreach (var property in root.EnumerateObject())
         {
             if (property.NameEquals("seed"u8))
             {
@@ -181,7 +181,7 @@ internal sealed class QuantumResult
     public void VerifySeed(TwineSignedPulse seed, ReadOnlySpan<byte> parameters)
     {
         ArgumentNullException.ThrowIfNull(seed);
-        Span<byte> digest = stackalloc byte[64];
+        Span<byte> digest = stackalloc byte[Sha3.Sha3_512Length];
         Sha3.HashData512(parameters, digest);
         var hash = Convert.ToHexStringLower(digest);
         if (!string.Equals(hash, ParamsHash, StringComparison.Ordinal))
