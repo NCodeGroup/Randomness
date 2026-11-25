@@ -73,7 +73,7 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
         if (options.ChainRetryDelay < MinRetryDelay || options.ChainRetryDelay > MaxRetryDelay)
         {
             failures.Add(
-                $"{Prefix}{nameof(options.ChainRetryDelay)} must be between {MinRetryDelay} and {MaxRetryDelay}."
+                $"{Prefix}{nameof(options.ChainRetryDelay)} must be between {MinRetryDelay} and {MaxRetryDelay}; it is {options.ChainRetryDelay}."
             );
         }
 

@@ -108,7 +108,7 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
         )
         {
             failures.Add(
-                $"{Prefix}{nameof(options.CertificateRetryDelay)} must be between {MinRetryDelay} and {MaxRetryDelay}."
+                $"{Prefix}{nameof(options.CertificateRetryDelay)} must be between {MinRetryDelay} and {MaxRetryDelay}; it is {options.CertificateRetryDelay}."
             );
         }
 

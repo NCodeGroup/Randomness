@@ -109,9 +109,9 @@ public class CurbyBeaconOptionsValidatorTests
     }
 
     [Theory]
-    [InlineData(999)]
-    [InlineData(86_400_001)]
-    public void Validate_WithChainRetryDelayOutOfRange_Fails(long milliseconds)
+    [InlineData(999, "00:00:00.9990000")]
+    [InlineData(86_400_001, "1.00:00:00.0010000")]
+    public void Validate_WithChainRetryDelayOutOfRange_Fails(long milliseconds, string shown)
     {
         var options = new CurbyBeaconOptions
         {
@@ -121,7 +121,7 @@ public class CurbyBeaconOptionsValidatorTests
         var result = new CurbyBeaconOptionsValidator().Validate(null, options);
 
         Assert.Contains(
-            "RandomnessBeacons:Curby:ChainRetryDelay must be between 00:00:01 and 1.00:00:00.",
+            $"RandomnessBeacons:Curby:ChainRetryDelay must be between 00:00:01 and 1.00:00:00; it is {shown}.",
             result.FailureMessage,
             StringComparison.Ordinal
         );
