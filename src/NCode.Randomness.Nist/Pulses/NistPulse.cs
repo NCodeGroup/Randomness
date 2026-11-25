@@ -242,10 +242,11 @@ internal sealed class NistPulse
             throw new NistFormatException($"The signature of pulse {PulseIndex} does not verify.");
         }
 
-        var hashed = new byte[SignedBytes.Length + Signature.Length];
-        SignedBytes.CopyTo(hashed, 0);
-        Signature.CopyTo(hashed, SignedBytes.Length);
-        var hash = SHA512.HashData(hashed);
+        using var outputHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA512);
+        outputHash.AppendData(SignedBytes);
+        outputHash.AppendData(Signature);
+        Span<byte> hash = stackalloc byte[HashLength];
+        outputHash.GetHashAndReset(hash);
         if (!CryptographicOperations.FixedTimeEquals(hash, Output))
         {
             throw new NistFormatException(
@@ -498,16 +499,19 @@ internal sealed class NistPulse
 
     private static void WriteString(ArrayBufferWriter<byte> signed, string value)
     {
-        byte[] bytes;
+        int length;
         try
         {
-            bytes = Utf8.GetBytes(value);
+            length = Utf8.GetByteCount(value);
         }
         catch (EncoderFallbackException)
         {
             throw new NistFormatException("A NIST pulse text member is not valid UTF-8.");
         }
 
-        WriteBytes(signed, bytes);
+        WriteUInt32(signed, (uint)length);
+        var span = signed.GetSpan(length);
+        var written = Utf8.GetBytes(value, span);
+        signed.Advance(written);
     }
 }
