@@ -15,33 +15,33 @@ namespace NCode.Randomness.Drand.Rounds;
 internal sealed class DrandChain(string hash, G2Affine publicKey, long genesisTime, int period)
 {
     /// <summary>
-    /// The chain hash, in lowercase hex.
+    /// Gets the chain hash, in lowercase hex.
     /// </summary>
     public string Hash { get; } = hash;
 
     /// <summary>
-    /// The group public key every round is verified against.
+    /// Gets the group public key every round is verified against.
     /// </summary>
     public G2Affine PublicKey { get; } = publicKey;
 
     /// <summary>
-    /// The time of round 1, in Unix seconds.
+    /// Gets the time of round 1, in Unix seconds.
     /// </summary>
     public long GenesisTime { get; } = genesisTime;
 
     /// <summary>
-    /// The seconds between rounds.
+    /// Gets the seconds between rounds.
     /// </summary>
     public int Period { get; } = period;
 
     /// <summary>
-    /// The last round whose time <see cref="DateTimeOffset"/> can represent.
+    /// Gets the last round whose time <see cref="DateTimeOffset"/> can represent.
     /// </summary>
     public long MaxRound =>
         (DateTimeOffset.MaxValue.ToUnixTimeSeconds() - GenesisTime) / Period + 1;
 
     /// <summary>
-    /// The quicknet chain, pinned from <see cref="DrandDefaults"/>.
+    /// Gets the quicknet chain, pinned from <see cref="DrandDefaults"/>.
     /// </summary>
     public static DrandChain Quicknet { get; } = CreateQuicknet();
 

@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Immutable;
 using Neo.Cryptography.BLS12_381;
 
 namespace NCode.Randomness.Drand.Bls;
@@ -15,7 +16,7 @@ internal static class G1Isogeny
     /// Gets the coefficients <c>k(1,0)</c> to <c>k(1,11)</c> of the x numerator, where index <c>i</c> is the
     /// coefficient of <c>x'^i</c>.
     /// </summary>
-    public static Fp[] XNumerator { get; } =
+    public static ImmutableArray<Fp> XNumerator { get; } =
         Parse(
             "11a05f2b1e833340b809101dd99815856b303e88a2d7005ff2627b56cdb4e2c85610c2d5f2e62d6eaeac1662734649b7",
             "17294ed3e943ab2f0588bab22147a81c7c17e75b2f6a8417f565e33c70d1e86b4838f2a6f318c356e834eef1b3cb83bb",
@@ -35,7 +36,7 @@ internal static class G1Isogeny
     /// Gets the coefficients <c>k(2,0)</c> to <c>k(2,9)</c> of the x denominator, which is monic: its top
     /// coefficient of one is not listed.
     /// </summary>
-    public static Fp[] XDenominator { get; } =
+    public static ImmutableArray<Fp> XDenominator { get; } =
         Parse(
             "8ca8d548cff19ae18b2e62f4bd3fa6f01d5ef4ba35b48ba9c9588617fc8ac62b558d681be343df8993cf9fa40d21b1c",
             "12561a5deb559c4348b4711298e536367041e8ca0cf0800c0126c2588c48bf5713daa8846cb026e9e5c8276ec82b3bff",
@@ -52,7 +53,7 @@ internal static class G1Isogeny
     /// <summary>
     /// Gets the coefficients <c>k(3,0)</c> to <c>k(3,15)</c> of the y numerator.
     /// </summary>
-    public static Fp[] YNumerator { get; } =
+    public static ImmutableArray<Fp> YNumerator { get; } =
         Parse(
             "90d97c81ba24ee0259d1f094980dcfa11ad138e48a869522b52af6c956543d3cd0c7aee9b3ba3c2be9845719707bb33",
             "134996a104ee5811d51036d776fb46831223e96c254f383d0f906343eb67ad34d6c56711962fa8bfe097e75a2e41c696",
@@ -76,7 +77,7 @@ internal static class G1Isogeny
     /// Gets the coefficients <c>k(4,0)</c> to <c>k(4,14)</c> of the y denominator, which is monic: its top
     /// coefficient of one is not listed.
     /// </summary>
-    public static Fp[] YDenominator { get; } =
+    public static ImmutableArray<Fp> YDenominator { get; } =
         Parse(
             "16112c4c3a9c98b252181140fad0eae9601a6de578980be6eec3232b5be72e7a07f3688ef60c206d01479253b03663c1",
             "1962d75c2381201e1a0cbd6c43c348b885c84ff731c4d59ca4a10356f453e01f78a4260763529e3532f6102c2e49a03d",
@@ -113,12 +114,12 @@ internal static class G1Isogeny
         return new G1Affine(mappedX, mappedY);
     }
 
-    private static Fp[] Parse(params string[] hexValues)
+    private static ImmutableArray<Fp> Parse(params string[] hexValues)
     {
-        return Array.ConvertAll(hexValues, FieldElements.FromHex);
+        return [.. Array.ConvertAll(hexValues, FieldElements.FromHex)];
     }
 
-    private static Fp Evaluate(Fp[] coefficients, Fp x, bool monic)
+    private static Fp Evaluate(ImmutableArray<Fp> coefficients, Fp x, bool monic)
     {
         // Horner's method from the top coefficient, which a monic polynomial leaves unlisted as one.
         var result = monic ? Fp.One : Fp.Zero;
