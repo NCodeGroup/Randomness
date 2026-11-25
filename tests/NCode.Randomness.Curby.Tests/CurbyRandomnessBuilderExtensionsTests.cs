@@ -239,5 +239,30 @@ public class CurbyRandomnessBuilderExtensionsTests
         Assert.Empty(options.MaxPulseAgeByBeacon);
     }
 
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithMaxPulseAgeOfThirtyMinutes_AddsNoLimit()
+    {
+        var services = new ServiceCollection();
+        var hostMaxAge = TimeSpan.FromMinutes(30);
+        services.AddRandomness(options => options.MaxPulseAge = hostMaxAge).AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
+
+        Assert.Empty(options.MaxPulseAgeByBeacon);
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithConfigure_AppliesTheOptions()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyQuantumBeacon(options => options.MaxResponseBytes = 8192);
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<CurbyBeaconOptions>>().Value;
+
+        Assert.Equal(8192, options.MaxResponseBytes);
+    }
+
     #endregion
 }

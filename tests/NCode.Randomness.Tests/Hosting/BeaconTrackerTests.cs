@@ -175,6 +175,32 @@ public class BeaconTrackerTests
     }
 
     [Fact]
+    public void Accept_WithPulseAtItsBeaconsLimit_IsAccepted()
+    {
+        var options = new RandomnessOptions();
+        options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(30);
+        var tracker = Create(options, "a");
+        Time.Advance(TimeSpan.FromMinutes(30));
+
+        var result = tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
+
+        Assert.Null(result.Error);
+    }
+
+    [Fact]
+    public void Accept_WithPulseOneTickPastItsBeaconsLimit_IsStale()
+    {
+        var options = new RandomnessOptions();
+        options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromMinutes(30);
+        var tracker = Create(options, "a");
+        Time.Advance(TimeSpan.FromMinutes(30) + TimeSpan.FromTicks(1));
+
+        var result = tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
+
+        Assert.Equal(BeaconError.StalePulse, result.Error);
+    }
+
+    [Fact]
     public void Accept_WithPulseOlderThanItsBeaconsLimit_IsStale()
     {
         var options = new RandomnessOptions();

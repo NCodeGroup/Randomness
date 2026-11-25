@@ -328,6 +328,20 @@ public class QuantumRoundTests
         AssertRefused(builder, $"The seed rule count {count} is not between 1 and 8.");
     }
 
+    [Fact]
+    public void Verify_WithSeedCountOfEight_ReadsIt()
+    {
+        using var builder = new QuantumRoundBuilder { SeedCount = 8 };
+        var built = builder.Build();
+        using var chain = VerifyChain(builder);
+        var documents = Documents(built.RoundJson);
+
+        var round = QuantumRound.Verify(documents, chain);
+
+        var result = Assert.IsType<QuantumResult>(round.Result);
+        Assert.Equal(8, result.SeedCount);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-8)]

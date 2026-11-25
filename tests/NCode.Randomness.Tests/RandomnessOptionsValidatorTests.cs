@@ -80,6 +80,21 @@ public class RandomnessOptionsValidatorTests
     }
 
     [Fact]
+    public void Validate_WithNullBeaconLimits_Fails()
+    {
+        var options = new RandomnessOptions { MaxPulseAgeByBeacon = null! };
+
+        var result = new RandomnessOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Failed);
+        Assert.Contains(
+            "Randomness:MaxPulseAgeByBeacon must not be null.",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
     public void Validate_WithEmptyBeaconName_Fails()
     {
         var options = new RandomnessOptions();

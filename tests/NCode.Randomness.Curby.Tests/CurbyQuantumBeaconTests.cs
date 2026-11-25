@@ -137,7 +137,11 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, fetch);
 
-        Assert.Contains("starts before", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            "The Bell chain starts before",
+            exception.Message,
+            StringComparison.Ordinal
+        );
     }
 
     [Fact]
@@ -151,7 +155,11 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, fetch);
 
-        Assert.Contains("starts before", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            "The seed chain starts before",
+            exception.Message,
+            StringComparison.Ordinal
+        );
     }
 
     [Fact]
@@ -409,6 +417,21 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         );
 
         Assert.Empty(Server.Requests);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheCallerCancels_Throws()
+    {
+        using var builder = new QuantumRoundBuilder();
+        ServeBuilt(builder);
+        var beacon = Create();
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+        var token = cancellation.Token;
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await beacon.GetPulseAsync(builder.Round, token)
+        );
     }
 
     #endregion
