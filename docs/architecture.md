@@ -50,7 +50,8 @@ flowchart LR
 | --- | --- |
 | `IRandomSource`, `ISecureRandom` | The byte-source port, and the capability that its bytes are secret. |
 | `RandomSourceExtensions`, `Sampling/UniformSampler` | Every typed value and range over any source, unbiased and deterministic given the bytes, written once. |
-| `SystemRandomSource` | The operating system's CSPRNG as an `ISecureRandom`, for use without DI or beacons. |
+| `SystemRandomSource` | The operating system's CSPRNG as an `ISecureRandom`, for use without beacons. |
+| `RandomnessHost`, `RandomnessHostBuilder` | The secure generator, beacon collector and draws without a host: a builder over a private service container that adapters register into, started by `BuildAsync` and stopped by `DisposeAsync` ([ADR-1011](decisions/1011-the-generator-is-composed-without-a-host-by-a-builder-over-a-private-service-container.md)). |
 | `Generation/HmacDrbg` | NIST SP 800-90A HMAC_DRBG with HMAC-SHA-512, pinned to the CAVP vectors. |
 | `Generation/DefaultSecureRandom`, `DrbgShard` | The registered `ISecureRandom`: per-processor shards, buffered, reseeded on a new pulse, on time and on volume ([ADR-1001](decisions/1001-the-secure-generator-is-a-sharded-buffered-hmac-drbg-reseeded-from-the-operating-system.md)). |
 | `Entropy/BeaconEntropyPool` | Folds every accepted pulse into one digest and epoch that shards read without blocking. |

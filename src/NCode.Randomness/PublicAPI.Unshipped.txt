@@ -67,6 +67,14 @@ NCode.Randomness.RandomnessDiagnostics
 NCode.Randomness.RandomnessHealthChecksBuilderExtensions
 NCode.Randomness.RandomnessHealthChecksBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!)
 NCode.Randomness.RandomnessHealthChecksBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!).AddRandomnessBeacons(params System.Collections.Generic.IEnumerable<string!>! tags) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+NCode.Randomness.RandomnessHost
+NCode.Randomness.RandomnessHost.BeaconStatus.get -> NCode.Randomness.IBeaconStatus!
+NCode.Randomness.RandomnessHost.DisposeAsync() -> System.Threading.Tasks.ValueTask
+NCode.Randomness.RandomnessHost.SecureRandom.get -> NCode.Randomness.ISecureRandom!
+NCode.Randomness.RandomnessHost.VerifiableRandomFactory.get -> NCode.Randomness.IVerifiableRandomFactory!
+NCode.Randomness.RandomnessHostBuilder
+NCode.Randomness.RandomnessHostBuilder.BuildAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.RandomnessHost!>
+NCode.Randomness.RandomnessHostBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 NCode.Randomness.RandomnessOptions
 NCode.Randomness.RandomnessOptions.FetchTimeout.get -> System.TimeSpan
 NCode.Randomness.RandomnessOptions.FetchTimeout.set -> void
@@ -121,6 +129,9 @@ NCode.Randomness.VerifiableRandom.Pulse.get -> NCode.Randomness.BeaconPulse!
 override NCode.Randomness.BeaconPulse.ToString() -> string!
 static NCode.Randomness.RandomnessBuilderExtensions.AddBeacon<TBeacon>(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!
 static NCode.Randomness.RandomnessHealthChecksBuilderExtensions.AddRandomnessBeacons(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, params System.Collections.Generic.IEnumerable<string!>! tags) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+static NCode.Randomness.RandomnessHost.CreateBuilder() -> NCode.Randomness.RandomnessHostBuilder!
+static NCode.Randomness.RandomnessHost.CreateBuilder(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.RandomnessHostBuilder!
+static NCode.Randomness.RandomnessHost.CreateBuilder(System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.RandomnessHostBuilder!
 static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
 static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
 static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> NCode.Randomness.IRandomnessBuilder!

@@ -15,8 +15,10 @@ Cryptographically secure random numbers for .NET, strengthened by public randomn
 - **Reproducible draws**: `IVerifiableRandomFactory` derives a deterministic stream, `ncode-randomness-draw/1`, from
   one verified pulse and a context label, for raffles, audits and sortition. It is deliberately not an
   `ISecureRandom`.
-- **`SystemRandomSource.Instance`**: the operating system's generator behind the same API, without dependency
-  injection.
+- **`RandomnessHost`**: the same generator and beacons without dependency injection, for console tools and
+  libraries: build it with `RandomnessHost.CreateBuilder()` and `BuildAsync`, and dispose it to stop the beacons.
+- **`SystemRandomSource.Instance`**: the operating system's generator behind the same API, with no beacon and
+  nothing to dispose.
 
 ```csharp
 builder.Services

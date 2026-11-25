@@ -41,7 +41,7 @@ internal sealed class BeaconCollector(
 
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
-        await base.StartAsync(cancellationToken);
+        await base.StartAsync(cancellationToken).ConfigureAwait(false);
         if (!Options.RequireInitialPulse)
         {
             return;
@@ -52,7 +52,8 @@ internal sealed class BeaconCollector(
             await Tracker
                 .WaitForPulseAsync(cancellationToken)
                 .AsTask()
-                .WaitAsync(Options.InitialPulseTimeout, Time, cancellationToken);
+                .WaitAsync(Options.InitialPulseTimeout, Time, cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (TimeoutException exception)
         {
@@ -93,7 +94,7 @@ internal sealed class BeaconCollector(
         var failures = 0;
         while (!stoppingToken.IsCancellationRequested)
         {
-            var mixed = await CollectAsync(beacon, name, stoppingToken);
+            var mixed = await CollectAsync(beacon, name, stoppingToken).ConfigureAwait(false);
             failures = mixed ? 0 : failures + 1;
             if (mixed && Options.Mode == BeaconMode.InitializeOnly)
             {
@@ -103,7 +104,7 @@ internal sealed class BeaconCollector(
 
             try
             {
-                await Task.Delay(NextDelay(failures), Time, stoppingToken);
+                await Task.Delay(NextDelay(failures), Time, stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -127,7 +128,7 @@ internal sealed class BeaconCollector(
         Exception? failure = null;
         try
         {
-            var pulse = await beacon.GetLatestPulseAsync(linked.Token);
+            var pulse = await beacon.GetLatestPulseAsync(linked.Token).ConfigureAwait(false);
             result = Tracker.Accept(name, pulse);
             if (result.Error is null && result.Outcome == PulseOutcomes.Accepted)
             {

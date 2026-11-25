@@ -45,7 +45,7 @@ mirror, and the beacon operator's future behavior are not.
 
 - **Economy of mechanism:** one standard DRBG, one sampler for every typed value, one port for every beacon.
 - **Fail-safe defaults:** a pulse is refused on any failed check; secret output never depends on a beacon; the
-  host fails at start on an invalid or misspelled setting.
+  host, or `RandomnessHost`'s `BuildAsync`, fails at start on an invalid or misspelled setting.
 - **Complete mediation:** every pulse passes the adapter's verification and the tracker's acceptance before the pool
   sees it.
 - **Least privilege:** adapters only read public HTTPS endpoints; no credential is needed or stored.

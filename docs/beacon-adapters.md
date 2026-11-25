@@ -44,6 +44,9 @@ Expose an extension member on `IRandomnessBuilder` that registers the adapter wi
 services.AddRandomness().AddCurbyBeacon().AddNistBeacon().AddDrandBeacon();
 ```
 
+`RandomnessHost.CreateBuilder()` returns an `IRandomnessBuilder` too, so the same member registers the adapter in an
+application without dependency injection.
+
 The collector fetches from every registered beacon on its own loop and mixes every accepted pulse into the secure
 generator, so each additional beacon removes a single point of trust.
 

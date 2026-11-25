@@ -10,9 +10,9 @@ namespace NCode.Randomness;
 /// (<see cref="RandomNumberGenerator"/>) as an <see cref="ISecureRandom"/>.
 /// </summary>
 /// <remarks>
-/// Use it without dependency injection, in offline deployments, or wherever no beacon is wanted. It is stateless and
-/// thread-safe, so the one <see cref="Instance"/> serves every caller. The hybrid generator that
-/// <c>AddRandomness()</c> registers also draws its entropy from it.
+/// Use it wherever no beacon is wanted, such as in an air-gapped deployment. It is stateless and thread-safe, so the
+/// one <see cref="Instance"/> serves every caller, and it needs no disposal. The hybrid generator that
+/// <c>AddRandomness()</c> registers and <see cref="RandomnessHost"/> builds also draws its entropy from it.
 /// </remarks>
 public sealed class SystemRandomSource : ISecureRandom
 {
