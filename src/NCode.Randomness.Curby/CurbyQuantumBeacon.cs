@@ -19,6 +19,7 @@ namespace NCode.Randomness.Curby;
 /// </summary>
 internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
 {
+    private const string RoundPath = "curbyq/round/";
     private const int MaxCrawl = 10;
 
     public CurbyQuantumBeacon(
@@ -48,7 +49,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
     private volatile BeaconPulse? _last;
 
     public ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken) =>
-        FetchAsync("curbyq/round/latest", null, cancellationToken);
+        FetchAsync($"{RoundPath}latest", null, cancellationToken);
 
     public ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken)
     {
@@ -63,7 +64,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
         }
 
         var roundText = round.ToString(CultureInfo.InvariantCulture);
-        var path = $"curbyq/round/{roundText}";
+        var path = $"{RoundPath}{roundText}";
         return FetchAsync(path, round, cancellationToken);
     }
 
@@ -123,7 +124,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
             await CrawlBellAsync(result, cancellationToken).ConfigureAwait(false);
             var seed = await CrawlSeedAsync(result, cancellationToken).ConfigureAwait(false);
             var numberText = verified.Number.ToString(CultureInfo.InvariantCulture);
-            var paramsPath = $"curbyq/round/{numberText}/params";
+            var paramsPath = $"{RoundPath}{numberText}/params";
             var parameters = await Api.GetBytesAsync(paramsPath, cancellationToken)
                 .ConfigureAwait(false)
                 ?? throw new TwineFormatException(

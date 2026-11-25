@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Text.Json;
 using NCode.Randomness.Curby.Twine;
 
@@ -74,7 +75,7 @@ internal sealed class QuantumResult
         if (
             !pulse.Payload.TryGet<IpldLink>("ref", out var reference)
             || !reference.Cid.Equals(Request.Cid)
-            || !pulse.Payload.TryGet<IpldString>("dataHash", out var hash)
+            || !pulse.Payload.TryGet<IpldString>(QuantumKeys.DataHash, out var hash)
         )
         {
             return false;
@@ -151,13 +152,23 @@ internal sealed class QuantumResult
             throw new TwineFormatException("The round's seed is not canonical base64.");
         }
 
-        var actual = new byte[SeedLength / 8];
-        Sha3.Shake256(seed.Cid.Digest, actual);
-        if (!actual.AsSpan().SequenceEqual(expected))
+        var length = SeedLength / 8;
+        var buffer = ArrayPool<byte>.Shared.Rent(length);
+        try
         {
-            throw new TwineFormatException(
-                $"The round's seed does not expand from seed pulse {seed.Index} ({seed.Cid})."
-            );
+            var actual = buffer.AsSpan(0, length);
+            Sha3.Shake256(seed.Cid.Digest, actual);
+            if (!actual.SequenceEqual(expected))
+            {
+                throw new TwineFormatException(
+                    $"The round's seed does not expand from seed pulse {seed.Index} ({seed.Cid})."
+                );
+            }
+        }
+        finally
+        {
+            // The seed is public, so the buffer needs no clearing.
+            ArrayPool<byte>.Shared.Return(buffer);
         }
     }
 

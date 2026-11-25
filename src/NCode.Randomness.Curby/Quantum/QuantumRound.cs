@@ -72,7 +72,9 @@ internal sealed class QuantumRound
         }
 
         var number = ReadRoundNumber(pulses);
-        var stages = pulses.Select(pulse => pulse.Payload.Get<IpldString>("stage").Value).ToList();
+        var stages = pulses
+            .Select(pulse => pulse.Payload.Get<IpldString>(QuantumKeys.Stage).Value)
+            .ToList();
         if (!AreKnownStages(stages))
         {
             throw new TwineFormatException(
@@ -97,10 +99,10 @@ internal sealed class QuantumRound
 
     private static long ReadRoundNumber(List<TwineSignedPulse> pulses)
     {
-        var number = pulses[0].Payload.Get<IpldInteger>("round").Value;
+        var number = pulses[0].Payload.Get<IpldInteger>(QuantumKeys.Round).Value;
         foreach (var pulse in pulses.Skip(1))
         {
-            var other = pulse.Payload.Get<IpldInteger>("round").Value;
+            var other = pulse.Payload.Get<IpldInteger>(QuantumKeys.Round).Value;
             if (other != number)
             {
                 throw new TwineFormatException(
@@ -133,8 +135,8 @@ internal sealed class QuantumRound
         var request = pulses[0];
         var precommit = pulses[1];
         var result = pulses[2];
-        var dataHash = ReadHash(precommit.Payload, "dataHash", "precommit");
-        var resultDataHash = ReadHash(result.Payload, "dataHash", "randomness pulse");
+        var dataHash = ReadHash(precommit.Payload, QuantumKeys.DataHash, "precommit");
+        var resultDataHash = ReadHash(result.Payload, QuantumKeys.DataHash, "randomness pulse");
         if (!string.Equals(dataHash, resultDataHash, StringComparison.Ordinal))
         {
             throw new TwineFormatException(

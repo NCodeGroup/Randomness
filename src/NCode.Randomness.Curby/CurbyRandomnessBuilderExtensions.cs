@@ -17,6 +17,16 @@ public static class CurbyRandomnessBuilderExtensions
 {
     private static TimeSpan QuantumMaxPulseAge { get; } = TimeSpan.FromMinutes(30);
 
+    private static void UseQuantumMaxPulseAge(RandomnessOptions options)
+    {
+        if (options.MaxPulseAgeByBeacon is null || options.MaxPulseAge >= QuantumMaxPulseAge)
+        {
+            return;
+        }
+
+        options.MaxPulseAgeByBeacon.TryAdd(CurbyDefaults.QuantumBeaconName, QuantumMaxPulseAge);
+    }
+
     extension(IRandomnessBuilder builder)
     {
         /// <summary>
@@ -171,16 +181,6 @@ public static class CurbyRandomnessBuilderExtensions
             );
             return builder;
         }
-    }
-
-    private static void UseQuantumMaxPulseAge(RandomnessOptions options)
-    {
-        if (options.MaxPulseAgeByBeacon is null || options.MaxPulseAge >= QuantumMaxPulseAge)
-        {
-            return;
-        }
-
-        options.MaxPulseAgeByBeacon.TryAdd(CurbyDefaults.QuantumBeaconName, QuantumMaxPulseAge);
     }
 
     private static void ConfigureResilience(HttpStandardResilienceOptions options)
