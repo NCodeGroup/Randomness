@@ -109,7 +109,7 @@ public class TwineVerificationTests
 
     #endregion
 
-    #region CURBy-Q Fixture Tests
+    #region Parse Tests
 
     [Fact]
     public void Parse_WithCurbyQDocuments_RecomputesEveryCid()
@@ -118,8 +118,8 @@ public class TwineVerificationTests
         var firstSeedPulse = CurbyQuantumFixtures.SeedPulse(1914066);
         var secondSeedPulse = CurbyQuantumFixtures.SeedPulse(1914067);
         var thirdSeedPulse = CurbyQuantumFixtures.SeedPulse(1914068);
-        var documents = new List<string>
-        {
+        List<string> documents =
+        [
             CurbyQuantumFixtures.Chain,
             CurbyQuantumFixtures.BellChain,
             CurbyQuantumFixtures.SeedChain,
@@ -127,7 +127,7 @@ public class TwineVerificationTests
             firstSeedPulse,
             secondSeedPulse,
             thirdSeedPulse,
-        };
+        ];
         var roundDocuments = RoundPulses().Select(element => element.GetRawText()).ToList();
         documents.AddRange(roundDocuments);
 
@@ -140,6 +140,10 @@ public class TwineVerificationTests
             Assert.Equal(expected, actual);
         }
     }
+
+    #endregion
+
+    #region Verify Tests
 
     [Fact]
     public void Verify_WithCurbyQPulses_AcceptsEachSignature()

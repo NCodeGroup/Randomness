@@ -72,7 +72,7 @@ public class DagJsonTests
     {
         var read = Read(json);
         var node = Assert.IsType<IpldFloat>(read);
-        var expected = double.Parse(json, CultureInfo.InvariantCulture);
+        var expected = double.Parse(json, NumberStyles.Float, CultureInfo.InvariantCulture);
         var expectedBits = BitConverter.DoubleToInt64Bits(expected);
         var actualBits = BitConverter.DoubleToInt64Bits(node.Value);
 

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Net;
-using NCode.Randomness.Curby.Http;
 using NCode.Randomness.Curby.Tests.Fixtures;
 using NCode.Randomness.Curby.Tests.TestTwine;
 
@@ -17,15 +16,11 @@ public sealed class CurbyBeaconTests : IDisposable
 
     private CurbyBeaconOptions Options { get; } = new();
 
-    private List<TwineChainCache> Caches { get; } = [];
+    private TwineTestServices Services { get; } = new();
 
     public void Dispose()
     {
-        foreach (var chains in Caches)
-        {
-            chains.Dispose();
-        }
-
+        Services.Dispose();
         Server.Dispose();
     }
 
@@ -77,9 +72,11 @@ public sealed class CurbyBeaconTests : IDisposable
             .Serve(PulsesPath + "latest", CurbyFixtures.Pulse(CurbyFixtures.LatestRound));
         var beacon = Create();
 
-        var exception = await AssertBeaconErrorAsync(
+        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
             BeaconError.InvalidPulse,
-            beacon.GetLatestPulseAsync
+            CancellationToken.None
         );
 
         Assert.Contains("does not serve pulse", exception.Message, StringComparison.Ordinal);
@@ -94,9 +91,11 @@ public sealed class CurbyBeaconTests : IDisposable
             .Serve(PulsesPath + Previous(CurbyFixtures.LatestRound), CurbyFixtures.Pulse(1620421));
         var beacon = Create();
 
-        var exception = await AssertBeaconErrorAsync(
+        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
             BeaconError.InvalidPulse,
-            beacon.GetLatestPulseAsync
+            CancellationToken.None
         );
 
         Assert.Contains("does not precede", exception.Message, StringComparison.Ordinal);
@@ -109,9 +108,11 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Serve(ChainPath, impostor.ChainJson);
         var beacon = Create();
 
-        var exception = await AssertBeaconErrorAsync(
+        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
             BeaconError.InvalidPulse,
-            beacon.GetLatestPulseAsync
+            CancellationToken.None
         );
 
         Assert.Contains("pinned", exception.Message, StringComparison.Ordinal);
@@ -122,7 +123,12 @@ public sealed class CurbyBeaconTests : IDisposable
     {
         var beacon = Create();
 
-        await AssertBeaconErrorAsync(BeaconError.InvalidPulse, beacon.GetLatestPulseAsync);
+        await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
+            BeaconError.InvalidPulse,
+            CancellationToken.None
+        );
     }
 
     [Fact]
@@ -131,7 +137,12 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Serve(ChainPath, CurbyFixtures.Chain);
         var beacon = Create();
 
-        await AssertBeaconErrorAsync(BeaconError.Unavailable, beacon.GetLatestPulseAsync);
+        await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
+            BeaconError.Unavailable,
+            CancellationToken.None
+        );
     }
 
     [Fact]
@@ -140,9 +151,11 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Answer(ChainPath, HttpStatusCode.ServiceUnavailable);
         var beacon = Create();
 
-        var exception = await AssertBeaconErrorAsync(
+        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
             BeaconError.Unavailable,
-            beacon.GetLatestPulseAsync
+            CancellationToken.None
         );
 
         Assert.IsType<HttpRequestException>(exception.InnerException);
@@ -154,7 +167,12 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Fail(ChainPath, new HttpRequestException("connection refused"));
         var beacon = Create();
 
-        await AssertBeaconErrorAsync(BeaconError.Unavailable, beacon.GetLatestPulseAsync);
+        await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
+            BeaconError.Unavailable,
+            CancellationToken.None
+        );
     }
 
     [Fact]
@@ -163,7 +181,12 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Fail(ChainPath, new TaskCanceledException("timeout"));
         var beacon = Create();
 
-        await AssertBeaconErrorAsync(BeaconError.Unavailable, beacon.GetLatestPulseAsync);
+        await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
+            BeaconError.Unavailable,
+            CancellationToken.None
+        );
     }
 
     [Fact]
@@ -172,7 +195,12 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Fail(ChainPath, new Polly.CircuitBreaker.BrokenCircuitException("open"));
         var beacon = Create();
 
-        await AssertBeaconErrorAsync(BeaconError.Unavailable, beacon.GetLatestPulseAsync);
+        await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
+            BeaconError.Unavailable,
+            CancellationToken.None
+        );
     }
 
     [Fact]
@@ -194,9 +222,11 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Serve(ChainPath, CurbyFixtures.Chain, "text/html");
         var beacon = Create();
 
-        var exception = await AssertBeaconErrorAsync(
+        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
             BeaconError.InvalidPulse,
-            beacon.GetLatestPulseAsync
+            CancellationToken.None
         );
 
         Assert.Contains("text/html", exception.Message, StringComparison.Ordinal);
@@ -208,7 +238,12 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Serve(ChainPath, "{");
         var beacon = Create();
 
-        await AssertBeaconErrorAsync(BeaconError.InvalidPulse, beacon.GetLatestPulseAsync);
+        await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
+            BeaconError.InvalidPulse,
+            CancellationToken.None
+        );
     }
 
     [Fact]
@@ -217,7 +252,12 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Serve(ChainPath, """{"cid":{"/":"x"},"data":{"content":"\ud800","signature":""}}""");
         var beacon = Create();
 
-        await AssertBeaconErrorAsync(BeaconError.InvalidPulse, beacon.GetLatestPulseAsync);
+        await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
+            BeaconError.InvalidPulse,
+            CancellationToken.None
+        );
     }
 
     [Fact]
@@ -227,9 +267,11 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Serve(ChainPath, CurbyFixtures.Chain);
         var beacon = Create();
 
-        var exception = await AssertBeaconErrorAsync(
+        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            CurbyDefaults.BeaconName,
             BeaconError.InvalidPulse,
-            beacon.GetLatestPulseAsync
+            CancellationToken.None
         );
 
         Assert.Contains("1024 bytes", exception.Message, StringComparison.Ordinal);
@@ -261,8 +303,11 @@ public sealed class CurbyBeaconTests : IDisposable
             .Serve(PulsesPath + "1620000", CurbyFixtures.Pulse(1620422));
         var beacon = Create();
 
-        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
-            beacon.GetPulseAsync(1620000, token)
+        var exception = await TwineTestServices.AssertBeaconErrorAsync(
+            token => beacon.GetPulseAsync(1620000, token),
+            CurbyDefaults.BeaconName,
+            BeaconError.InvalidPulse,
+            CancellationToken.None
         );
 
         Assert.Contains("round 1620422", exception.Message, StringComparison.Ordinal);
@@ -274,8 +319,11 @@ public sealed class CurbyBeaconTests : IDisposable
         Server.Serve(ChainPath, CurbyFixtures.Chain);
         var beacon = Create();
 
-        await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
-            beacon.GetPulseAsync(99_999_999, token)
+        await TwineTestServices.AssertBeaconErrorAsync(
+            token => beacon.GetPulseAsync(99_999_999, token),
+            CurbyDefaults.BeaconName,
+            BeaconError.PulseNotFound,
+            CancellationToken.None
         );
     }
 
@@ -286,8 +334,11 @@ public sealed class CurbyBeaconTests : IDisposable
     {
         var beacon = Create();
 
-        await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
-            beacon.GetPulseAsync(round, token)
+        await TwineTestServices.AssertBeaconErrorAsync(
+            token => beacon.GetPulseAsync(round, token),
+            CurbyDefaults.BeaconName,
+            BeaconError.PulseNotFound,
+            CancellationToken.None
         );
 
         Assert.Empty(Server.Requests);
@@ -301,19 +352,6 @@ public sealed class CurbyBeaconTests : IDisposable
             ?["data"]?["content"]?["links"]?[0]?["/"]?.GetValue<string>()
         ?? throw new InvalidOperationException("No link.");
 
-    private static async Task<BeaconException> AssertBeaconErrorAsync(
-        BeaconError error,
-        Func<CancellationToken, ValueTask<BeaconPulse>> fetch
-    )
-    {
-        var exception = await Assert.ThrowsAsync<BeaconException>(async () =>
-            await fetch(CancellationToken.None)
-        );
-        Assert.Equal(error, exception.Error);
-        Assert.Equal(CurbyDefaults.BeaconName, exception.Beacon);
-        return exception;
-    }
-
     private void ServeCurby() =>
         Server
             .Serve(ChainPath, CurbyFixtures.Chain)
@@ -326,9 +364,7 @@ public sealed class CurbyBeaconTests : IDisposable
     private CurbyBeacon Create()
     {
         var options = Microsoft.Extensions.Options.Options.Create(Options);
-        var api = new TwineApi(Server, options);
-        var chains = new TwineChainCache(api);
-        Caches.Add(chains);
+        var (api, chains) = Services.Create(Server, options);
         return new CurbyBeacon(api, chains, options);
     }
 }

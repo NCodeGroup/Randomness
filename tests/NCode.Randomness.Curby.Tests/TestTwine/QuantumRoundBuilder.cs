@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Text;
 using NCode.Randomness.Curby.Twine;
 
 namespace NCode.Randomness.Curby.Tests.TestTwine;
@@ -214,7 +215,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
             resultMixins.Add((Seed.ChainCid, seedPulses[^1].Cid));
         }
 
-        var parametersBytes = System.Text.Encoding.UTF8.GetBytes(parameters);
+        var parametersBytes = Encoding.UTF8.GetBytes(parameters);
         var parametersDigest = Sha3.HashData512(parametersBytes);
         var paramsHash = Convert.ToHexStringLower(parametersDigest);
         var resultDataHash = Ipld.Text(DataHash);
