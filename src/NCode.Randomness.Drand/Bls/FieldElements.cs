@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Globalization;
 using System.Numerics;
 using Neo.Cryptography.BLS12_381;
@@ -36,8 +37,17 @@ internal static class FieldElements
     /// <returns>The field element.</returns>
     public static Fp FromHex(string hex)
     {
-        var padded = hex.PadLeft(ElementBytes * 2, '0');
-        var bytes = Convert.FromHexString(padded);
+        Span<char> digits = stackalloc char[ElementBytes * 2];
+        digits.Fill('0');
+        var tail = digits[^hex.Length..];
+        hex.AsSpan().CopyTo(tail);
+        Span<byte> bytes = stackalloc byte[ElementBytes];
+        var status = Convert.FromHexString(digits, bytes, out _, out _);
+        if (status != OperationStatus.Done)
+        {
+            throw new FormatException("The value is not hexadecimal.");
+        }
+
         return Fp.FromBytes(bytes);
     }
 
@@ -60,9 +70,10 @@ internal static class FieldElements
             );
         }
 
-        var bytes = new byte[ElementBytes];
+        Span<byte> bytes = stackalloc byte[ElementBytes];
+        bytes.Clear();
         var byteCount = value.GetByteCount(isUnsigned: true);
-        var destination = bytes.AsSpan(ElementBytes - byteCount);
+        var destination = bytes[(ElementBytes - byteCount)..];
         // Cannot fail: a value below the modulus fits in 48 bytes.
         value.TryWriteBytes(destination, out _, isUnsigned: true, isBigEndian: true);
         return Fp.FromBytes(bytes);
@@ -75,7 +86,9 @@ internal static class FieldElements
     /// <returns>The integer, from zero up to but excluding the modulus.</returns>
     public static BigInteger ToInteger(Fp value)
     {
-        var bytes = value.ToArray();
+        Span<byte> bytes = stackalloc byte[ElementBytes];
+        // Cannot fail: the span holds the 48 bytes of an element.
+        value.TryWrite(bytes);
         return new BigInteger(bytes, isUnsigned: true, isBigEndian: true);
     }
 
@@ -109,6 +122,9 @@ internal static class FieldElements
     /// <returns><see langword="true"/> when the element is odd; otherwise <see langword="false"/>.</returns>
     public static bool Sign(Fp value)
     {
-        return (value.ToArray()[ElementBytes - 1] & 1) == 1;
+        Span<byte> bytes = stackalloc byte[ElementBytes];
+        // Cannot fail: the span holds the 48 bytes of an element.
+        value.TryWrite(bytes);
+        return (bytes[ElementBytes - 1] & 1) == 1;
     }
 }

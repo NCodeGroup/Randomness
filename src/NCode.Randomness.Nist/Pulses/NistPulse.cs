@@ -648,7 +648,8 @@ internal sealed class NistPulse
             );
         }
 
-        var localRandomHash = SHA512.HashData(LocalRandomValue);
+        Span<byte> localRandomHash = stackalloc byte[HashLength];
+        SHA512.HashData(LocalRandomValue, localRandomHash);
         if (!CryptographicOperations.FixedTimeEquals(localRandomHash, predecessor.Precommitment))
         {
             throw new NistFormatException(

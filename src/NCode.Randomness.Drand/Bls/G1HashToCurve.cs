@@ -11,6 +11,16 @@ namespace NCode.Randomness.Drand.Bls;
 internal static class G1HashToCurve
 {
     /// <summary>
+    /// The bytes expanded for each field element, <c>L</c> of RFC 9380 section 5.
+    /// </summary>
+    private const int ElementLength = 64;
+
+    /// <summary>
+    /// The field elements hashed from each message, <c>count</c> of RFC 9380 section 5.2 for hash_to_curve.
+    /// </summary>
+    private const int ElementCount = 2;
+
+    /// <summary>
     /// Gets the coefficient <c>A</c> of the isogenous curve <c>E'</c>.
     /// </summary>
     private static Fp A { get; } =
@@ -39,10 +49,10 @@ internal static class G1HashToCurve
     /// <returns>The two field elements.</returns>
     public static Fp[] HashToField(ReadOnlySpan<byte> message, ReadOnlySpan<byte> domain)
     {
-        Span<byte> bytes = stackalloc byte[128];
+        Span<byte> bytes = stackalloc byte[ElementCount * ElementLength];
         ExpandMessageXmd.Expand(message, domain, bytes);
-        var first = bytes[..64];
-        var second = bytes[64..];
+        var first = bytes[..ElementLength];
+        var second = bytes[ElementLength..];
         var firstElement = FieldElements.Reduce(first);
         var secondElement = FieldElements.Reduce(second);
         return [firstElement, secondElement];
