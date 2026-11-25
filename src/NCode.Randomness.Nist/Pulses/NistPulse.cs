@@ -13,7 +13,7 @@ namespace NCode.Randomness.Nist.Pulses;
 
 /// <summary>
 /// A parsed, not yet verified, pulse of a NIST Randomness Beacon 2.0 chain, with the exact bytes its certificate's
-/// key signed. Members the beacon does not sign, such as the pulse's own address, are ignored.
+/// key signed. Members the beacon does not sign, such as the address of each list value, are ignored.
 /// </summary>
 internal sealed class NistPulse
 {
@@ -51,6 +51,11 @@ internal sealed class NistPulse
     /// The bytes rented at first for a pulse's signed bytes, enough for a pulse without renting again.
     /// </summary>
     private const int SignedBytesCapacity = 1024;
+
+    /// <summary>
+    /// The name reported for the value of a list item.
+    /// </summary>
+    private const string ListValuePath = "listValues[].value";
 
     /// <summary>
     /// Gets a strict UTF-8 encoding, without a byte order mark, that throws on invalid bytes or characters instead of
@@ -96,10 +101,13 @@ internal sealed class NistPulse
         WriteBytes(signed, localRandomValue);
         WriteExternal(signed, pulse);
         var listValues = ReadListValues(pulse);
-        var previous = listValues[0];
-        foreach (var value in listValues)
+        var previousText = listValues[0];
+        var previous = new byte[HashLength];
+        DecodeHash(previousText, ListValuePath, previous);
+        WriteBytes(signed, previous);
+        for (var i = 1; i < listValues.Length; ++i)
         {
-            WriteBytes(signed, value);
+            WriteHash(signed, listValues[i], ListValuePath);
         }
 
         var precommitment = ReadHash(pulse, "precommitmentValue");
@@ -148,24 +156,24 @@ internal sealed class NistPulse
             throw new NistFormatException("The NIST pulse member 'external' is not an object.");
         }
 
-        var sourceId = ReadHash(external, "sourceId", "external.sourceId");
-        WriteBytes(signed, sourceId);
+        var sourceId = ReadString(external, "sourceId", "external.sourceId");
+        WriteHash(signed, sourceId, "external.sourceId");
         var statusCode = ReadUInt32(external, "statusCode", "external.statusCode");
         WriteUInt32(signed, statusCode);
-        var value = ReadHash(external, "value", "external.value");
-        WriteBytes(signed, value);
+        var value = ReadString(external, "value", "external.value");
+        WriteHash(signed, value, "external.value");
     }
 
     /// <summary>
-    /// Reads the values of the <c>listValues</c> member, in order; the first must be of type <c>previous</c>, the
-    /// previous pulse's output.
+    /// Reads the hexadecimal text of each value of the <c>listValues</c> member, in order; the first must be of type
+    /// <c>previous</c>, the previous pulse's output.
     /// </summary>
     /// <param name="pulse">The <c>pulse</c> object.</param>
-    /// <returns>The values, the first of type <c>previous</c>.</returns>
+    /// <returns>The hexadecimal texts, the first of type <c>previous</c>.</returns>
     /// <exception cref="NistFormatException">
     /// The member is not a non-empty array of values, or its first value is not of type <c>previous</c>.
     /// </exception>
-    private static ImmutableArray<byte[]> ReadListValues(JsonElement pulse)
+    private static ImmutableArray<string> ReadListValues(JsonElement pulse)
     {
         var list = ReadMember(pulse, "listValues");
         if (list.ValueKind != JsonValueKind.Array || list.GetArrayLength() == 0)
@@ -176,7 +184,7 @@ internal sealed class NistPulse
         }
 
         var count = list.GetArrayLength();
-        var values = ImmutableArray.CreateBuilder<byte[]>(count);
+        var values = ImmutableArray.CreateBuilder<string>(count);
         foreach (var item in list.EnumerateArray())
         {
             if (item.ValueKind != JsonValueKind.Object)
@@ -187,7 +195,7 @@ internal sealed class NistPulse
             }
 
             var type = ReadString(item, "type", "listValues[].type");
-            var value = ReadHash(item, "value", "listValues[].value");
+            var value = ReadString(item, "value", ListValuePath);
             if (values.Count == 0 && !string.Equals(type, PreviousType, StringComparison.Ordinal))
             {
                 throw new NistFormatException(
@@ -341,15 +349,31 @@ internal sealed class NistPulse
     /// <exception cref="NistFormatException">The member is missing, not hexadecimal or not 64 bytes.</exception>
     private static byte[] ReadHash(JsonElement parent, string name, string? path = null)
     {
-        var bytes = ReadHexBytes(parent, name, path);
-        if (bytes.Length != HashLength)
+        var text = ReadString(parent, name, path);
+        var bytes = new byte[HashLength];
+        DecodeHash(text, path ?? name, bytes);
+        return bytes;
+    }
+
+    /// <summary>
+    /// Decodes a 64-byte hash from its hexadecimal text into <paramref name="destination"/>.
+    /// </summary>
+    /// <param name="text">The hexadecimal text of the member.</param>
+    /// <param name="path">The name of the member to report.</param>
+    /// <param name="destination">The 64 bytes to decode into.</param>
+    /// <exception cref="NistFormatException">The text is not hexadecimal or not 64 bytes.</exception>
+    private static void DecodeHash(string text, string path, Span<byte> destination)
+    {
+        var status = Convert.FromHexString(text, destination, out _, out var written);
+        if (status is OperationStatus.InvalidData or OperationStatus.NeedMoreData)
         {
-            throw new NistFormatException(
-                $"The NIST member '{path ?? name}' has {bytes.Length} bytes, not {HashLength} bytes."
-            );
+            throw new NistFormatException($"The NIST member '{path}' is not hexadecimal.");
         }
 
-        return bytes;
+        if (status != OperationStatus.Done || written != HashLength)
+        {
+            throw new NistFormatException($"The NIST member '{path}' is not {HashLength} bytes.");
+        }
     }
 
     /// <summary>
@@ -431,6 +455,23 @@ internal sealed class NistPulse
     {
         WriteUInt32(signed, (uint)value.Length);
         signed.Write(value);
+    }
+
+    /// <summary>
+    /// Appends a 64-byte hash to the signed bytes, prefixed by its length as a 4-byte big-endian unsigned integer,
+    /// decoding its hexadecimal text straight into them.
+    /// </summary>
+    /// <param name="signed">The signed bytes to append to.</param>
+    /// <param name="text">The hexadecimal text of the member.</param>
+    /// <param name="path">The name of the member to report.</param>
+    /// <exception cref="NistFormatException">The text is not hexadecimal or not 64 bytes.</exception>
+    private static void WriteHash(PooledBufferWriter signed, string text, string path)
+    {
+        WriteUInt32(signed, HashLength);
+        var span = signed.GetSpan(HashLength);
+        var destination = span[..HashLength];
+        DecodeHash(text, path, destination);
+        signed.Advance(HashLength);
     }
 
     /// <summary>

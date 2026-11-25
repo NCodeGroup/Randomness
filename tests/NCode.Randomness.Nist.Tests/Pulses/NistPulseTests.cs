@@ -106,8 +106,16 @@ public class NistPulseTests
             { "pulse.pulseIndex", null, "'pulseIndex'" },
             { "pulse.pulseIndex", "0", "'pulseIndex'" },
             { "pulse.statusCode", "-1", "'statusCode'" },
-            { "pulse.localRandomValue", $"\"{Hex(63)}\"", "'localRandomValue'" },
+            { "pulse.localRandomValue", $"\"{Hex(63)}\"", "'localRandomValue' is not 64 bytes" },
             { "pulse.outputValue", "\"not hex\"", "'outputValue' is not hexadecimal" },
+            { "pulse.precommitmentValue", "\"ABC\"", "'precommitmentValue' is not hexadecimal" },
+            { "pulse.external.sourceId", "\"not hex\"", "'external.sourceId' is not hexadecimal" },
+            { "pulse.external.value", $"\"{Hex(65)}\"", "'external.value' is not 64 bytes" },
+            {
+                "pulse.listValues.1.value",
+                $"\"{Hex(63)}\"",
+                "'listValues[].value' is not 64 bytes"
+            },
             { "pulse.listValues", "[]", "'listValues'" },
             { "pulse.listValues.0.type", "\"hour\"", "'previous'" },
             { "pulse.external", "\"none\"", "'external'" },
