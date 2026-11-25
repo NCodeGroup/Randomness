@@ -15,8 +15,16 @@ namespace NCode.Randomness.Curby;
 /// </summary>
 public static class CurbyRandomnessBuilderExtensions
 {
+    /// <summary>
+    /// Gets the age up to which <c>curby-q</c> pulses are current when the host sets no limit for them.
+    /// </summary>
     private static TimeSpan QuantumMaxPulseAge { get; } = TimeSpan.FromMinutes(30);
 
+    /// <summary>
+    /// Sets the limit on the age of <c>curby-q</c> pulses to 30 minutes, unless the host names a limit for
+    /// <c>curby-q</c> or sets a <see cref="RandomnessOptions.MaxPulseAge"/> of at least 30 minutes.
+    /// </summary>
+    /// <param name="options">The options to adjust.</param>
     private static void UseQuantumMaxPulseAge(RandomnessOptions options)
     {
         if (options.MaxPulseAgeByBeacon is null || options.MaxPulseAge >= QuantumMaxPulseAge)
@@ -126,6 +134,10 @@ public static class CurbyRandomnessBuilderExtensions
             return builder.AddCurbyQuantumBeaconCore();
         }
 
+        /// <summary>
+        /// Registers the services both CURBy beacons share: the options validator, the Twine API client with its HTTP
+        /// client and resilience policy, and the chain cache. Registering it again changes nothing.
+        /// </summary>
         private void AddCurbyServices()
         {
             var services = builder.Services;
@@ -155,6 +167,10 @@ public static class CurbyRandomnessBuilderExtensions
                 .AddStandardResilienceHandler(ConfigureResilience);
         }
 
+        /// <summary>
+        /// Registers the shared services, the CURBy-Q beacon and the <c>curby-q</c> limit on the age of pulses.
+        /// </summary>
+        /// <returns>The builder, for chaining.</returns>
         private IRandomnessBuilder AddCurbyQuantumBeaconCore()
         {
             builder.AddCurbyServices();
@@ -169,6 +185,10 @@ public static class CurbyRandomnessBuilderExtensions
             return builder;
         }
 
+        /// <summary>
+        /// Registers the shared services and the CURBy beacon.
+        /// </summary>
+        /// <returns>The builder, for chaining.</returns>
         private IRandomnessBuilder AddCurbyBeaconCore()
         {
             builder.AddCurbyServices();

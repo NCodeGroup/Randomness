@@ -21,6 +21,12 @@ internal sealed class QuantumRound
     private const int MaxSeedBits = 8 * 1024 * 1024;
     private const int MaxSeedCount = 8;
 
+    /// <summary>
+    /// Initializes a round.
+    /// </summary>
+    /// <param name="number">The DIRNG round number.</param>
+    /// <param name="errorReason">The reason in the round's <c>error</c> pulse, if it has one.</param>
+    /// <param name="result">The round's result, if it has one.</param>
     private QuantumRound(long number, string? errorReason, QuantumResult? result)
     {
         Number = number;
@@ -97,6 +103,12 @@ internal sealed class QuantumRound
         return new QuantumRound(number, null, result);
     }
 
+    /// <summary>
+    /// Reads the round number the pulses share. It throws <see cref="TwineFormatException"/> when the pulses carry
+    /// different round numbers or the number is negative.
+    /// </summary>
+    /// <param name="pulses">The round's pulses.</param>
+    /// <returns>The round number.</returns>
     private static long ReadRoundNumber(List<TwineSignedPulse> pulses)
     {
         var number = pulses[0].Payload.Get<IpldInteger>(QuantumKeys.Round).Value;
@@ -119,6 +131,11 @@ internal sealed class QuantumRound
         return number;
     }
 
+    /// <summary>
+    /// Returns whether <paramref name="stages"/> is a sequence CURBy-Q publishes: <c>request</c>, then optionally
+    /// <c>precommit</c>, then optionally <c>randomness</c> or <c>error</c>; or <c>request</c> then <c>error</c>.
+    /// </summary>
+    /// <param name="stages">The stage of each pulse, in order.</param>
     private static bool AreKnownStages(List<string> stages) =>
         stages[0] == RequestStage
         && (
@@ -130,6 +147,13 @@ internal sealed class QuantumRound
             || (stages[1] == ErrorStage && stages.Count == 2)
         );
 
+    /// <summary>
+    /// Reads and checks the fields of a complete round's request, precommit and randomness pulses: the data hashes
+    /// agree, the seed algorithm, rule, length and chain are acceptable, and the randomness has the requested length.
+    /// It throws <see cref="TwineFormatException"/> when a field fails its check.
+    /// </summary>
+    /// <param name="pulses">The round's request, precommit and randomness pulses, in that order.</param>
+    /// <returns>The round's result.</returns>
     private static QuantumResult ReadResult(List<TwineSignedPulse> pulses)
     {
         var request = pulses[0];
@@ -215,6 +239,14 @@ internal sealed class QuantumRound
         };
     }
 
+    /// <summary>
+    /// Reads a hash field of a pulse's payload. It throws <see cref="TwineFormatException"/> unless the field is 128
+    /// lowercase hexadecimal characters.
+    /// </summary>
+    /// <param name="payload">The payload of the pulse.</param>
+    /// <param name="field">The name of the field.</param>
+    /// <param name="pulse">The name of the pulse, for the message.</param>
+    /// <returns>The hash, in lowercase hexadecimal.</returns>
     private static string ReadHash(IpldMap payload, string field, string pulse)
     {
         var value = payload.Get<IpldString>(field).Value;

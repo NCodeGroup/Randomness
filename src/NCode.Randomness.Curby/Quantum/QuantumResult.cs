@@ -172,6 +172,13 @@ internal sealed class QuantumResult
         }
     }
 
+    /// <summary>
+    /// Reads the base64 text of the <c>seed</c> property of the extractor's parameters. It throws
+    /// <see cref="TwineFormatException"/> when they are not a JSON object, or <c>seed</c> is missing, repeated or not
+    /// a string.
+    /// </summary>
+    /// <param name="parameters">The extractor's parameters, a JSON document.</param>
+    /// <returns>The seed as the parameters encode it.</returns>
     private static string ReadSeed(ReadOnlySpan<byte> parameters)
     {
         JsonElement document;

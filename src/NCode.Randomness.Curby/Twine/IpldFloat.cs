@@ -8,5 +8,8 @@ namespace NCode.Randomness.Curby.Twine;
 /// </summary>
 internal sealed class IpldFloat(double value) : IpldNode
 {
+    /// <summary>
+    /// Gets the value of the float.
+    /// </summary>
     public double Value { get; } = value;
 }

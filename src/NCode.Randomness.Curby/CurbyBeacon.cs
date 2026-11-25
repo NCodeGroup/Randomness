@@ -19,6 +19,12 @@ namespace NCode.Randomness.Curby;
 /// </summary>
 internal sealed class CurbyBeacon : IRandomnessBeacon
 {
+    /// <summary>
+    /// Initializes the beacon with the Twine API, the chain cache and the pinned chain.
+    /// </summary>
+    /// <param name="api">The client for the Twine API.</param>
+    /// <param name="chains">The cache of verified chains.</param>
+    /// <param name="options">The options that pin the CURBy-RNG chain.</param>
     public CurbyBeacon(TwineApi api, TwineChainCache chains, IOptions<CurbyBeaconOptions> options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -35,7 +41,9 @@ internal sealed class CurbyBeacon : IRandomnessBeacon
 
     private Cid PinnedChain { get; }
 
-    // The last pulse verified, so the next round's predecessor, usually this pulse, needs no fetch.
+    /// <summary>
+    /// The last pulse verified, so the next round's predecessor, usually this pulse, needs no fetch.
+    /// </summary>
     private TwinePulse? _lastVerified;
 
     public ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken) =>
@@ -137,10 +145,24 @@ internal sealed class CurbyBeacon : IRandomnessBeacon
         }
     }
 
+    /// <summary>
+    /// Returns whether <paramref name="exception"/> is neither a beacon failure, a disposal, a cancellation nor an
+    /// outage, so the parser or verifier threw it on malformed data, such as an invalid UTF-16 escape.
+    /// </summary>
+    /// <param name="exception">The exception to classify.</param>
+    /// <param name="cancellationToken">The caller's token, whose cancellation is not an outage.</param>
+    /// <returns><see langword="true"/> when the data was malformed; otherwise <see langword="false"/>.</returns>
     internal static bool IsMalformed(Exception exception, CancellationToken cancellationToken) =>
         exception is not (BeaconException or ObjectDisposedException or OperationCanceledException)
         && !IsOutage(exception, cancellationToken);
 
+    /// <summary>
+    /// Returns whether <paramref name="exception"/> shows the service could not be reached: a failed request, a
+    /// timeout, an I/O failure, a cancellation the caller did not ask for or a request the resilience policy rejected.
+    /// </summary>
+    /// <param name="exception">The exception to classify.</param>
+    /// <param name="cancellationToken">The caller's token, whose cancellation is not an outage.</param>
+    /// <returns><see langword="true"/> when the service is unavailable; otherwise <see langword="false"/>.</returns>
     internal static bool IsOutage(Exception exception, CancellationToken cancellationToken) =>
         exception is not BeaconException
         && (

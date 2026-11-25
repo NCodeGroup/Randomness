@@ -101,6 +101,12 @@ internal static class Keccak
         }
     }
 
+    /// <summary>
+    /// Computes the SHAKE256 extendable-output function of <paramref name="source"/>, filling
+    /// <paramref name="destination"/> with output.
+    /// </summary>
+    /// <param name="source">The data to hash.</param>
+    /// <param name="destination">The buffer to fill; its length sets the output length.</param>
     public static void Shake256(ReadOnlySpan<byte> source, Span<byte> destination)
     {
         Span<ulong> state = stackalloc ulong[25];
@@ -137,6 +143,11 @@ internal static class Keccak
         }
     }
 
+    /// <summary>
+    /// XORs a block of whole 8-byte lanes into the start of the state and permutes it.
+    /// </summary>
+    /// <param name="state">The 25 lanes of the sponge state.</param>
+    /// <param name="block">The block to absorb, whose length is the sponge's rate.</param>
     private static void Absorb(Span<ulong> state, ReadOnlySpan<byte> block)
     {
         for (var i = 0; i < block.Length / sizeof(ulong); i++)

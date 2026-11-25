@@ -29,12 +29,24 @@ internal sealed class TwineSignedPulse
         Payload = payload;
     }
 
+    /// <summary>
+    /// Gets the CID of the pulse's document.
+    /// </summary>
     public Cid Cid { get; }
 
+    /// <summary>
+    /// Gets the CID of the chain the pulse belongs to.
+    /// </summary>
     public Cid Chain { get; }
 
+    /// <summary>
+    /// Gets the pulse's index on its chain, from 0.
+    /// </summary>
     public long Index { get; }
 
+    /// <summary>
+    /// Gets the CIDs of the pulses the pulse links to, the previous pulse of its chain first.
+    /// </summary>
     public ImmutableArray<Cid> Links { get; }
 
     /// <summary>
@@ -42,6 +54,9 @@ internal sealed class TwineSignedPulse
     /// </summary>
     public FrozenDictionary<Cid, Cid> Mixins { get; }
 
+    /// <summary>
+    /// Gets the pulse's payload, the map the chain's specification defines.
+    /// </summary>
     public IpldMap Payload { get; }
 
     /// <summary>
@@ -55,6 +70,14 @@ internal sealed class TwineSignedPulse
     /// </summary>
     public Cid? MixinOf(Cid chain) => Mixins.GetValueOrDefault(chain);
 
+    /// <summary>
+    /// Verifies a pulse document against <paramref name="chain"/>: it names the chain, the chain's key signed it with
+    /// RS256, and its index, links, mixins and payload are well formed. It throws
+    /// <see cref="TwineFormatException"/> when a check fails.
+    /// </summary>
+    /// <param name="document">The pulse document, already checked against its CID.</param>
+    /// <param name="chain">The verified chain the pulse belongs to.</param>
+    /// <returns>The verified pulse.</returns>
     public static TwineSignedPulse Verify(TwineDocument document, TwineChain chain)
     {
         ArgumentNullException.ThrowIfNull(document);

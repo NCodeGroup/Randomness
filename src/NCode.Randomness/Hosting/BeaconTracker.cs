@@ -69,6 +69,10 @@ internal sealed class BeaconTracker : IBeaconStatus
 
     private ImmutableArray<string> Names { get; }
 
+    /// <summary>
+    /// Gets the longest age of a pulse for each beacon, in the order of <see cref="Names"/>: the limit the options
+    /// name for the beacon, or <see cref="RandomnessOptions.MaxPulseAge"/> when they name none.
+    /// </summary>
     private ImmutableArray<TimeSpan> MaxPulseAges { get; }
 
     private FrozenDictionary<string, int> Indexes { get; }
@@ -140,6 +144,15 @@ internal sealed class BeaconTracker : IBeaconStatus
         && pulse.Round == last.Round
         && string.Equals(pulse.Id, last.Id, StringComparison.Ordinal);
 
+    /// <summary>
+    /// Decides whether a pulse is acceptable, and returns the reason it is not.
+    /// </summary>
+    /// <param name="index">The index of the beacon in the registered order.</param>
+    /// <param name="beacon">The name of the beacon that fetched the pulse.</param>
+    /// <param name="pulse">The pulse to judge.</param>
+    /// <param name="last">The last pulse accepted from the beacon, if any.</param>
+    /// <param name="now">The current time.</param>
+    /// <returns>The error that refuses the pulse, or <see langword="null"/> when it is acceptable.</returns>
     private BeaconError? Judge(
         int index,
         string beacon,

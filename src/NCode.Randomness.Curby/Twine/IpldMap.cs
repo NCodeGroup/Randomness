@@ -27,6 +27,10 @@ internal sealed class IpldMap(ImmutableArray<KeyValuePair<string, IpldNode>> ent
     /// Reads the field <paramref name="key"/>: returns false when the map has no such field, and throws a
     /// <see cref="TwineFormatException"/> when the field holds another kind of node than <typeparamref name="T"/>.
     /// </summary>
+    /// <param name="key">The name of the field.</param>
+    /// <param name="value">The field's node, when the map has it.</param>
+    /// <typeparam name="T">The kind of node the field must hold.</typeparam>
+    /// <returns><see langword="true"/> when the map has the field; otherwise <see langword="false"/>.</returns>
     public bool TryGet<T>(string key, [NotNullWhen(true)] out T? value)
         where T : IpldNode
     {

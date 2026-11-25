@@ -25,6 +25,12 @@ internal static class Sha3
         }
     }
 
+    /// <summary>
+    /// Computes the SHAKE256 extendable-output function of <paramref name="source"/>, filling
+    /// <paramref name="destination"/> with output, using the platform's implementation where it has one.
+    /// </summary>
+    /// <param name="source">The data to hash.</param>
+    /// <param name="destination">The buffer to fill; its length sets the output length.</param>
     public static void Shake256(ReadOnlySpan<byte> source, Span<byte> destination)
     {
         if (System.Security.Cryptography.Shake256.IsSupported)

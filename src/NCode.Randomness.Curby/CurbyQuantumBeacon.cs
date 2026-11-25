@@ -22,6 +22,12 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
     private const string RoundPath = "curbyq/round/";
     private const int MaxCrawl = 10;
 
+    /// <summary>
+    /// Initializes the beacon with the Twine API, the chain cache and the pinned chains.
+    /// </summary>
+    /// <param name="api">The client for the Twine API.</param>
+    /// <param name="chains">The cache of verified chains.</param>
+    /// <param name="options">The options that pin the CURBy-Q and Bell chains.</param>
     public CurbyQuantumBeacon(
         TwineApi api,
         TwineChainCache chains,
@@ -35,6 +41,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
         BellChain = Cid.Parse(options.Value.BellChainId);
     }
 
+    /// <inheritdoc/>
     public string Name => CurbyDefaults.QuantumBeaconName;
 
     private TwineApi Api { get; }
@@ -45,12 +52,16 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
 
     private Cid BellChain { get; }
 
-    // The last pulse verified, so the same round fetched again needs no crawl.
+    /// <summary>
+    /// The last pulse verified, so the same round fetched again needs no crawl.
+    /// </summary>
     private volatile BeaconPulse? _last;
 
+    /// <inheritdoc/>
     public ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken) =>
         FetchAsync($"{RoundPath}latest", null, cancellationToken);
 
+    /// <inheritdoc/>
     public ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken)
     {
         if (round < 0)
@@ -68,6 +79,18 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
         return FetchAsync(path, round, cancellationToken);
     }
 
+    /// <summary>
+    /// Reads a round from the Twine API, verifies it and returns its pulse. The round's chains are crawled by
+    /// <see cref="CrawlBellAsync"/> and <see cref="CrawlSeedAsync"/>. A round that fails verification throws a
+    /// <see cref="BeaconException"/> with <see cref="BeaconError.InvalidPulse"/>, and an outage one with
+    /// <see cref="BeaconError.Unavailable"/>. A round with no randomness pulse throws
+    /// <see cref="BeaconError.PulseNotFound"/> for a numbered round and <see cref="BeaconError.Unavailable"/> for the
+    /// latest.
+    /// </summary>
+    /// <param name="path">The path of the round, such as <c>curbyq/round/28297</c> or <c>curbyq/round/latest</c>.</param>
+    /// <param name="round">The round number the answer must carry, or <see langword="null"/> for the latest round.</param>
+    /// <param name="cancellationToken">The token that cancels the fetch.</param>
+    /// <returns>The verified pulse of the round.</returns>
     private async ValueTask<BeaconPulse> FetchAsync(
         string path,
         long? round,
@@ -174,7 +197,13 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
         }
     }
 
-    // Walks the Bell chain back from the pulse the precommit mixes in to the response to the request.
+    /// <summary>
+    /// Walks the Bell chain back from the pulse the precommit mixes in to the response to the request, fetching each
+    /// pulse with <see cref="GetCrawledAsync"/>. It throws <see cref="TwineFormatException"/> when no pulse within
+    /// ten answers the request or the chain starts first.
+    /// </summary>
+    /// <param name="result">The round's pulses.</param>
+    /// <param name="cancellationToken">The token that cancels the fetches.</param>
     private async ValueTask CrawlBellAsync(
         QuantumResult result,
         CancellationToken cancellationToken
@@ -207,7 +236,14 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
         );
     }
 
-    // Walks the seed chain back from the pulse the randomness pulse mixes in and returns the seed pulse.
+    /// <summary>
+    /// Walks the seed chain back from the pulse the randomness pulse mixes in to the first pulse that does not mix in
+    /// the precommit, verifying each pulse and its order with the one after it, and returns the seed pulse. It throws
+    /// <see cref="TwineFormatException"/> when ten pulses in a row mix in the precommit or the chain starts first.
+    /// </summary>
+    /// <param name="result">The round's pulses.</param>
+    /// <param name="cancellationToken">The token that cancels the fetches.</param>
+    /// <returns>The pulse the seed expands from.</returns>
     private async ValueTask<TwineSignedPulse> CrawlSeedAsync(
         QuantumResult result,
         CancellationToken cancellationToken
@@ -240,6 +276,15 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
         throw new TwineFormatException($"{MaxCrawl} seed pulses in a row mix in the precommit.");
     }
 
+    /// <summary>
+    /// Fetches the pulse with the CID <paramref name="cid"/> from <paramref name="chain"/> and verifies it. The pulse
+    /// must be the one requested and, when <paramref name="newer"/> is given, must precede it.
+    /// </summary>
+    /// <param name="chain">The verified chain the pulse belongs to.</param>
+    /// <param name="cid">The CID of the pulse.</param>
+    /// <param name="newer">The pulse that follows the one requested, or <see langword="null"/> for the first one.</param>
+    /// <param name="cancellationToken">The token that cancels the fetch.</param>
+    /// <returns>The verified pulse.</returns>
     private async ValueTask<TwineSignedPulse> GetCrawledAsync(
         TwineChain chain,
         Cid cid,
