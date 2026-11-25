@@ -37,6 +37,9 @@ product does.
   chain, with settings in `RandomnessBeacons:Drand`
   ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
   [ADR-1010](docs/decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md)).
+- The CURBy and NIST adapters fetch each chain or certificate once for every caller, under its own 30-second timeout,
+  and remember a failed fetch for `RandomnessBeacons:Curby:ChainRetryDelay` or
+  `RandomnessBeacons:Nist:CertificateRetryDelay` (default 1 minute) before they try it again.
 
 ### Security
 
@@ -61,6 +64,8 @@ product does.
   specifies, verifies against the pinned quicknet group key, and the randomness is the SHA-256 of that signature
   ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
   [ADR-1010](docs/decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md)).
+- Each beacon adapter's `BaseAddress` must be an absolute `https` URL ending in `/`, with no user info, query or
+  fragment, so no credential written into a configured address reaches a logged request.
 - Pulses that roll back, switch chains, reuse an accepted round with other content, or are out of date by their
   timestamp are refused.
 - Dependency injection registers the secure generator only as `ISecureRandom`, never as the plain `IRandomSource`, and
