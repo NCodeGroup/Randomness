@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
-using System.Text.Json;
 using Microsoft.Extensions.Options;
 using NCode.Randomness.Curby.Http;
 using NCode.Randomness.Curby.Twine;
@@ -114,33 +113,12 @@ internal sealed class CurbyBeacon : IRandomnessBeacon
                 pulse.Cid.Digest
             );
         }
-        catch (Exception exception) when (exception is TwineFormatException or JsonException)
+        catch (Exception exception)
+            when (TwineErrors.ToBeaconException(exception, Name, "CURBy", cancellationToken)
+                    is { } translated
+            )
         {
-            throw new BeaconException(
-                BeaconError.InvalidPulse,
-                Name,
-                $"CURBy answered with data that fails verification: {exception.Message}",
-                exception
-            );
-        }
-        catch (Exception exception) when (TwineErrors.IsOutage(exception, cancellationToken))
-        {
-            throw new BeaconException(
-                BeaconError.Unavailable,
-                Name,
-                $"CURBy is unavailable: {exception.Message}",
-                exception
-            );
-        }
-        catch (Exception exception) when (TwineErrors.IsMalformed(exception, cancellationToken))
-        {
-            // Anything else the parser or verifier throws, such as an invalid UTF-16 escape, is bad data too.
-            throw new BeaconException(
-                BeaconError.InvalidPulse,
-                Name,
-                $"CURBy answered with data that cannot be read: {exception.Message}",
-                exception
-            );
+            throw translated;
         }
     }
 

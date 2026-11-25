@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
-using System.Text.Json;
 using Microsoft.Extensions.Options;
 using NCode.Randomness.Curby.Http;
 using NCode.Randomness.Curby.Quantum;
@@ -81,7 +80,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
 
     /// <summary>
     /// Reads a round from the Twine API, verifies it and returns its pulse. The round's chains are crawled by
-    /// <see cref="CrawlBellAsync"/> and <see cref="CrawlSeedAsync"/>. A round that fails verification throws a
+    /// <see cref="CrawlBellAsync"/> and <see cref="CrawlSeedAsync"/>. A round that does not verify throws a
     /// <see cref="BeaconException"/> with <see cref="BeaconError.InvalidPulse"/>, and an outage one with
     /// <see cref="BeaconError.Unavailable"/>. A round with no randomness pulse throws
     /// <see cref="BeaconError.PulseNotFound"/> for a numbered round and <see cref="BeaconError.Unavailable"/> for the
@@ -170,33 +169,12 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
             Volatile.Write(ref _last, pulse);
             return pulse;
         }
-        catch (Exception exception) when (exception is TwineFormatException or JsonException)
+        catch (Exception exception)
+            when (TwineErrors.ToBeaconException(exception, Name, "CURBy-Q", cancellationToken)
+                    is { } translated
+            )
         {
-            throw new BeaconException(
-                BeaconError.InvalidPulse,
-                Name,
-                $"CURBy-Q answered with data that fails verification: {exception.Message}",
-                exception
-            );
-        }
-        catch (Exception exception) when (TwineErrors.IsOutage(exception, cancellationToken))
-        {
-            throw new BeaconException(
-                BeaconError.Unavailable,
-                Name,
-                $"CURBy-Q is unavailable: {exception.Message}",
-                exception
-            );
-        }
-        catch (Exception exception) when (TwineErrors.IsMalformed(exception, cancellationToken))
-        {
-            // Anything else the parser or verifier throws, such as an invalid UTF-16 escape, is bad data too.
-            throw new BeaconException(
-                BeaconError.InvalidPulse,
-                Name,
-                $"CURBy-Q answered with data that cannot be read: {exception.Message}",
-                exception
-            );
+            throw translated;
         }
     }
 

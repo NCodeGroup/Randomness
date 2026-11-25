@@ -172,6 +172,16 @@ public class CurbyRandomnessBuilderExtensionsTests
     }
 
     [Fact]
+    public void AddCurbyQuantumBeacon_AfterTwineApiIsRegistered_RegistersTheChainCache()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<TwineApi>();
+        services.AddRandomness().AddCurbyQuantumBeacon();
+
+        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwineChainCache));
+    }
+
+    [Fact]
     public async Task AddCurbyQuantumBeacon_WithConfiguration_BindsTheSection()
     {
         var chainSetting = KeyValuePair.Create(

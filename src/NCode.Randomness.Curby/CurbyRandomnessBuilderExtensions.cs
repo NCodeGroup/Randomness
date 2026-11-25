@@ -147,13 +147,14 @@ public static class CurbyRandomnessBuilderExtensions
                 CurbyBeaconOptionsValidator
             >();
             services.TryAddEnumerable(validator);
-            if (services.Any(descriptor => descriptor.ServiceType == typeof(TwineApi)))
+            var registered = services.Any(descriptor => descriptor.ServiceType == typeof(TwineApi));
+            services.TryAddSingleton<TwineApi>();
+            services.TryAddSingleton<TwineChainCache>();
+            if (registered)
             {
                 return;
             }
 
-            services.AddSingleton<TwineApi>();
-            services.TryAddSingleton<TwineChainCache>();
             services
                 .AddHttpClient(CurbyDefaults.HttpClientName)
                 .ConfigurePrimaryHttpMessageHandler(static () =>
