@@ -56,13 +56,32 @@ public sealed class TokenService(ISecureRandom random)
 {
     private const string Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-    public byte[] NewKey() => random.GetBytes(32);
-
     public string NewRecoveryCode() => random.GetString(Alphabet, 16);
 
     public int RollDie() => random.NextInteger(1, 7);
 }
 ```
+
+Fill a key straight into memory that is cleared after use, such as a `stackalloc` span, rather than taking a `byte[]`
+from `GetBytes`: the garbage collector can move an array and leave copies of the key behind.
+
+```csharp
+Span<byte> key = stackalloc byte[32];
+try
+{
+    random.Fill(key);
+    HMACSHA256.HashData(key, message, mac);
+}
+finally
+{
+    CryptographicOperations.ZeroMemory(key);
+}
+```
+
+A key that outlives one method belongs in a pinned buffer that is zeroed on dispose, such as one from
+[NCode.Buffers](https://www.nuget.org/packages/NCode.Buffers/)'
+`BufferFactory.Rent(32, isSensitive: true, out Span<byte> key)`. `Fill` takes any span, so the two packages work
+together without either depending on the other.
 
 Every value is unbiased: integer ranges use rejection sampling, never a modulo. One generic method covers every
 integer type, from `byte` to `UInt128`:
@@ -87,7 +106,7 @@ var builder = RandomnessHost.CreateBuilder();
 builder.AddCurbyBeacon().AddNistBeacon().AddDrandBeacon();
 await using var randomness = await builder.BuildAsync(cancellationToken);
 
-byte[] key = randomness.SecureRandom.GetBytes(32);
+Guid id = randomness.SecureRandom.NextGuid();
 ```
 
 `CreateBuilder` takes nothing, an `Action<RandomnessOptions>` or a configuration section, as `AddRandomness` does.

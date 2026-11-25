@@ -77,3 +77,4 @@ records are indexed in [project-template/](project-template/README.md).
 | [1009](1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md) | NIST pulses are verified against pinned certificates and their hash chain before any byte is used | Accepted |
 | [1010](1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md) | drand rounds are verified against the pinned quicknet key with a managed BLS12-381 library | Accepted |
 | [1011](1011-the-generator-is-composed-without-a-host-by-a-builder-over-a-private-service-container.md) | The generator is composed without a host by a builder over a private service container | Accepted |
+| [1012](1012-secrets-live-only-in-stack-or-pinned-memory-and-the-packages-take-no-buffer-library-dependency.md) | Secrets live only in stack or pinned memory, and the packages take no buffer library dependency | Accepted |
