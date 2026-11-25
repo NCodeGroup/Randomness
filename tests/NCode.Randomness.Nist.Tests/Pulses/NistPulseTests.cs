@@ -243,12 +243,11 @@ public class NistPulseTests
     [Fact]
     public void Verify_WhenPulseIsDatedAfterTheCertificate_Throws()
     {
-        using var signer = new NistTestSigner();
+        var notBefore = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var notAfter = new DateTimeOffset(2027, 12, 31, 0, 0, 0, TimeSpan.Zero);
+        using var signer = new NistTestSigner(notBefore: notBefore, notAfter: notAfter);
         using var certificate = signer.Certificate();
-        var builder = NistPulseBuilder.For(5) with
-        {
-            Timestamp = new DateTimeOffset(2028, 1, 1, 0, 0, 0, TimeSpan.Zero),
-        };
+        var builder = NistPulseBuilder.For(5) with { Timestamp = notAfter.AddMilliseconds(1) };
         var json = builder.Build(signer);
         var pulse = ParseBuilt(json);
 
@@ -260,18 +259,45 @@ public class NistPulseTests
     [Fact]
     public void Verify_WhenPulseIsDatedBeforeTheCertificate_Throws()
     {
-        using var signer = new NistTestSigner();
+        var notBefore = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var notAfter = new DateTimeOffset(2027, 12, 31, 0, 0, 0, TimeSpan.Zero);
+        using var signer = new NistTestSigner(notBefore: notBefore, notAfter: notAfter);
         using var certificate = signer.Certificate();
-        var builder = NistPulseBuilder.For(5) with
-        {
-            Timestamp = new DateTimeOffset(2025, 12, 31, 0, 0, 0, TimeSpan.Zero),
-        };
+        var builder = NistPulseBuilder.For(5) with { Timestamp = notBefore.AddMilliseconds(-1) };
         var json = builder.Build(signer);
         var pulse = ParseBuilt(json);
 
         var exception = Assert.Throws<NistFormatException>(() => pulse.Verify(certificate));
 
         Assert.Contains("validity", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WhenPulseIsDatedAtNotBefore_Succeeds()
+    {
+        var notBefore = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var notAfter = new DateTimeOffset(2027, 12, 31, 0, 0, 0, TimeSpan.Zero);
+        using var signer = new NistTestSigner(notBefore: notBefore, notAfter: notAfter);
+        using var certificate = signer.Certificate();
+        var builder = NistPulseBuilder.For(5) with { Timestamp = notBefore };
+        var json = builder.Build(signer);
+        var pulse = ParseBuilt(json);
+
+        pulse.Verify(certificate);
+    }
+
+    [Fact]
+    public void Verify_WhenPulseIsDatedAtNotAfter_Succeeds()
+    {
+        var notBefore = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var notAfter = new DateTimeOffset(2027, 12, 31, 0, 0, 0, TimeSpan.Zero);
+        using var signer = new NistTestSigner(notBefore: notBefore, notAfter: notAfter);
+        using var certificate = signer.Certificate();
+        var builder = NistPulseBuilder.For(5) with { Timestamp = notAfter };
+        var json = builder.Build(signer);
+        var pulse = ParseBuilt(json);
+
+        pulse.Verify(certificate);
     }
 
     [Fact]
@@ -423,6 +449,24 @@ public class NistPulseTests
         using var signer = new NistTestSigner();
         var later = NistPulseBuilder.For(11).Timestamp.AddMinutes(1);
         var predecessorBuilder = NistPulseBuilder.For(10) with { Timestamp = later };
+        var predecessorJson = predecessorBuilder.Build(signer);
+        var previous = NistPulseBuilder.OutputOf(predecessorJson);
+        var pulseBuilder = NistPulseBuilder.For(11) with { Previous = previous };
+        var pulseJson = pulseBuilder.Build(signer);
+        var predecessor = ParseBuilt(predecessorJson);
+        var pulse = ParseBuilt(pulseJson);
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.VerifyFollows(predecessor));
+
+        Assert.Contains("is not earlier", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyFollows_WhenPredecessorHasTheSameTimestamp_Throws()
+    {
+        using var signer = new NistTestSigner();
+        var same = NistPulseBuilder.For(11).Timestamp;
+        var predecessorBuilder = NistPulseBuilder.For(10) with { Timestamp = same };
         var predecessorJson = predecessorBuilder.Build(signer);
         var previous = NistPulseBuilder.OutputOf(predecessorJson);
         var pulseBuilder = NistPulseBuilder.For(11) with { Previous = previous };
