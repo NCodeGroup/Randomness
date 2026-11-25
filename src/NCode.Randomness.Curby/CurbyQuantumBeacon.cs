@@ -58,11 +58,9 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon, IDisposable
             return ValueTask.FromException<BeaconPulse>(exception);
         }
 
-        return FetchAsync(
-            $"curbyq/round/{round.ToString(CultureInfo.InvariantCulture)}",
-            round,
-            cancellationToken
-        );
+        var roundText = round.ToString(CultureInfo.InvariantCulture);
+        var path = $"curbyq/round/{roundText}";
+        return FetchAsync(path, round, cancellationToken);
     }
 
     public void Dispose() => Chains.Dispose();
@@ -114,35 +112,29 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon, IDisposable
                 );
             }
 
-            if (
-                _last is { } last
-                && string.Equals(
-                    last.Id,
-                    result.ResultPulse.Cid.ToString(),
-                    StringComparison.Ordinal
-                )
-            )
+            var resultId = result.ResultPulse.Cid.ToString();
+            if (_last is { } last && string.Equals(last.Id, resultId, StringComparison.Ordinal))
             {
                 return last;
             }
 
             await CrawlBellAsync(result, cancellationToken).ConfigureAwait(false);
             var seed = await CrawlSeedAsync(result, cancellationToken).ConfigureAwait(false);
-            var parameters = await Api.GetBytesAsync(
-                    $"curbyq/round/{verified.Number.ToString(CultureInfo.InvariantCulture)}/params",
-                    cancellationToken
-                )
+            var numberText = verified.Number.ToString(CultureInfo.InvariantCulture);
+            var paramsPath = $"curbyq/round/{numberText}/params";
+            var parameters = await Api.GetBytesAsync(paramsPath, cancellationToken)
                 .ConfigureAwait(false)
                 ?? throw new TwineFormatException(
                     $"The Twine API does not serve the parameters of round {verified.Number}."
                 );
             result.VerifySeed(seed, parameters);
 
+            var chainId = chain.Cid.ToString();
             var pulse = new BeaconPulse(
                 Name,
-                chain.Cid.ToString(),
+                chainId,
                 verified.Number,
-                result.ResultPulse.Cid.ToString(),
+                resultId,
                 result.Timestamp,
                 result.Randomness
             );
@@ -252,8 +244,8 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon, IDisposable
         CancellationToken cancellationToken
     )
     {
-        var document = await Api.GetAsync($"chains/{chain.Cid}/pulses/{cid}", cancellationToken)
-            .ConfigureAwait(false)
+        var path = $"chains/{chain.Cid}/pulses/{cid}";
+        var document = await Api.GetAsync(path, cancellationToken).ConfigureAwait(false)
             ?? throw new TwineFormatException($"The Twine API does not serve pulse {cid}.");
         var pulse = TwineSignedPulse.Verify(document, chain);
         if (!pulse.Cid.Equals(cid))

@@ -68,7 +68,8 @@ internal sealed class TwineSignedPulse
             );
         }
 
-        JwsRs256.Verify(document.Signature, chain.Key, document.ContentMultihash());
+        var multihash = document.ContentMultihash();
+        JwsRs256.Verify(document.Signature, chain.Key, multihash);
 
         var index = content.Get<IpldInteger>("index").Value;
         if (index < 0)
@@ -85,7 +86,8 @@ internal sealed class TwineSignedPulse
         {
             var mixin = item.As<IpldMap>("mixins");
             var mixinChain = mixin.Get<IpldLink>("chain").Cid;
-            if (!mixins.TryAdd(mixinChain, mixin.Get<IpldLink>("value").Cid))
+            var mixinValue = mixin.Get<IpldLink>("value").Cid;
+            if (!mixins.TryAdd(mixinChain, mixinValue))
             {
                 throw new TwineFormatException($"The pulse mixes in chain {mixinChain} twice.");
             }

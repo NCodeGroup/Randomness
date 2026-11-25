@@ -34,7 +34,13 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
     )
     {
         var body = await GetBodyAsync(path, JsonMediaType, cancellationToken).ConfigureAwait(false);
-        return body is null ? null : TwineDocument.Parse(ParseJson(body));
+        if (body is null)
+        {
+            return null;
+        }
+
+        var json = ParseJson(body);
+        return TwineDocument.Parse(json);
     }
 
     /// <summary>
@@ -63,7 +69,8 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
         var documents = ImmutableArray.CreateBuilder<TwineDocument>(json.GetArrayLength());
         foreach (var element in json.EnumerateArray())
         {
-            documents.Add(TwineDocument.Parse(element));
+            var document = TwineDocument.Parse(element);
+            documents.Add(document);
         }
 
         return documents.MoveToImmutable();

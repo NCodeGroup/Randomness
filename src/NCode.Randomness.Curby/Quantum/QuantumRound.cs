@@ -91,7 +91,8 @@ internal sealed class QuantumRound
             return new QuantumRound(number, null, null);
         }
 
-        return new QuantumRound(number, null, ReadResult(number, pulses[0], pulses[1], pulses[2]));
+        var result = ReadResult(number, pulses[0], pulses[1], pulses[2]);
+        return new QuantumRound(number, null, result);
     }
 
     private static long ReadRoundNumber(List<TwineSignedPulse> pulses)
@@ -197,9 +198,8 @@ internal sealed class QuantumRound
             );
         }
 
-        var timestamp = TwinePulse.ParseTimestamp(
-            result.Payload.Get<IpldString>("timestamp").Value
-        );
+        var timestampText = result.Payload.Get<IpldString>("timestamp").Value;
+        var timestamp = TwinePulse.ParseTimestamp(timestampText);
         return new QuantumResult(
             number,
             request,

@@ -94,7 +94,8 @@ internal sealed class QuantumResult(
     public bool MixesPrecommit(TwineSignedPulse pulse)
     {
         ArgumentNullException.ThrowIfNull(pulse);
-        return Precommit.Cid.Equals(pulse.MixinOf(Precommit.Chain));
+        var mixin = pulse.MixinOf(Precommit.Chain);
+        return Precommit.Cid.Equals(mixin);
     }
 
     /// <summary>
@@ -123,7 +124,8 @@ internal sealed class QuantumResult(
     public void VerifySeed(TwineSignedPulse seed, ReadOnlySpan<byte> parameters)
     {
         ArgumentNullException.ThrowIfNull(seed);
-        var hash = Convert.ToHexStringLower(Sha3.HashData512(parameters));
+        var digest = Sha3.HashData512(parameters);
+        var hash = Convert.ToHexStringLower(digest);
         if (!string.Equals(hash, ParamsHash, StringComparison.Ordinal))
         {
             throw new TwineFormatException("The round's parameters do not hash to its paramsHash.");
@@ -140,7 +142,8 @@ internal sealed class QuantumResult(
             throw new TwineFormatException("The round's seed is not canonical base64.");
         }
 
-        if (!string.Equals(Convert.ToBase64String(expected), encoded, StringComparison.Ordinal))
+        var canonical = Convert.ToBase64String(expected);
+        if (!string.Equals(canonical, encoded, StringComparison.Ordinal))
         {
             throw new TwineFormatException("The round's seed is not canonical base64.");
         }
