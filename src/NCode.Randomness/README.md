@@ -27,11 +27,14 @@ builder.Services
 
 public sealed class TokenService(ISecureRandom random)
 {
-    public byte[] NewKey() => random.GetBytes(32);
+    public string NewRecoveryCode() => random.GetString("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 16);
 
     public int RollDie() => random.NextInteger(1, 7);
 }
 ```
+
+For a key, call `Fill` with a `stackalloc` or pinned span and clear it with `CryptographicOperations.ZeroMemory` after
+use, rather than keeping it in the `byte[]` that `GetBytes` returns.
 
 Beacon adapters implement `IRandomnessBeacon` and register with `AddBeacon<TBeacon>()`. The repository's README and
 `docs/` folder hold the full guide, the draw specification and the decision records.
