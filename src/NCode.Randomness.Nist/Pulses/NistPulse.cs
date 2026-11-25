@@ -3,6 +3,7 @@
 
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -23,6 +24,11 @@ internal sealed class NistPulse
     private const string SupportedVersion = "2.0";
     private const uint SupportedCipherSuite = 0;
 
+    /// <summary>
+    /// The bytes rented at first for a pulse's signed bytes, enough for a pulse without renting again.
+    /// </summary>
+    private const int SignedBytesCapacity = 1024;
+
     private static UTF8Encoding Utf8 { get; } =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
@@ -40,7 +46,7 @@ internal sealed class NistPulse
         }
 
         var pulse = ReadObject(document, "pulse");
-        var signed = new ArrayBufferWriter<byte>(1024);
+        using var signed = new PooledBufferWriter(SignedBytesCapacity);
 
         var uri = ReadString(pulse, "uri");
         WriteString(signed, uri);
@@ -62,7 +68,13 @@ internal sealed class NistPulse
         var localRandomValue = ReadHash(pulse, "localRandomValue");
         WriteBytes(signed, localRandomValue);
         WriteExternal(signed, pulse);
-        var previous = WriteListValues(signed, pulse);
+        var listValues = ReadListValues(pulse);
+        var previous = listValues[0];
+        foreach (var value in listValues)
+        {
+            WriteBytes(signed, value);
+        }
+
         var precommitment = ReadHash(pulse, "precommitmentValue");
         WriteBytes(signed, precommitment);
         var statusCode = ReadUInt32(pulse, "statusCode");
@@ -94,7 +106,7 @@ internal sealed class NistPulse
     /// <param name="pulse">The <c>pulse</c> object.</param>
     /// <exception cref="NistFormatException">The member is not an object or one of its members is malformed.
     /// </exception>
-    private static void WriteExternal(ArrayBufferWriter<byte> signed, JsonElement pulse)
+    private static void WriteExternal(PooledBufferWriter signed, JsonElement pulse)
     {
         if (
             !pulse.TryGetProperty("external", out var external)
@@ -118,16 +130,15 @@ internal sealed class NistPulse
     }
 
     /// <summary>
-    /// Appends every value of the <c>listValues</c> member to the signed bytes, in order, and returns the first,
-    /// which must be the previous pulse's output.
+    /// Reads the values of the <c>listValues</c> member, in order; the first must be of type <c>previous</c>, the
+    /// previous pulse's output.
     /// </summary>
-    /// <param name="signed">The signed bytes to append to.</param>
     /// <param name="pulse">The <c>pulse</c> object.</param>
-    /// <returns>The value of type <c>previous</c>.</returns>
+    /// <returns>The values, the first of type <c>previous</c>.</returns>
     /// <exception cref="NistFormatException">
     /// The member is not a non-empty array of values, or its first value is not of type <c>previous</c>.
     /// </exception>
-    private static byte[] WriteListValues(ArrayBufferWriter<byte> signed, JsonElement pulse)
+    private static ImmutableArray<byte[]> ReadListValues(JsonElement pulse)
     {
         var list = ReadMember(pulse, "listValues");
         if (list.ValueKind != JsonValueKind.Array || list.GetArrayLength() == 0)
@@ -137,7 +148,8 @@ internal sealed class NistPulse
             );
         }
 
-        byte[]? previous = null;
+        var count = list.GetArrayLength();
+        var values = ImmutableArray.CreateBuilder<byte[]>(count);
         foreach (var item in list.EnumerateArray())
         {
             if (item.ValueKind != JsonValueKind.Object)
@@ -149,22 +161,17 @@ internal sealed class NistPulse
 
             var type = ReadString(item, "type", "listValues[].type");
             var value = ReadHash(item, "value", "listValues[].value");
-            if (previous is null)
+            if (values.Count == 0 && !string.Equals(type, PreviousType, StringComparison.Ordinal))
             {
-                if (!string.Equals(type, PreviousType, StringComparison.Ordinal))
-                {
-                    throw new NistFormatException(
-                        $"The first NIST pulse member in 'listValues' has type '{type}', not '{PreviousType}'."
-                    );
-                }
-
-                previous = value;
+                throw new NistFormatException(
+                    $"The first NIST pulse member in 'listValues' has type '{type}', not '{PreviousType}'."
+                );
             }
 
-            WriteBytes(signed, value);
+            values.Add(value);
         }
 
-        return previous ?? throw new NistFormatException("The NIST pulse has no previous value.");
+        return values.MoveToImmutable();
     }
 
     /// <summary>
@@ -369,7 +376,7 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="signed">The signed bytes to append to.</param>
     /// <param name="value">The value to append.</param>
-    private static void WriteUInt32(ArrayBufferWriter<byte> signed, uint value)
+    private static void WriteUInt32(PooledBufferWriter signed, uint value)
     {
         var span = signed.GetSpan(sizeof(uint));
         BinaryPrimitives.WriteUInt32BigEndian(span, value);
@@ -381,7 +388,7 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="signed">The signed bytes to append to.</param>
     /// <param name="value">The value to append.</param>
-    private static void WriteInt64(ArrayBufferWriter<byte> signed, long value)
+    private static void WriteInt64(PooledBufferWriter signed, long value)
     {
         var span = signed.GetSpan(sizeof(long));
         BinaryPrimitives.WriteInt64BigEndian(span, value);
@@ -393,7 +400,7 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="signed">The signed bytes to append to.</param>
     /// <param name="value">The bytes to append.</param>
-    private static void WriteBytes(ArrayBufferWriter<byte> signed, ReadOnlySpan<byte> value)
+    private static void WriteBytes(PooledBufferWriter signed, ReadOnlySpan<byte> value)
     {
         WriteUInt32(signed, (uint)value.Length);
         signed.Write(value);
@@ -405,7 +412,7 @@ internal sealed class NistPulse
     /// <param name="signed">The signed bytes to append to.</param>
     /// <param name="value">The text to append.</param>
     /// <exception cref="NistFormatException">The text is not valid UTF-8.</exception>
-    private static void WriteString(ArrayBufferWriter<byte> signed, string value)
+    private static void WriteString(PooledBufferWriter signed, string value)
     {
         int length;
         try
