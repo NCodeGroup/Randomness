@@ -64,8 +64,10 @@ internal sealed class NistPulse
     private static UTF8Encoding Utf8 { get; } =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
-    // These are the options NistApi parses a response with.
-    private static JsonDocumentOptions JsonOptions { get; } =
+    /// <summary>
+    /// Gets the options that parse a document: nesting up to 16 levels deep and no duplicate property names.
+    /// </summary>
+    internal static JsonDocumentOptions JsonOptions { get; } =
         new() { MaxDepth = 16, AllowDuplicateProperties = false };
 
     /// <summary>

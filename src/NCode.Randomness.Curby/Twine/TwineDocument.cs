@@ -13,8 +13,10 @@ namespace NCode.Randomness.Curby.Twine;
 /// </summary>
 internal sealed class TwineDocument
 {
-    // The depth limit that TwineApi applies to a response.
-    private static JsonDocumentOptions JsonOptions { get; } = new() { MaxDepth = 32 };
+    /// <summary>
+    /// Gets the options that parse a document: nesting up to 32 levels deep.
+    /// </summary>
+    internal static JsonDocumentOptions JsonOptions { get; } = new() { MaxDepth = 32 };
 
     private TwineDocument(Cid cid, IpldMap content, string signature)
     {

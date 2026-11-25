@@ -27,8 +27,6 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
 
     private const string OctetStreamMediaType = "application/octet-stream";
 
-    private static JsonDocumentOptions ParseOptions { get; } = new() { MaxDepth = 32 };
-
     /// <summary>
     /// Parses <paramref name="body"/> as JSON, accepting nesting up to 32 levels deep.
     /// </summary>
@@ -39,7 +37,7 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
     {
         try
         {
-            return JsonElement.Parse(body, ParseOptions);
+            return JsonElement.Parse(body, TwineDocument.JsonOptions);
         }
         catch (JsonException exception)
         {

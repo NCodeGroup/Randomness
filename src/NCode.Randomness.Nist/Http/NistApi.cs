@@ -33,12 +33,6 @@ internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOpt
     private const string TextMediaType = "text/plain";
 
     /// <summary>
-    /// Gets the options that parse a response body: nesting up to 16 levels deep and no duplicate property names.
-    /// </summary>
-    private static JsonDocumentOptions ParseOptions { get; } =
-        new() { MaxDepth = 16, AllowDuplicateProperties = false };
-
-    /// <summary>
     /// Parses <paramref name="body"/> as JSON, accepting nesting up to 16 levels deep and no duplicate property names.
     /// </summary>
     /// <param name="body">The response body, as UTF-8 JSON.</param>
@@ -48,7 +42,7 @@ internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOpt
     {
         try
         {
-            return JsonElement.Parse(body, ParseOptions);
+            return JsonElement.Parse(body, NistPulse.JsonOptions);
         }
         catch (JsonException exception)
         {

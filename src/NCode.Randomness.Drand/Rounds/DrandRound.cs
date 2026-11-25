@@ -26,8 +26,10 @@ internal sealed class DrandRound
     /// </summary>
     private const int RandomnessLength = 32;
 
-    // These are the options DrandApi parses a response with.
-    private static JsonDocumentOptions JsonOptions { get; } =
+    /// <summary>
+    /// Gets the options that parse a document: nesting up to 16 levels deep and no duplicate property names.
+    /// </summary>
+    internal static JsonDocumentOptions JsonOptions { get; } =
         new() { MaxDepth = 16, AllowDuplicateProperties = false };
 
     /// <summary>
