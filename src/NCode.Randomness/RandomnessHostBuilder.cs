@@ -28,8 +28,15 @@ public sealed class RandomnessHostBuilder : IRandomnessBuilder
     /// </summary>
     /// <param name="cancellationToken">Cancels the build.</param>
     /// <returns>The started host; dispose it when done.</returns>
-    /// <exception cref="InvalidOperationException">This builder has already built its host.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// This builder has already built its host, the configuration has an unknown key, or
+    /// <see cref="RandomnessOptions.RequireInitialPulse"/> is set and no beacon gave a pulse within
+    /// <see cref="RandomnessOptions.InitialPulseTimeout"/>.
+    /// </exception>
     /// <exception cref="OptionsValidationException">A setting is invalid.</exception>
+    /// <exception cref="AggregateException">
+    /// A hosted service failed to start and one it had started failed to stop; the start failure comes first.
+    /// </exception>
     public async ValueTask<RandomnessHost> BuildAsync(CancellationToken cancellationToken)
     {
         if (Interlocked.Exchange(ref _built, 1) != 0)
