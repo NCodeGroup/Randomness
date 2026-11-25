@@ -14,6 +14,59 @@ namespace NCode.Randomness.Curby.Quantum;
 internal sealed class QuantumResult
 {
     /// <summary>
+    /// Reads the base64 text of the <c>seed</c> property of the extractor's parameters. It throws
+    /// <see cref="TwineFormatException"/> when they are not a JSON object, or <c>seed</c> is missing, repeated or not
+    /// a string.
+    /// </summary>
+    /// <param name="parameters">The extractor's parameters, a JSON document.</param>
+    /// <returns>The seed as the parameters encode it.</returns>
+    private static string ReadSeed(ReadOnlySpan<byte> parameters)
+    {
+        JsonElement document;
+        try
+        {
+            document = JsonElement.Parse(parameters);
+        }
+        catch (JsonException exception)
+        {
+            throw new TwineFormatException(
+                $"The round's parameters are not JSON: {exception.Message}"
+            );
+        }
+
+        if (document.ValueKind != JsonValueKind.Object)
+        {
+            throw new TwineFormatException("The round's parameters are not a JSON object.");
+        }
+
+        JsonElement? seed = null;
+        foreach (var property in document.EnumerateObject())
+        {
+            if (property.NameEquals("seed"u8))
+            {
+                if (seed is not null)
+                {
+                    throw new TwineFormatException("The round's parameters have 'seed' twice.");
+                }
+
+                seed = property.Value;
+            }
+        }
+
+        if (seed is null)
+        {
+            throw new TwineFormatException("The round's parameters have no 'seed'.");
+        }
+
+        if (seed.Value.ValueKind != JsonValueKind.String)
+        {
+            throw new TwineFormatException("The round's 'seed' is not a string.");
+        }
+
+        return seed.Value.GetString() ?? string.Empty;
+    }
+
+    /// <summary>
     /// Gets the request pulse, which asks for the Bell experiment.
     /// </summary>
     public required TwineSignedPulse Request { get; init; }
@@ -170,58 +223,5 @@ internal sealed class QuantumResult
             ArrayPool<byte>.Shared.Return(buffer);
             ArrayPool<byte>.Shared.Return(decodedBuffer);
         }
-    }
-
-    /// <summary>
-    /// Reads the base64 text of the <c>seed</c> property of the extractor's parameters. It throws
-    /// <see cref="TwineFormatException"/> when they are not a JSON object, or <c>seed</c> is missing, repeated or not
-    /// a string.
-    /// </summary>
-    /// <param name="parameters">The extractor's parameters, a JSON document.</param>
-    /// <returns>The seed as the parameters encode it.</returns>
-    private static string ReadSeed(ReadOnlySpan<byte> parameters)
-    {
-        JsonElement document;
-        try
-        {
-            document = JsonElement.Parse(parameters);
-        }
-        catch (JsonException exception)
-        {
-            throw new TwineFormatException(
-                $"The round's parameters are not JSON: {exception.Message}"
-            );
-        }
-
-        if (document.ValueKind != JsonValueKind.Object)
-        {
-            throw new TwineFormatException("The round's parameters are not a JSON object.");
-        }
-
-        JsonElement? seed = null;
-        foreach (var property in document.EnumerateObject())
-        {
-            if (property.NameEquals("seed"u8))
-            {
-                if (seed is not null)
-                {
-                    throw new TwineFormatException("The round's parameters have 'seed' twice.");
-                }
-
-                seed = property.Value;
-            }
-        }
-
-        if (seed is null)
-        {
-            throw new TwineFormatException("The round's parameters have no 'seed'.");
-        }
-
-        if (seed.Value.ValueKind != JsonValueKind.String)
-        {
-            throw new TwineFormatException("The round's 'seed' is not a string.");
-        }
-
-        return seed.Value.GetString() ?? string.Empty;
     }
 }

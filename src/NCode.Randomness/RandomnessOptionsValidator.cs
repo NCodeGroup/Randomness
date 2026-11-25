@@ -14,6 +14,42 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
     private static TimeSpan MaxTimerPeriod { get; } =
         TimeSpan.FromMilliseconds(uint.MaxValue - 1.0);
 
+    /// <summary>
+    /// Adds a failure for each per-beacon pulse age limit that is missing, has an empty beacon name, or lies outside the
+    /// range a timer accepts, in beacon-name order.
+    /// </summary>
+    /// <param name="failures">The list that receives a message for each failure.</param>
+    /// <param name="options">The options whose per-beacon limits are checked.</param>
+    private static void CheckBeaconLimits(List<string> failures, RandomnessOptions options)
+    {
+        if (options.MaxPulseAgeByBeacon is null)
+        {
+            failures.Add($"{Prefix}{nameof(options.MaxPulseAgeByBeacon)} must not be null.");
+            return;
+        }
+
+        var entries = options.MaxPulseAgeByBeacon.OrderBy(
+            entry => entry.Key,
+            StringComparer.Ordinal
+        );
+        foreach (var (key, value) in entries)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                failures.Add(
+                    $"{Prefix}{nameof(options.MaxPulseAgeByBeacon)} has an empty beacon name."
+                );
+            }
+
+            CheckPeriod(
+                failures,
+                $"{nameof(options.MaxPulseAgeByBeacon)}:{key}",
+                value,
+                TimeSpan.FromSeconds(1)
+            );
+        }
+    }
+
     public ValidateOptionsResult Validate(string? name, RandomnessOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -78,42 +114,6 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
         return failures.Count == 0
             ? ValidateOptionsResult.Success
             : ValidateOptionsResult.Fail(failures);
-    }
-
-    /// <summary>
-    /// Adds a failure for each per-beacon pulse age limit that is missing, has an empty beacon name, or lies outside the
-    /// range a timer accepts, in beacon-name order.
-    /// </summary>
-    /// <param name="failures">The list that receives a message for each failure.</param>
-    /// <param name="options">The options whose per-beacon limits are checked.</param>
-    private static void CheckBeaconLimits(List<string> failures, RandomnessOptions options)
-    {
-        if (options.MaxPulseAgeByBeacon is null)
-        {
-            failures.Add($"{Prefix}{nameof(options.MaxPulseAgeByBeacon)} must not be null.");
-            return;
-        }
-
-        var entries = options.MaxPulseAgeByBeacon.OrderBy(
-            entry => entry.Key,
-            StringComparer.Ordinal
-        );
-        foreach (var (key, value) in entries)
-        {
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                failures.Add(
-                    $"{Prefix}{nameof(options.MaxPulseAgeByBeacon)} has an empty beacon name."
-                );
-            }
-
-            CheckPeriod(
-                failures,
-                $"{nameof(options.MaxPulseAgeByBeacon)}:{key}",
-                value,
-                TimeSpan.FromSeconds(1)
-            );
-        }
     }
 
     private static void CheckPeriod(

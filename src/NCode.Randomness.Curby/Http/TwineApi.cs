@@ -20,6 +20,26 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
 
     private static JsonDocumentOptions ParseOptions { get; } = new() { MaxDepth = 32 };
 
+    /// <summary>
+    /// Parses <paramref name="body"/> as JSON, accepting nesting up to 32 levels deep.
+    /// </summary>
+    /// <param name="body">The response body, as UTF-8 JSON.</param>
+    /// <returns>The root element of the parsed document.</returns>
+    /// <exception cref="TwineFormatException"><paramref name="body"/> is not valid JSON.</exception>
+    private static JsonElement ParseJson(byte[] body)
+    {
+        try
+        {
+            return JsonElement.Parse(body, ParseOptions);
+        }
+        catch (JsonException exception)
+        {
+            throw new TwineFormatException(
+                $"The Twine API answered with malformed JSON: {exception.Message}"
+            );
+        }
+    }
+
     private IHttpClientFactory Clients { get; } = clients;
 
     private CurbyBeaconOptions Options { get; } = options.Value;
@@ -133,26 +153,6 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
         }
 
         return await ReadLimitedAsync(response.Content, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Parses <paramref name="body"/> as JSON, accepting nesting up to 32 levels deep.
-    /// </summary>
-    /// <param name="body">The response body, as UTF-8 JSON.</param>
-    /// <returns>The root element of the parsed document.</returns>
-    /// <exception cref="TwineFormatException"><paramref name="body"/> is not valid JSON.</exception>
-    private static JsonElement ParseJson(byte[] body)
-    {
-        try
-        {
-            return JsonElement.Parse(body, ParseOptions);
-        }
-        catch (JsonException exception)
-        {
-            throw new TwineFormatException(
-                $"The Twine API answered with malformed JSON: {exception.Message}"
-            );
-        }
     }
 
     private async ValueTask<byte[]> ReadLimitedAsync(
