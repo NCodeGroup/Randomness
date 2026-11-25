@@ -13,9 +13,11 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     private const string ChainPath = "/chains/" + CurbyQuantumFixtures.ChainId;
     private const string BellChainPath = "/chains/" + CurbyQuantumFixtures.BellChainId;
     private const string SeedChainPath = "/chains/" + CurbyQuantumFixtures.SeedChainId;
-    private const string RoundPath = "/curbyq/round/28297";
     private const string LatestPath = "/curbyq/round/latest";
-    private const string ParametersPath = "/curbyq/round/28297/params";
+
+    private static string RoundPath { get; } = "/curbyq/round/" + CurbyQuantumFixtures.Round;
+
+    private static string ParametersPath { get; } = RoundPath + "/params";
 
     private static void AssertRound(BeaconPulse pulse)
     {

@@ -129,7 +129,7 @@ public class TwineVerificationTests
     [Fact]
     public void Parse_WithCurbyQDocuments_RecomputesEveryCid()
     {
-        var bellPulse = CurbyQuantumFixtures.BellPulse(59313);
+        var bellPulse = CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex);
         var firstSeedPulse = CurbyQuantumFixtures.SeedPulse(
             CurbyQuantumFixtures.FirstSeedPulseIndex
         );
@@ -187,7 +187,7 @@ public class TwineVerificationTests
                 return TwineSignedPulse.Verify(document, quantum);
             })
             .ToList();
-        var responseJson = CurbyQuantumFixtures.BellPulse(59313);
+        var responseJson = CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex);
         var responseDocument = Document(responseJson);
         var response = TwineSignedPulse.Verify(responseDocument, bell);
         var seeds = new[]

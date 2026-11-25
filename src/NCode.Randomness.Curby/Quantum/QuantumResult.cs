@@ -44,7 +44,7 @@ internal sealed class QuantumResult
         JsonElement? seed = null;
         foreach (var property in root.EnumerateObject())
         {
-            if (property.NameEquals("seed"u8))
+            if (property.NameEquals(QuantumKeys.Seed))
             {
                 if (seed is not null)
                 {
