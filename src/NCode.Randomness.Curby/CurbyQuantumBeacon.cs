@@ -19,7 +19,6 @@ namespace NCode.Randomness.Curby;
 internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
 {
     private const string RoundPath = "curbyq/round/";
-    private const int MaxCrawl = 10;
 
     /// <summary>
     /// Initializes the beacon with the Twine API, the chain cache and the pinned chains.
@@ -180,8 +179,9 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
 
     /// <summary>
     /// Walks the Bell chain back from the pulse the precommit mixes in to the response to the request, fetching each
-    /// pulse with <see cref="GetCrawledAsync"/>. It throws <see cref="TwineFormatException"/> when no pulse within
-    /// ten answers the request or the chain starts first.
+    /// pulse with <see cref="GetDocumentAsync"/>. The walk's checks and limits are
+    /// <see cref="QuantumBellWalk"/>'s, so it throws <see cref="TwineFormatException"/> when no pulse within ten
+    /// answers the request or the chain starts first.
     /// </summary>
     /// <param name="result">The round's pulses.</param>
     /// <param name="cancellationToken">The token that cancels the fetches.</param>
@@ -193,34 +193,21 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
         var bell = await Chains
             .GetAsync(BellChain, "bell", cancellationToken)
             .ConfigureAwait(false);
-        var cid = result.Precommit.MixinOf(BellChain)
-            ?? throw new TwineFormatException("The precommit does not mix in the Bell chain.");
-        TwineSignedPulse? newer = null;
-        for (var count = 0; count < MaxCrawl; ++count)
+        var walk = new QuantumBellWalk(result, bell);
+        bool answered;
+        do
         {
-            var pulse = await GetCrawledAsync(bell, cid, newer, cancellationToken)
+            var document = await GetDocumentAsync(bell, walk.Next, cancellationToken)
                 .ConfigureAwait(false);
-            if (result.IsBellResponse(pulse))
-            {
-                return;
-            }
-
-            cid = pulse.Previous
-                ?? throw new TwineFormatException(
-                    "The Bell chain starts before any response to the request."
-                );
-            newer = pulse;
-        }
-
-        throw new TwineFormatException(
-            $"No response to the request is within {MaxCrawl} Bell pulses of the one the precommit mixes in."
-        );
+            answered = walk.Visit(document);
+        } while (!answered);
     }
 
     /// <summary>
     /// Walks the seed chain back from the pulse the randomness pulse mixes in to the first pulse that does not mix in
-    /// the precommit, verifying each pulse and its order with the one after it, and returns the seed pulse. It throws
-    /// <see cref="TwineFormatException"/> when ten pulses in a row mix in the precommit or the chain starts first.
+    /// the precommit, fetching each pulse with <see cref="GetDocumentAsync"/>, and returns the seed pulse. The walk's
+    /// checks and limits are <see cref="QuantumSeedWalk"/>'s, so it throws <see cref="TwineFormatException"/> when ten
+    /// pulses in a row mix in the precommit or the chain starts first.
     /// </summary>
     /// <param name="result">The round's pulses.</param>
     /// <param name="cancellationToken">The token that cancels the fetches.</param>
@@ -233,58 +220,42 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
         var seedChain = await Chains
             .GetAsync(result.SeedChain, null, cancellationToken)
             .ConfigureAwait(false);
-        var cid = result.ResultPulse.MixinOf(result.SeedChain)
-            ?? throw new TwineFormatException("The result does not mix in the seed chain.");
-        var mixing = new List<TwineSignedPulse>(MaxCrawl);
-        TwineSignedPulse? newer = null;
-        for (var count = 0; count < MaxCrawl; ++count)
+        var walk = new QuantumSeedWalk(result, seedChain);
+        TwineSignedPulse? seed = null;
+        while (seed is null)
         {
-            var pulse = await GetCrawledAsync(seedChain, cid, newer, cancellationToken)
+            var document = await GetDocumentAsync(seedChain, walk.Next, cancellationToken)
                 .ConfigureAwait(false);
-            if (!result.MixesPrecommit(pulse))
-            {
-                return result.SelectSeed(mixing);
-            }
-
-            mixing.Add(pulse);
-            cid = pulse.Previous
-                ?? throw new TwineFormatException(
-                    "The seed chain starts before any pulse that does not mix in the precommit."
-                );
-            newer = pulse;
+            seed = walk.Visit(document);
         }
 
-        throw new TwineFormatException($"{MaxCrawl} seed pulses in a row mix in the precommit.");
+        return seed;
     }
 
     /// <summary>
-    /// Fetches the pulse with the CID <paramref name="cid"/> from <paramref name="chain"/> and verifies it. The pulse
-    /// must be the one requested and, when <paramref name="newer"/> is given, must precede it.
+    /// Fetches the document of the pulse with the CID <paramref name="cid"/> from <paramref name="chain"/>. The
+    /// document must be the one requested.
     /// </summary>
     /// <param name="chain">The verified chain the pulse belongs to.</param>
     /// <param name="cid">The CID of the pulse.</param>
-    /// <param name="newer">The pulse that follows the one requested, or <see langword="null"/> for the first one.</param>
     /// <param name="cancellationToken">The token that cancels the fetch.</param>
-    /// <returns>The verified pulse.</returns>
-    private async ValueTask<TwineSignedPulse> GetCrawledAsync(
+    /// <returns>The document of the pulse, not yet verified.</returns>
+    private async ValueTask<TwineDocument> GetDocumentAsync(
         TwineChain chain,
         Cid cid,
-        TwineSignedPulse? newer,
         CancellationToken cancellationToken
     )
     {
         var path = $"chains/{chain.Cid}/pulses/{cid}";
         var document = await Api.GetAsync(path, cancellationToken).ConfigureAwait(false)
             ?? throw new TwineFormatException($"The Twine API does not serve pulse {cid}.");
-        var pulse = TwineSignedPulse.Verify(document, chain);
-        if (!pulse.Cid.Equals(cid))
+        if (!document.Cid.Equals(cid))
         {
             throw new TwineFormatException(
-                $"The Twine API answered pulse {cid} with pulse {pulse.Cid}."
+                $"The Twine API answered pulse {cid} with pulse {document.Cid}."
             );
         }
 
-        newer?.VerifyPrecededBy(pulse);
-        return pulse;
+        return document;
     }
 }
