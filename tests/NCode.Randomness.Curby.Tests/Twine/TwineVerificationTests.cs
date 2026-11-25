@@ -155,15 +155,22 @@ public class TwineVerificationTests
         using var seed = TwineChain.Verify(seedDocument, seedCid, null);
 
         var round = RoundPulses()
-            .Select(element => TwineSignedPulse.Verify(Document(element.GetRawText()), quantum))
+            .Select(element =>
+            {
+                var document = Document(element.GetRawText());
+                return TwineSignedPulse.Verify(document, quantum);
+            })
             .ToList();
         var responseJson = CurbyQuantumFixtures.BellPulse(59313);
         var responseDocument = Document(responseJson);
         var response = TwineSignedPulse.Verify(responseDocument, bell);
         var seeds = new[] { 1914066L, 1914067L, 1914068L }
             .Select(index =>
-                TwineSignedPulse.Verify(Document(CurbyQuantumFixtures.SeedPulse(index)), seed)
-            )
+            {
+                var seedJson = CurbyQuantumFixtures.SeedPulse(index);
+                var document = Document(seedJson);
+                return TwineSignedPulse.Verify(document, seed);
+            })
             .ToList();
         var requestId = round[0].Cid.ToString();
         var precommitId = round[1].Cid.ToString();
@@ -209,9 +216,10 @@ public class TwineVerificationTests
     public void Verify_WithChainOfAnotherFamily_Throws()
     {
         using var builder = new TwineBuilder(specification: "twine/1.0.x/bell/1.0.x");
+        var document = Document(builder.ChainJson);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
-            TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid, "rng")
+            TwineChain.Verify(document, builder.ChainCid, "rng")
         );
 
         Assert.Contains("not twine/1.x/rng/1.x", exception.Message, StringComparison.Ordinal);
@@ -232,9 +240,10 @@ public class TwineVerificationTests
     public void Verify_WithoutFamilyAndAnotherTwineVersion_Throws()
     {
         using var builder = new TwineBuilder(specification: "twine/2.0.x/mirror/1.0.x");
+        var document = Document(builder.ChainJson);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
-            TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid, null)
+            TwineChain.Verify(document, builder.ChainCid, null)
         );
 
         Assert.Contains("not twine/1.x.", exception.Message, StringComparison.Ordinal);

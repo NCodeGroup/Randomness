@@ -127,9 +127,8 @@ public class CurbyRandomnessBuilderExtensionsTests
     {
         var services = new ServiceCollection();
         services.AddRandomness().AddCurbyQuantumBeacon().AddCurbyQuantumBeacon();
-        await using var provider = services.BuildServiceProvider(
-            new ServiceProviderOptions { ValidateOnBuild = true }
-        );
+        var providerOptions = new ServiceProviderOptions { ValidateOnBuild = true };
+        await using var provider = services.BuildServiceProvider(providerOptions);
 
         var beacons = provider.GetServices<IRandomnessBeacon>();
         var beacon = Assert.Single(beacons);
@@ -147,9 +146,8 @@ public class CurbyRandomnessBuilderExtensionsTests
     {
         var services = new ServiceCollection();
         services.AddRandomness().AddCurbyBeacon().AddCurbyQuantumBeacon();
-        await using var provider = services.BuildServiceProvider(
-            new ServiceProviderOptions { ValidateOnBuild = true }
-        );
+        var providerOptions = new ServiceProviderOptions { ValidateOnBuild = true };
+        await using var provider = services.BuildServiceProvider(providerOptions);
 
         var names = provider.GetServices<IRandomnessBeacon>().Select(beacon => beacon.Name);
         var orderedNames = names.Order(StringComparer.Ordinal);
@@ -163,14 +161,14 @@ public class CurbyRandomnessBuilderExtensionsTests
     {
         var services = new ServiceCollection();
         services.AddRandomness().AddCurbyBeacon().AddCurbyQuantumBeacon();
-        await using var provider = services.BuildServiceProvider(
-            new ServiceProviderOptions { ValidateOnBuild = true }
-        );
+        var providerOptions = new ServiceProviderOptions { ValidateOnBuild = true };
+        await using var provider = services.BuildServiceProvider(providerOptions);
 
         var chains = provider.GetRequiredService<TwineChainCache>();
 
         Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwineChainCache));
-        Assert.Same(chains, provider.GetRequiredService<TwineChainCache>());
+        var again = provider.GetRequiredService<TwineChainCache>();
+        Assert.Same(chains, again);
     }
 
     [Fact]
@@ -204,8 +202,9 @@ public class CurbyRandomnessBuilderExtensionsTests
         var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
 
         var limit = Assert.Single(options.MaxPulseAgeByBeacon);
+        var expectedLimit = TimeSpan.FromMinutes(30);
         Assert.Equal(CurbyDefaults.QuantumBeaconName, limit.Key);
-        Assert.Equal(TimeSpan.FromMinutes(30), limit.Value);
+        Assert.Equal(expectedLimit, limit.Value);
         Assert.DoesNotContain(CurbyDefaults.BeaconName, options.MaxPulseAgeByBeacon.Keys);
     }
 
@@ -213,30 +212,26 @@ public class CurbyRandomnessBuilderExtensionsTests
     public async Task AddCurbyQuantumBeacon_WithHostLimit_KeepsIt()
     {
         var services = new ServiceCollection();
+        var hostLimit = TimeSpan.FromMinutes(45);
         services
             .AddRandomness(options =>
-                options.MaxPulseAgeByBeacon[CurbyDefaults.QuantumBeaconName] = TimeSpan.FromMinutes(
-                    45
-                )
+                options.MaxPulseAgeByBeacon[CurbyDefaults.QuantumBeaconName] = hostLimit
             )
             .AddCurbyQuantumBeacon();
         await using var provider = services.BuildServiceProvider();
 
         var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
 
-        Assert.Equal(
-            TimeSpan.FromMinutes(45),
-            options.MaxPulseAgeByBeacon[CurbyDefaults.QuantumBeaconName]
-        );
+        var limit = options.MaxPulseAgeByBeacon[CurbyDefaults.QuantumBeaconName];
+        Assert.Equal(hostLimit, limit);
     }
 
     [Fact]
     public async Task AddCurbyQuantumBeacon_WithLongerMaxPulseAge_AddsNoLimit()
     {
         var services = new ServiceCollection();
-        services
-            .AddRandomness(options => options.MaxPulseAge = TimeSpan.FromHours(1))
-            .AddCurbyQuantumBeacon();
+        var hostMaxAge = TimeSpan.FromHours(1);
+        services.AddRandomness(options => options.MaxPulseAge = hostMaxAge).AddCurbyQuantumBeacon();
         await using var provider = services.BuildServiceProvider();
 
         var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;

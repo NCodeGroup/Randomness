@@ -18,10 +18,8 @@ public sealed class TwineChainCacheTests : IDisposable
 
     public TwineChainCacheTests()
     {
-        var api = new TwineApi(
-            Server,
-            Microsoft.Extensions.Options.Options.Create(new CurbyBeaconOptions())
-        );
+        var options = Microsoft.Extensions.Options.Options.Create(new CurbyBeaconOptions());
+        var api = new TwineApi(Server, options);
         Cache = new TwineChainCache(api);
     }
 

@@ -9,8 +9,6 @@ namespace NCode.Randomness.Curby.Tests.Twine;
 
 public class TwineSignedPulseTests
 {
-    private const string QuantumChainId =
-        "bafyriqhijw5soalbtppuwwjbskfiriqy6swa5qd5trgbzx4nypnu7mp7iyhx7m2iin2nxnglmngvjgirzb7bvlisxq3uygoik7ozbybxnftiw";
     private const string QuantumPulseId =
         "bafyriqeidk4qclt3i7urnujipqmio3oyrvu4exguefe2nhn2jcpsvmaeh7va3gyue2xmsjqu6i6quajljrnzupib7672sgyx57ae2vsklujcm";
 
@@ -22,7 +20,7 @@ public class TwineSignedPulseTests
     public void Verify_WithCurbyPulse_ReadsLinksMixinsAndPayload()
     {
         using var chain = VerifyCurbyChain();
-        var quantum = Cid.Parse(QuantumChainId);
+        var quantum = Cid.Parse(CurbyQuantumFixtures.ChainId);
         var pulseJson = CurbyFixtures.Pulse(1620423);
         var document = TwineVerificationTests.Document(pulseJson);
 
@@ -50,9 +48,10 @@ public class TwineSignedPulseTests
         using var curby = VerifyCurbyChain();
         using var builder = new TwineBuilder();
         var pulse = builder.Pulses(1, Start)[0];
+        var document = TwineVerificationTests.Document(pulse.Json);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
-            TwineSignedPulse.Verify(TwineVerificationTests.Document(pulse.Json), curby)
+            TwineSignedPulse.Verify(document, curby)
         );
 
         Assert.Contains("belongs to chain", exception.Message, StringComparison.Ordinal);
@@ -73,9 +72,10 @@ public class TwineSignedPulseTests
             (builder.ChainCid, builder.ChainCid)
         );
         var sealedPulse = builder.Seal(content);
+        var document = TwineVerificationTests.Document(sealedPulse.Json);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
-            TwineSignedPulse.Verify(TwineVerificationTests.Document(sealedPulse.Json), chain)
+            TwineSignedPulse.Verify(document, chain)
         );
 
         Assert.Contains("twice", exception.Message, StringComparison.Ordinal);
@@ -89,9 +89,10 @@ public class TwineSignedPulseTests
         var payload = Ipld.Map();
         var content = builder.Content(-1, null, payload);
         var sealedPulse = builder.Seal(content);
+        var document = TwineVerificationTests.Document(sealedPulse.Json);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
-            TwineSignedPulse.Verify(TwineVerificationTests.Document(sealedPulse.Json), chain)
+            TwineSignedPulse.Verify(document, chain)
         );
 
         Assert.Contains("negative", exception.Message, StringComparison.Ordinal);

@@ -89,30 +89,16 @@ internal sealed class TwineBuilder : IDisposable
         DateTimeOffset timestamp
     )
     {
-        IpldNode[] links = previous is null ? [] : [Ipld.Link(previous)];
-        return Ipld.Map(
-            ("chain", Ipld.Link(ChainCid)),
-            ("index", Ipld.Integer(index)),
-            ("links", Ipld.List(links)),
-            ("mixins", Ipld.List()),
-            (
-                "payload",
-                Ipld.Map(
-                    ("pre", Ipld.Bytes([0x14, 0x40, .. Sha3.HashData512(nextSecret)])),
-                    ("salt", Ipld.Bytes(salt)),
-                    (
-                        "timestamp",
-                        Ipld.Text(
-                            timestamp.UtcDateTime.ToString(
-                                "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
-                                System.Globalization.CultureInfo.InvariantCulture
-                            )
-                        )
-                    )
-                )
-            ),
-            ("source", Ipld.Text("test"))
+        var nextDigest = Sha3.HashData512(nextSecret);
+        var pre = Ipld.Bytes([0x14, 0x40, .. nextDigest]);
+        var saltBytes = Ipld.Bytes(salt);
+        var time = timestamp.UtcDateTime.ToString(
+            "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
+            System.Globalization.CultureInfo.InvariantCulture
         );
+        var timestampText = Ipld.Text(time);
+        var payload = Ipld.Map(("pre", pre), ("salt", saltBytes), ("timestamp", timestampText));
+        return Content(index, previous, payload);
     }
 
     /// <summary>
@@ -129,11 +115,16 @@ internal sealed class TwineBuilder : IDisposable
         var chainLink = Ipld.Link(ChainCid);
         var indexNode = Ipld.Integer(index);
         var linksNode = Ipld.List(links);
-        var mixinsNode = Ipld.List([
+        IpldNode[] mixinMaps =
+        [
             .. mixins.Select(mixin =>
-                Ipld.Map(("chain", Ipld.Link(mixin.Chain)), ("value", Ipld.Link(mixin.Value)))
-            ),
-        ]);
+            {
+                var mixinChain = Ipld.Link(mixin.Chain);
+                var mixinValue = Ipld.Link(mixin.Value);
+                return Ipld.Map(("chain", mixinChain), ("value", mixinValue));
+            }),
+        ];
+        var mixinsNode = Ipld.List(mixinMaps);
         var sourceNode = Ipld.Text("test");
         return Ipld.Map(
             ("chain", chainLink),

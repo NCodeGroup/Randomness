@@ -17,6 +17,11 @@ internal sealed class QuantumRoundBuilder : IDisposable
 
     private static readonly byte[] DefaultDataDigest = Sha3.HashData512("bell data"u8);
 
+    private static string Timestamp(ref int clock) =>
+        Start
+            .AddSeconds(clock++)
+            .UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
+
     public TwineBuilder Quantum { get; } = new(specification: "twine/1.0.x/diqrng/1.0.x");
 
     public TwineBuilder Bell { get; } = new(specification: "twine/1.0.x/bell/1.0.x");
@@ -293,23 +298,4 @@ internal sealed class QuantumRoundBuilder : IDisposable
         var content = Quantum.Content(0, null, payload);
         return Quantum.Seal(content);
     }
-
-    private static string Timestamp(ref int clock) =>
-        Start
-            .AddSeconds(clock++)
-            .UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
 }
-
-/// <summary>
-/// A CURBy-Q round that <see cref="QuantumRoundBuilder"/> built.
-/// </summary>
-internal sealed record BuiltQuantumRound(
-    (string Json, Cid Cid) Request,
-    (string Json, Cid Cid) Precommit,
-    (string Json, Cid Cid) Result,
-    IReadOnlyList<(string Json, Cid Cid)> BellPulses,
-    IReadOnlyList<(string Json, Cid Cid)> SeedPulses,
-    string Parameters,
-    byte[] Randomness,
-    string RoundJson
-);
