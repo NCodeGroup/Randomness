@@ -76,4 +76,6 @@ product does.
 - Dependency injection registers the secure generator, and `RandomnessHost` exposes it, only as `ISecureRandom`,
   never as the plain `IRandomSource`, and a disposed generator or draw throws instead of returning bytes
   ([#4](https://github.com/NCodeGroup/Randomness/issues/4)).
-- Generator state lives in pinned memory, served bytes are erased from the buffers, and state is zeroed on disposal.
+- Generator state, seeds and every buffer that holds them live on the stack or in pinned memory, never in a shared
+  array pool, and are zeroed after use; served bytes are erased from the buffers, and state is zeroed on disposal
+  ([ADR-1012](docs/decisions/1012-secrets-live-only-in-stack-or-pinned-memory-and-the-packages-take-no-buffer-library-dependency.md)).
