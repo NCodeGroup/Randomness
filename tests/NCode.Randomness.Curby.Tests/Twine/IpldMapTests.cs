@@ -50,5 +50,9 @@ public class IpldMapTests
 
     #endregion
 
-    private static IpldNode Read(string json) => DagJson.Read(JsonElement.Parse(json));
+    private static IpldNode Read(string json)
+    {
+        var element = JsonElement.Parse(json);
+        return DagJson.Read(element);
+    }
 }

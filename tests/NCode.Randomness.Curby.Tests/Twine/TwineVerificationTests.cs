@@ -167,7 +167,8 @@ public class TwineVerificationTests
         var round = RoundPulses()
             .Select(element =>
             {
-                var document = Document(element.GetRawText());
+                var json = element.GetRawText();
+                var document = Document(json);
                 return TwineSignedPulse.Verify(document, quantum);
             })
             .ToList();

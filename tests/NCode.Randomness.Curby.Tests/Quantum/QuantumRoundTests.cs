@@ -356,7 +356,8 @@ public class QuantumRoundTests
         {
             EditPrecommit = static payload =>
             {
-                var dataHash = Ipld.Text(new string('A', 128));
+                var uppercase = new string('A', 128);
+                var dataHash = Ipld.Text(uppercase);
                 return payload.With("dataHash", dataHash);
             },
         };
@@ -410,7 +411,8 @@ public class QuantumRoundTests
         {
             EditResult = static payload =>
             {
-                var dataHash = Ipld.Text(new string('a', 128));
+                var lowercase = new string('a', 128);
+                var dataHash = Ipld.Text(lowercase);
                 return payload.With("dataHash", dataHash);
             },
         };

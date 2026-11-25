@@ -33,7 +33,8 @@ public class DagCborTests
     [InlineData(-0.0, "fb8000000000000000")]
     public void Encode_WithFloat_UsesEightBytes(double value, string expected)
     {
-        var encoded = DagCbor.Encode(new IpldFloat(value));
+        var node = new IpldFloat(value);
+        var encoded = DagCbor.Encode(node);
         var hex = Convert.ToHexStringLower(encoded);
 
         Assert.Equal(expected, hex);
@@ -44,9 +45,9 @@ public class DagCborTests
     [InlineData(double.PositiveInfinity)]
     public void Encode_WithNonFiniteFloat_Throws(double value)
     {
-        var exception = Assert.Throws<TwineFormatException>(() =>
-            DagCbor.Encode(new IpldFloat(value))
-        );
+        var node = new IpldFloat(value);
+
+        var exception = Assert.Throws<TwineFormatException>(() => DagCbor.Encode(node));
 
         Assert.Contains("has no encoding", exception.Message, StringComparison.Ordinal);
     }

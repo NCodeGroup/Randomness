@@ -21,8 +21,11 @@ internal sealed class QuantumRoundBuilder : IDisposable
     /// Formats the timestamp of the pulse at position <paramref name="index"/> of the round, one second after the
     /// pulse before it.
     /// </summary>
-    private static string Timestamp(int index) =>
-        TwineBuilder.FormatTimestamp(Start.AddSeconds(index));
+    private static string Timestamp(int index)
+    {
+        var timestamp = Start.AddSeconds(index);
+        return TwineBuilder.FormatTimestamp(timestamp);
+    }
 
     public TwineBuilder Quantum { get; } = new(specification: "twine/1.0.x/diqrng/1.0.x");
 
