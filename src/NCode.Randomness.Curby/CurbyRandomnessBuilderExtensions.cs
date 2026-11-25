@@ -15,6 +15,8 @@ namespace NCode.Randomness.Curby;
 /// </summary>
 public static class CurbyRandomnessBuilderExtensions
 {
+    private static TimeSpan QuantumMaxPulseAge { get; } = TimeSpan.FromMinutes(30);
+
     extension(IRandomnessBuilder builder)
     {
         /// <summary>
@@ -169,8 +171,6 @@ public static class CurbyRandomnessBuilderExtensions
             return builder;
         }
     }
-
-    private static readonly TimeSpan QuantumMaxPulseAge = TimeSpan.FromMinutes(30);
 
     private static void UseQuantumMaxPulseAge(RandomnessOptions options)
     {
