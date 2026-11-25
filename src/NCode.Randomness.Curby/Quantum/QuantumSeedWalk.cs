@@ -14,8 +14,6 @@ namespace NCode.Randomness.Curby.Quantum;
 /// <param name="chain">The verified seed chain.</param>
 internal sealed class QuantumSeedWalk(QuantumResult result, TwineChain chain)
 {
-    private const int MaxPulses = 10;
-
     private QuantumResult Result { get; } = result;
 
     private TwineChain Chain { get; } = chain;
@@ -27,7 +25,7 @@ internal sealed class QuantumSeedWalk(QuantumResult result, TwineChain chain)
         result.ResultPulse.MixinOf(result.SeedChain)
         ?? throw new TwineFormatException("The result does not mix in the seed chain.");
 
-    private List<TwineSignedPulse> Mixing { get; } = new(MaxPulses);
+    private List<TwineSignedPulse> Mixing { get; } = new(QuantumWalk.MaxPulses);
 
     private TwineSignedPulse? Newer { get; set; }
 
@@ -56,10 +54,10 @@ internal sealed class QuantumSeedWalk(QuantumResult result, TwineChain chain)
             ?? throw new TwineFormatException(
                 "The seed chain starts before any pulse that does not mix in the precommit."
             );
-        if (Mixing.Count == MaxPulses)
+        if (Mixing.Count == QuantumWalk.MaxPulses)
         {
             throw new TwineFormatException(
-                $"{MaxPulses} seed pulses in a row mix in the precommit."
+                $"{QuantumWalk.MaxPulses} seed pulses in a row mix in the precommit."
             );
         }
 

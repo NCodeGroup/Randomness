@@ -14,8 +14,6 @@ namespace NCode.Randomness.Curby.Quantum;
 /// <param name="chain">The verified Bell chain.</param>
 internal sealed class QuantumBellWalk(QuantumResult result, TwineChain chain)
 {
-    private const int MaxPulses = 10;
-
     private QuantumResult Result { get; } = result;
 
     private TwineChain Chain { get; } = chain;
@@ -56,10 +54,10 @@ internal sealed class QuantumBellWalk(QuantumResult result, TwineChain chain)
                 "The Bell chain starts before any response to the request."
             );
         Visited++;
-        if (Visited == MaxPulses)
+        if (Visited == QuantumWalk.MaxPulses)
         {
             throw new TwineFormatException(
-                $"No response to the request is within {MaxPulses} Bell pulses of the one the precommit mixes in."
+                $"No response to the request is within {QuantumWalk.MaxPulses} Bell pulses of the one the precommit mixes in."
             );
         }
 
