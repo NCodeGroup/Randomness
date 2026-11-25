@@ -128,7 +128,8 @@ internal sealed class QuantumResult
     public void VerifySeed(TwineSignedPulse seed, ReadOnlySpan<byte> parameters)
     {
         ArgumentNullException.ThrowIfNull(seed);
-        var digest = Sha3.HashData512(parameters);
+        Span<byte> digest = stackalloc byte[64];
+        Sha3.HashData512(parameters, digest);
         var hash = Convert.ToHexStringLower(digest);
         if (!string.Equals(hash, ParamsHash, StringComparison.Ordinal))
         {
@@ -136,26 +137,24 @@ internal sealed class QuantumResult
         }
 
         var encoded = ReadSeed(parameters);
-        byte[] expected;
-        try
-        {
-            expected = Convert.FromBase64String(encoded);
-        }
-        catch (FormatException)
-        {
-            throw new TwineFormatException("The round's seed is not canonical base64.");
-        }
-
-        var canonical = Convert.ToBase64String(expected);
-        if (!string.Equals(canonical, encoded, StringComparison.Ordinal))
-        {
-            throw new TwineFormatException("The round's seed is not canonical base64.");
-        }
-
+        var decodedCapacity = encoded.Length * 3 / 4;
+        var decodedBuffer = ArrayPool<byte>.Shared.Rent(decodedCapacity);
         var length = SeedLength / 8;
         var buffer = ArrayPool<byte>.Shared.Rent(length);
         try
         {
+            if (!Convert.TryFromBase64String(encoded, decodedBuffer, out var decodedLength))
+            {
+                throw new TwineFormatException("The round's seed is not canonical base64.");
+            }
+
+            var expected = decodedBuffer.AsSpan(0, decodedLength);
+            var canonical = Convert.ToBase64String(expected);
+            if (!string.Equals(canonical, encoded, StringComparison.Ordinal))
+            {
+                throw new TwineFormatException("The round's seed is not canonical base64.");
+            }
+
             var actual = buffer.AsSpan(0, length);
             Sha3.Shake256(seed.Cid.Digest, actual);
             if (!actual.SequenceEqual(expected))
@@ -167,8 +166,9 @@ internal sealed class QuantumResult
         }
         finally
         {
-            // The seed is public, so the buffer needs no clearing.
+            // The seed is public, so the buffers need no clearing.
             ArrayPool<byte>.Shared.Return(buffer);
+            ArrayPool<byte>.Shared.Return(decodedBuffer);
         }
     }
 
