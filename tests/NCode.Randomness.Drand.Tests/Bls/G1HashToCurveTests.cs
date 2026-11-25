@@ -7,6 +7,52 @@ namespace NCode.Randomness.Drand.Tests.Bls;
 
 public class G1HashToCurveTests
 {
+    private static readonly byte[] Domain =
+        "QUUX-V01-CS02-with-BLS12381G1_XMD:SHA-256_SSWU_RO_"u8.ToArray();
+
+    #region HashToField Tests
+
+    [Fact]
+    public void HashToField_WithEmptyMessage_ReturnsRfcVector()
+    {
+        var u = G1HashToCurve.HashToField([], Domain);
+
+        Assert.Equal(2, u.Length);
+        Assert.Equal(
+            "0ba14bd907ad64a016293ee7c2d276b8eae71f25a4b941eece7b0d89f17f75cb3ae5438a614fb61d6835ad59f29c564f",
+            Convert.ToHexStringLower(u[0].ToArray())
+        );
+        Assert.Equal(
+            "019b9bd7979f12657976de2884c7cce192b82c177c80e0ec604436a7f538d231552f0d96d9f7babe5fa3b19b3ff25ac9",
+            Convert.ToHexStringLower(u[1].ToArray())
+        );
+    }
+
+    #endregion
+
+    #region Hash Tests
+
+    [Theory]
+    [InlineData(
+        "",
+        "052926add2207b76ca4fa57a8734416c8dc95e24501772c814278700eed6d1e4e8cf62d9c09db0fac349612b759e79a1",
+        "08ba738453bfed09cb546dbb0783dbb3a5f1f566ed67bb6be0e8c67e2e81a4cc68ee29813bb7994998f3eae0c9c6a265"
+    )]
+    [InlineData(
+        "abc",
+        "03567bc5ef9c690c2ab2ecdf6a96ef1c139cc0b2f284dca0a9a7943388a49a3aee664ba5379a7655d3c68900be2f6903",
+        "0b9c15f3fe6e5cf4211f346271d7b01c8f3b28be689c8429c85b67af215533311f0b8dfaaa154fa6b88176c229f2885d"
+    )]
+    public void Hash_WithRfcVector_ReturnsExpectedPoint(string message, string x, string y)
+    {
+        var point = G1HashToCurve.Hash(System.Text.Encoding.UTF8.GetBytes(message), Domain);
+
+        Assert.Equal(x, Convert.ToHexStringLower(point.X.ToArray()));
+        Assert.Equal(y, Convert.ToHexStringLower(point.Y.ToArray()));
+    }
+
+    #endregion
+
     #region MapToCurve Tests
 
     [Theory]

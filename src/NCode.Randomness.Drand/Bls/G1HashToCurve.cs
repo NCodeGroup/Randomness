@@ -32,6 +32,35 @@ internal static class G1HashToCurve
     private static Fp Z { get; } = FieldElements.FromInteger(11);
 
     /// <summary>
+    /// Hashes a message to two field elements, RFC 9380 section 5.2 with <c>count</c> 2 and <c>L</c> 64.
+    /// </summary>
+    /// <param name="message">The message.</param>
+    /// <param name="domain">The domain separation tag.</param>
+    /// <returns>The two field elements.</returns>
+    public static Fp[] HashToField(ReadOnlySpan<byte> message, ReadOnlySpan<byte> domain)
+    {
+        var bytes = ExpandMessageXmd.Expand(message, domain, 128);
+        return
+        [
+            FieldElements.Reduce(bytes.AsSpan(0, 64)),
+            FieldElements.Reduce(bytes.AsSpan(64, 64)),
+        ];
+    }
+
+    /// <summary>
+    /// Hashes a message to a point of the BLS12-381 G1 group, RFC 9380 section 3.
+    /// </summary>
+    /// <param name="message">The message.</param>
+    /// <param name="domain">The domain separation tag.</param>
+    /// <returns>The point in the G1 subgroup.</returns>
+    public static G1Affine Hash(ReadOnlySpan<byte> message, ReadOnlySpan<byte> domain)
+    {
+        var u = HashToField(message, domain);
+        var sum = new G1Projective(MapToCurve(u[0])) + MapToCurve(u[1]);
+        return new G1Affine(sum.ClearCofactor());
+    }
+
+    /// <summary>
     /// Maps a field element to a point of the BLS12-381 curve, by the simplified SWU map on <c>E'</c> and the
     /// 11-isogeny.
     /// </summary>
