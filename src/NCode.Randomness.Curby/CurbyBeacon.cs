@@ -178,7 +178,7 @@ internal sealed class CurbyBeacon : IRandomnessBeacon, IDisposable
                 ?? throw new TwineFormatException(
                     $"The Twine API does not serve chain {PinnedChain}."
                 );
-            var chain = TwineChain.Verify(document, PinnedChain);
+            var chain = TwineChain.Verify(document, PinnedChain, "rng");
             Volatile.Write(ref _chain, chain);
             return chain;
         }
