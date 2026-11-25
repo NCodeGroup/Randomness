@@ -91,8 +91,8 @@ public class G1HashToCurveTests
         Assert.Equal(y, actualY);
     }
 
-    // u = 0 makes tv1 zero, the exceptional case of RFC 9380 section 6.6.2. The expected point, map_to_curve(0) with its
-    // cofactor cleared, comes from @noble/curves 2.4.0, whose hashToCurve gives RFC 9380 J.9.1's P for msg "": node
+    // u = 0 makes tv1 zero, the exceptional case of RFC 9380 section 6.6.2. The expected point, map_to_curve(0) with
+    // its cofactor cleared, comes from @noble/curves 2.4.0, whose hashToCurve gives RFC 9380 J.9.1's P for msg "": node
     // --input-type=module -e "import { bls12_381 } from '@noble/curves/bls12-381.js'; const p =
     // bls12_381.G1.mapToCurve(0n).toAffine(); console.log(p.x.toString(16).padStart(96, '0'),
     // p.y.toString(16).padStart(96, '0'));"
