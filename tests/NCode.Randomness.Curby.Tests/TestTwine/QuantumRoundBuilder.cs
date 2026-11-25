@@ -40,6 +40,22 @@ internal sealed class QuantumRoundBuilder : IDisposable
 
     public int SeedCount { get; init; } = 1;
 
+    /// <summary>
+    /// Whether the precommit mixes in a pulse of the Bell chain; false leaves the mixin out.
+    /// </summary>
+    public bool PrecommitMixesBell { get; init; } = true;
+
+    /// <summary>
+    /// Whether the randomness pulse mixes in a pulse of the seed chain; false leaves the mixin out.
+    /// </summary>
+    public bool ResultMixesSeed { get; init; } = true;
+
+    /// <summary>
+    /// How many seed pulses after pulse 0 mix in the precommit, or null for <see cref="SeedCount"/> + 1. The seed
+    /// expands from the pulse <see cref="SeedCount"/> after the first of them either way.
+    /// </summary>
+    public int? SeedPulsesMixingPrecommit { get; init; }
+
     public Func<IpldMap, IpldMap> EditRequest { get; init; } = static payload => payload;
 
     public Func<IpldMap, IpldMap> EditPrecommit { get; init; } = static payload => payload;
@@ -117,17 +133,19 @@ internal sealed class QuantumRoundBuilder : IDisposable
                 ("timestamp", Ipld.Text(Timestamp(ref clock)))
             )
         );
+        var precommitMixins = new List<(Cid Chain, Cid Value)>();
+        if (PrecommitMixesBell)
+        {
+            precommitMixins.Add((Bell.ChainCid, bellPulses[^1].Cid));
+        }
+
+        precommitMixins.Add((Seed.ChainCid, seedPulses[0].Cid));
         var precommit = Quantum.Seal(
-            Quantum.Content(
-                1,
-                request.Cid,
-                precommitPayload,
-                (Bell.ChainCid, bellPulses[^1].Cid),
-                (Seed.ChainCid, seedPulses[0].Cid)
-            )
+            Quantum.Content(1, request.Cid, precommitPayload, [.. precommitMixins])
         );
 
-        for (var i = 1; i <= SeedCount + 1; i++)
+        var mixingCount = SeedPulsesMixingPrecommit ?? SeedCount + 1;
+        for (var i = 1; i <= mixingCount; i++)
         {
             var seedPulse = Seed.Seal(
                 Seed.Content(
@@ -144,9 +162,14 @@ internal sealed class QuantumRoundBuilder : IDisposable
         }
 
         var seed = new byte[SeedLength / 8];
-        Sha3.Shake256(seedPulses[^1].Cid.Digest, seed);
+        Sha3.Shake256(seedPulses[1 + SeedCount].Cid.Digest, seed);
         var parameters = Parameters(seed);
         var randomness = RandomNumberGenerator.GetBytes(64);
+        var resultMixins = new List<(Cid Chain, Cid Value)>();
+        if (ResultMixesSeed)
+        {
+            resultMixins.Add((Seed.ChainCid, seedPulses[^1].Cid));
+        }
 
         var result = Quantum.Seal(
             Quantum.Content(
@@ -169,7 +192,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
                         ("timestamp", Ipld.Text(Timestamp(ref clock)))
                     )
                 ),
-                (Seed.ChainCid, seedPulses[^1].Cid)
+                [.. resultMixins]
             )
         );
 

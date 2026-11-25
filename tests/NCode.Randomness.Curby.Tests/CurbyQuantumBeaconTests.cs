@@ -94,6 +94,100 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     }
 
     [Fact]
+    public async Task GetPulseAsync_WithSeedCountOfThree_Succeeds()
+    {
+        using var builder = new QuantumRoundBuilder { SeedCount = 3 };
+        var round = ServeBuilt(builder);
+        using var beacon = Create();
+
+        var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
+
+        Assert.Equal(round.Randomness, pulse.Randomness);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenNineSeedPulsesMixInThePrecommit_Succeeds()
+    {
+        using var builder = new QuantumRoundBuilder { SeedCount = 8 };
+        var round = ServeBuilt(builder);
+        using var beacon = Create();
+
+        var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
+
+        Assert.Equal(round.Randomness, pulse.Randomness);
+        Assert.Equal(10, round.SeedPulses.Count);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTenSeedPulsesMixInThePrecommit_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder
+        {
+            SeedCount = 1,
+            SeedPulsesMixingPrecommit = 10,
+        };
+        ServeBuilt(builder);
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains("seed pulses in a row", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenThePrecommitDoesNotMixInTheBellChain_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder { PrecommitMixesBell = false };
+        ServeBuilt(builder);
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains(
+            "does not mix in the Bell chain",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheResultDoesNotMixInTheSeedChain_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder { ResultMixesSeed = false };
+        ServeBuilt(builder);
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains(
+            "does not mix in the seed chain",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public async Task GetPulseAsync_WhenTheBellChainIsAnotherFamily_IsInvalid()
+    {
+        using var builder = new QuantumRoundBuilder();
+        ServeBuilt(builder);
+        Options.BellChainId = builder.Seed.ChainCid.ToString();
+        using var beacon = Create();
+
+        var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
+            beacon.GetPulseAsync(builder.Round, token)
+        );
+
+        Assert.Contains("not twine/1.x/bell/1.x", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task GetPulseAsync_WhenTheRoundFailed_IsNotFound()
     {
         const string reason = "the Bell test failed";

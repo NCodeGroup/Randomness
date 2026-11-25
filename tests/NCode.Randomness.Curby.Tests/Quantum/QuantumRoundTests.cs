@@ -463,6 +463,21 @@ public class QuantumRoundTests
     }
 
     [Fact]
+    public void SelectSeed_WithSeedCountOfTwo_ReturnsThePulseTwoAfterTheFirst()
+    {
+        using var builder = new QuantumRoundBuilder { SeedCount = 2 };
+        var built = builder.Build();
+        var result = BuiltResult(builder, built);
+        var newest = BuiltSeedPulse(builder, built, 3);
+        var middle = BuiltSeedPulse(builder, built, 2);
+        var first = BuiltSeedPulse(builder, built, 1);
+
+        var seed = result.SelectSeed([newest, middle, first]);
+
+        Assert.Equal(newest.Cid, seed.Cid);
+    }
+
+    [Fact]
     public void SelectSeed_WithTooFewPulses_Throws()
     {
         var result = FixtureResult();
