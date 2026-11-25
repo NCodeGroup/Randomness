@@ -22,7 +22,17 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
     private CurbyBeaconOptions Options { get; } = new();
 
-    public void Dispose() => Server.Dispose();
+    private List<TwineChainCache> Caches { get; } = [];
+
+    public void Dispose()
+    {
+        foreach (var chains in Caches)
+        {
+            chains.Dispose();
+        }
+
+        Server.Dispose();
+    }
 
     #region GetPulseAsync Tests
 
@@ -30,7 +40,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     public async Task GetPulseAsync_WithCurbyQData_ReturnsTheVerifiedRound()
     {
         ServeCurbyQ();
-        using var beacon = Create();
+        var beacon = Create();
 
         var pulse = await beacon.GetPulseAsync(CurbyQuantumFixtures.Round, CancellationToken.None);
 
@@ -59,7 +69,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder();
         var round = ServeBuilt(builder);
-        using var beacon = Create();
+        var beacon = Create();
 
         var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
 
@@ -77,7 +87,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder { BellPulsesAfterResponse = 3 };
         var round = ServeBuilt(builder);
-        using var beacon = Create();
+        var beacon = Create();
 
         var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
 
@@ -92,7 +102,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder { BellPulsesAfterResponse = 10 };
         ServeBuilt(builder);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -106,7 +116,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder { SeedCount = 3 };
         var round = ServeBuilt(builder);
-        using var beacon = Create();
+        var beacon = Create();
 
         var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
 
@@ -118,7 +128,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder { SeedCount = 8 };
         var round = ServeBuilt(builder);
-        using var beacon = Create();
+        var beacon = Create();
 
         var pulse = await beacon.GetPulseAsync(builder.Round, CancellationToken.None);
 
@@ -135,7 +145,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
             SeedPulsesMixingPrecommit = 10,
         };
         ServeBuilt(builder);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -149,7 +159,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder { PrecommitMixesBell = false };
         ServeBuilt(builder);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -167,7 +177,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder { ResultMixesSeed = false };
         ServeBuilt(builder);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -186,7 +196,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         using var builder = new QuantumRoundBuilder();
         ServeBuilt(builder);
         Options.BellChainId = builder.Seed.ChainCid.ToString();
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -204,7 +214,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         var roundPath = RoundPathOf(builder.Round);
         var errorRoundJson = builder.ErrorRoundJson(reason);
         Server.Serve(roundPath, errorRoundJson);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -221,7 +231,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         ServeChains(builder);
         var roundPath = RoundPathOf(builder.Round);
         Server.Serve(roundPath, $"[{round.Request.Json},{round.Precommit.Json}]");
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -237,7 +247,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         ServeChains(builder);
         var roundPath = RoundPathOf(builder.Round);
         Server.Serve(roundPath, "[]");
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -253,7 +263,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         var round = ServeBuilt(builder);
         var nextRoundPath = RoundPathOf(builder.Round + 1);
         Server.Serve(nextRoundPath, round.RoundJson);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
             beacon.GetPulseAsync(builder.Round + 1, token)
@@ -271,7 +281,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     {
         using var builder = new QuantumRoundBuilder();
         ServeBuilt(builder, serveParameters: false);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -287,7 +297,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         var round = ServeBuilt(builder);
         var bellPulsePath = BellPulsePath(builder, round, 1);
         Server.Serve(bellPulsePath, round.BellPulses[0].Json);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.InvalidPulse, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -302,7 +312,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         using var builder = new QuantumRoundBuilder();
         Options.QuantumChainId = builder.Quantum.ChainCid.ToString();
         Server.Answer("/chains/" + builder.Quantum.ChainCid, HttpStatusCode.ServiceUnavailable);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(BeaconError.Unavailable, token =>
             beacon.GetPulseAsync(builder.Round, token)
@@ -314,7 +324,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     [Fact]
     public async Task GetPulseAsync_WithNegativeRound_IsNotFound()
     {
-        using var beacon = Create();
+        var beacon = Create();
 
         await AssertBeaconErrorAsync(BeaconError.PulseNotFound, token =>
             beacon.GetPulseAsync(-1, token)
@@ -331,7 +341,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     public async Task GetLatestPulseAsync_WithCurbyQData_ReturnsTheLatestRound()
     {
         ServeCurbyQ();
-        using var beacon = Create();
+        var beacon = Create();
 
         var pulse = await beacon.GetLatestPulseAsync(CancellationToken.None);
 
@@ -343,7 +353,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     public async Task GetLatestPulseAsync_ForTheSameRound_ReusesTheVerifiedPulse()
     {
         ServeCurbyQ();
-        using var beacon = Create();
+        var beacon = Create();
         var first = await beacon.GetLatestPulseAsync(CancellationToken.None);
         Server.Requests.Clear();
 
@@ -361,7 +371,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         ServeChains(builder);
         var errorRoundJson = builder.ErrorRoundJson(reason);
         Server.Serve(LatestPath, errorRoundJson);
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(
             BeaconError.Unavailable,
@@ -377,7 +387,7 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
         using var builder = new QuantumRoundBuilder();
         ServeChains(builder);
         Server.Serve(LatestPath, "[]");
-        using var beacon = Create();
+        var beacon = Create();
 
         var exception = await AssertBeaconErrorAsync(
             BeaconError.Unavailable,
@@ -487,6 +497,9 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
     private CurbyQuantumBeacon Create()
     {
         var options = Microsoft.Extensions.Options.Options.Create(Options);
-        return new CurbyQuantumBeacon(new TwineApi(Server, options), options);
+        var api = new TwineApi(Server, options);
+        var chains = new TwineChainCache(api);
+        Caches.Add(chains);
+        return new CurbyQuantumBeacon(api, chains, options);
     }
 }

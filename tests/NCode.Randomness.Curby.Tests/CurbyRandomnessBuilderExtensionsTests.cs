@@ -159,6 +159,21 @@ public class CurbyRandomnessBuilderExtensionsTests
     }
 
     [Fact]
+    public async Task AddCurbyBeacon_WithTheQuantumBeacon_SharesOneChainCache()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyBeacon().AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider(
+            new ServiceProviderOptions { ValidateOnBuild = true }
+        );
+
+        var chains = provider.GetRequiredService<TwineChainCache>();
+
+        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwineChainCache));
+        Assert.Same(chains, provider.GetRequiredService<TwineChainCache>());
+    }
+
+    [Fact]
     public async Task AddCurbyQuantumBeacon_WithConfiguration_BindsTheSection()
     {
         var chainSetting = KeyValuePair.Create(

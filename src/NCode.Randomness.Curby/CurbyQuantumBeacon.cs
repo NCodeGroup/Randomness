@@ -17,15 +17,19 @@ namespace NCode.Randomness.Curby;
 /// precommit names must be in causal order with them; and the seed must expand from the seed pulse. The Trevisan
 /// extraction itself is not verified. The randomness is the extractor's output that the randomness pulse publishes.
 /// </summary>
-internal sealed class CurbyQuantumBeacon : IRandomnessBeacon, IDisposable
+internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
 {
     private const int MaxCrawl = 10;
 
-    public CurbyQuantumBeacon(TwineApi api, IOptions<CurbyBeaconOptions> options)
+    public CurbyQuantumBeacon(
+        TwineApi api,
+        TwineChainCache chains,
+        IOptions<CurbyBeaconOptions> options
+    )
     {
         ArgumentNullException.ThrowIfNull(options);
         Api = api;
-        Chains = new TwineChainCache(api);
+        Chains = chains;
         QuantumChain = Cid.Parse(options.Value.QuantumChainId);
         BellChain = Cid.Parse(options.Value.BellChainId);
     }
@@ -62,8 +66,6 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon, IDisposable
         var path = $"curbyq/round/{roundText}";
         return FetchAsync(path, round, cancellationToken);
     }
-
-    public void Dispose() => Chains.Dispose();
 
     private async ValueTask<BeaconPulse> FetchAsync(
         string path,

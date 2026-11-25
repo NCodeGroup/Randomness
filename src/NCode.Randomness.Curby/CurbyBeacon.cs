@@ -17,12 +17,13 @@ namespace NCode.Randomness.Curby;
 /// one round earlier; and the pulse's salt must match the predecessor's precommitment. The randomness is the
 /// pulse's SHA3-512 digest.
 /// </summary>
-internal sealed class CurbyBeacon : IRandomnessBeacon, IDisposable
+internal sealed class CurbyBeacon : IRandomnessBeacon
 {
-    public CurbyBeacon(TwineApi api, IOptions<CurbyBeaconOptions> options)
+    public CurbyBeacon(TwineApi api, TwineChainCache chains, IOptions<CurbyBeaconOptions> options)
     {
         ArgumentNullException.ThrowIfNull(options);
         Api = api;
+        Chains = chains;
         PinnedChain = Cid.Parse(options.Value.ChainId);
     }
 
@@ -30,12 +31,9 @@ internal sealed class CurbyBeacon : IRandomnessBeacon, IDisposable
 
     private TwineApi Api { get; }
 
+    private TwineChainCache Chains { get; }
+
     private Cid PinnedChain { get; }
-
-    private SemaphoreSlim ChainGate { get; } = new(1, 1);
-
-    // The verified chain, fetched once: its CID is pinned, so it never changes.
-    private TwineChain? _chain;
 
     // The last pulse verified, so the next round's predecessor, usually this pulse, needs no fetch.
     private TwinePulse? _lastVerified;
@@ -59,12 +57,6 @@ internal sealed class CurbyBeacon : IRandomnessBeacon, IDisposable
         return FetchAsync(round.ToString(CultureInfo.InvariantCulture), round, cancellationToken);
     }
 
-    public void Dispose()
-    {
-        _chain?.Dispose();
-        ChainGate.Dispose();
-    }
-
     private async ValueTask<BeaconPulse> FetchAsync(
         string selector,
         long? round,
@@ -73,7 +65,9 @@ internal sealed class CurbyBeacon : IRandomnessBeacon, IDisposable
     {
         try
         {
-            var chain = await GetChainAsync(cancellationToken).ConfigureAwait(false);
+            var chain = await Chains
+                .GetAsync(PinnedChain, "rng", cancellationToken)
+                .ConfigureAwait(false);
             var pulse = await GetPulseAsync(chain, selector, cancellationToken)
                 .ConfigureAwait(false);
             if (pulse is null)
@@ -157,36 +151,6 @@ internal sealed class CurbyBeacon : IRandomnessBeacon, IDisposable
             )
             || exception is ExecutionRejectedException
         );
-
-    private async ValueTask<TwineChain> GetChainAsync(CancellationToken cancellationToken)
-    {
-        if (Volatile.Read(ref _chain) is { } cached)
-        {
-            return cached;
-        }
-
-        await ChainGate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            if (_chain is { } raced)
-            {
-                return raced;
-            }
-
-            var document = await Api.GetAsync($"chains/{PinnedChain}", cancellationToken)
-                .ConfigureAwait(false)
-                ?? throw new TwineFormatException(
-                    $"The Twine API does not serve chain {PinnedChain}."
-                );
-            var chain = TwineChain.Verify(document, PinnedChain, "rng");
-            Volatile.Write(ref _chain, chain);
-            return chain;
-        }
-        finally
-        {
-            ChainGate.Release();
-        }
-    }
 
     private async ValueTask<TwinePulse?> GetPulseAsync(
         TwineChain chain,

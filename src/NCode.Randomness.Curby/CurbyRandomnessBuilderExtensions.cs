@@ -131,6 +131,7 @@ public static class CurbyRandomnessBuilderExtensions
             }
 
             services.AddSingleton<TwineApi>();
+            services.TryAddSingleton<TwineChainCache>();
             services
                 .AddHttpClient(CurbyDefaults.HttpClientName)
                 .ConfigurePrimaryHttpMessageHandler(static () =>

@@ -7,8 +7,8 @@ using NCode.Randomness.Curby.Twine;
 namespace NCode.Randomness.Curby.Http;
 
 /// <summary>
-/// Fetches and verifies Twine chains once, keyed by CID and expected family. Chains come only from pinned CIDs or CIDs
-/// in signed pulses, so the cache stays small.
+/// Fetches and verifies Twine chains once, keyed by CID and expected family. Both CURBy beacons share one instance.
+/// Chains come only from pinned CIDs or CIDs in signed pulses, so the cache stays small.
 /// </summary>
 internal sealed class TwineChainCache(TwineApi api) : IDisposable
 {
