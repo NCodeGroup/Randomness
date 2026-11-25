@@ -62,7 +62,7 @@ internal static class TwineErrors
     /// <param name="exception">The exception to classify.</param>
     /// <param name="cancellationToken">The caller's token, whose cancellation is not an outage.</param>
     /// <returns><see langword="true"/> when the data was malformed; otherwise <see langword="false"/>.</returns>
-    internal static bool IsMalformed(Exception exception, CancellationToken cancellationToken) =>
+    private static bool IsMalformed(Exception exception, CancellationToken cancellationToken) =>
         exception is not (BeaconException or ObjectDisposedException or OperationCanceledException)
         && !IsOutage(exception, cancellationToken);
 
@@ -74,7 +74,7 @@ internal static class TwineErrors
     /// <param name="exception">The exception to classify.</param>
     /// <param name="cancellationToken">The caller's token, whose cancellation is not an outage.</param>
     /// <returns><see langword="true"/> when the service is unavailable; otherwise <see langword="false"/>.</returns>
-    internal static bool IsOutage(Exception exception, CancellationToken cancellationToken) =>
+    private static bool IsOutage(Exception exception, CancellationToken cancellationToken) =>
         exception is not BeaconException
         && (
             exception

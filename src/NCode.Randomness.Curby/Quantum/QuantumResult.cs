@@ -13,6 +13,8 @@ namespace NCode.Randomness.Curby.Quantum;
 /// </summary>
 internal sealed class QuantumResult
 {
+    private const string NotCanonicalBase64 = "The round's seed is not canonical base64.";
+
     /// <summary>
     /// Reads the base64 text of the <c>seed</c> property of the extractor's parameters. It throws
     /// <see cref="TwineFormatException"/> when they are not a JSON object, or <c>seed</c> is missing, repeated or not
@@ -126,7 +128,7 @@ internal sealed class QuantumResult
     {
         ArgumentNullException.ThrowIfNull(pulse);
         if (
-            !pulse.Payload.TryGet<IpldLink>("ref", out var reference)
+            !pulse.Payload.TryGet<IpldLink>(QuantumKeys.Ref, out var reference)
             || !reference.Cid.Equals(Request.Cid)
             || !pulse.Payload.TryGet<IpldString>(QuantumKeys.DataHash, out var hash)
         )
@@ -198,14 +200,14 @@ internal sealed class QuantumResult
         {
             if (!Convert.TryFromBase64String(encoded, decodedBuffer, out var decodedLength))
             {
-                throw new TwineFormatException("The round's seed is not canonical base64.");
+                throw new TwineFormatException(NotCanonicalBase64);
             }
 
             var expected = decodedBuffer.AsSpan(0, decodedLength);
             var canonical = Convert.ToBase64String(expected);
             if (!string.Equals(canonical, encoded, StringComparison.Ordinal))
             {
-                throw new TwineFormatException("The round's seed is not canonical base64.");
+                throw new TwineFormatException(NotCanonicalBase64);
             }
 
             var actual = buffer.AsSpan(0, length);

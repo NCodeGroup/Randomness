@@ -55,8 +55,9 @@ internal sealed class QuantumRound
             .ToList();
         if (!AreKnownStages(stages))
         {
+            var stageList = string.Join(", ", stages);
             throw new TwineFormatException(
-                $"The round's stages are {string.Join(", ", stages)}, which CURBy-Q does not publish."
+                $"The round's stages are {stageList}, which CURBy-Q does not publish."
             );
         }
 
@@ -132,7 +133,7 @@ internal sealed class QuantumRound
         var precommit = pulses[1];
         var result = pulses[2];
         var dataHash = ReadDataHash(precommit.Payload, result.Payload);
-        var paramsHash = ReadHash(result.Payload, "paramsHash", "randomness pulse");
+        var paramsHash = ReadHash(result.Payload, QuantumKeys.ParamsHash, "randomness pulse");
         CheckSeedAlgorithm(precommit.Payload);
         var seedCount = ReadSeedCount(precommit.Payload);
         var seedLength = ReadSeedLength(precommit.Payload);
@@ -200,7 +201,7 @@ internal sealed class QuantumRound
     /// <returns>The number of seed pulses.</returns>
     private static int ReadSeedCount(IpldMap precommit)
     {
-        var rule = precommit.Get<IpldMap>("rule");
+        var rule = precommit.Get<IpldMap>(QuantumKeys.Rule);
         var after = rule.Get<IpldString>("after").Value;
         if (after != "self")
         {

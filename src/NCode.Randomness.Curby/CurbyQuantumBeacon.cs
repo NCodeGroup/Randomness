@@ -235,7 +235,7 @@ internal sealed class CurbyQuantumBeacon : IRandomnessBeacon
             .ConfigureAwait(false);
         var cid = result.ResultPulse.MixinOf(result.SeedChain)
             ?? throw new TwineFormatException("The result does not mix in the seed chain.");
-        var mixing = new List<TwineSignedPulse>();
+        var mixing = new List<TwineSignedPulse>(MaxCrawl);
         TwineSignedPulse? newer = null;
         for (var count = 0; count < MaxCrawl; ++count)
         {

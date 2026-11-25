@@ -13,7 +13,7 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
     private const string Prefix = RandomnessOptions.SectionName + ":";
     private static TimeSpan MaxTimerPeriod { get; } =
         TimeSpan.FromMilliseconds(uint.MaxValue - 1.0);
-    private static TimeSpan MinimumBeaconLimit { get; } = TimeSpan.FromSeconds(1);
+    private static TimeSpan MinimumPulseAge { get; } = TimeSpan.FromSeconds(1);
 
     /// <summary>
     /// Adds a failure for each per-beacon pulse age limit that is missing, has an empty beacon name, or lies outside the
@@ -43,7 +43,7 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
             }
 
             var limitKey = $"{nameof(options.MaxPulseAgeByBeacon)}:{key}";
-            CheckPeriod(failures, limitKey, value, MinimumBeaconLimit);
+            CheckPeriod(failures, limitKey, value, MinimumPulseAge);
         }
     }
 
@@ -76,12 +76,7 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
             options.FetchTimeout,
             TimeSpan.FromMilliseconds(1)
         );
-        CheckPeriod(
-            failures,
-            nameof(options.MaxPulseAge),
-            options.MaxPulseAge,
-            TimeSpan.FromSeconds(1)
-        );
+        CheckPeriod(failures, nameof(options.MaxPulseAge), options.MaxPulseAge, MinimumPulseAge);
         CheckBeaconLimits(failures, options);
         CheckPeriod(failures, nameof(options.MaxClockSkew), options.MaxClockSkew, TimeSpan.Zero);
         CheckPeriod(
