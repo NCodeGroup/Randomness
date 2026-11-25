@@ -63,3 +63,6 @@ How `/ship-plan` lands a reviewed plan. `integrate`: `pull-request` pushes the p
 - Options classes have setters for `Action<TOptions>` callbacks, which overrides the template's `init`-only rule for
   them ([ADR-1006](docs/decisions/1006-options-classes-have-setters-for-the-options-pattern.md)). The core binds
   `Randomness` strictly, so each adapter binds a section of its own under `RandomnessBeacons`.
+- A type that only its own factory builds, such as `NistPulse.Parse`, `NistCertificate.Parse` or `DrandRound.Verify`,
+  keeps a private classic constructor: a primary constructor can't be private, so it would let any code in the
+  assembly build an unverified instance, and `csharp.instructions.md` asks for one only where it can express the type.
