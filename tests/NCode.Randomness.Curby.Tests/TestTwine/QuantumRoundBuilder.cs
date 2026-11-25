@@ -13,9 +13,9 @@ namespace NCode.Randomness.Curby.Tests.TestTwine;
 /// </summary>
 internal sealed class QuantumRoundBuilder : IDisposable
 {
-    private static readonly DateTimeOffset Start = new(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static DateTimeOffset Start { get; } = new(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
-    private static readonly byte[] DefaultDataDigest = Sha3.HashData512("bell data"u8);
+    private static byte[] DefaultDataDigest { get; } = Sha3.HashData512("bell data"u8);
 
     private static string Timestamp(ref int clock) =>
         Start
