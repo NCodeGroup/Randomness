@@ -13,7 +13,12 @@ namespace NCode.Randomness.Nist.Tests.Pulses;
 
 public class NistPulseTests
 {
-    private const int ExternalLength = 4 + 64 + 4 + 4 + 64;
+    private const int LengthPrefixBytes = 4;
+    private const int StatusCodeBytes = 4;
+    private const int HashBytes = 64;
+    private const int MaxSignatureBytes = 1024;
+    private const int ExternalLength =
+        LengthPrefixBytes + HashBytes + StatusCodeBytes + LengthPrefixBytes + HashBytes;
 
     private static string Hex(int bytes) => new('A', bytes * 2);
 
@@ -105,15 +110,30 @@ public class NistPulseTests
             { "pulse", null, "'pulse'" },
             { "pulse.pulseIndex", null, "'pulseIndex'" },
             { "pulse.pulseIndex", "0", "'pulseIndex'" },
+            { "pulse.chainIndex", "0", "'chainIndex'" },
             { "pulse.statusCode", "-1", "'statusCode'" },
-            { "pulse.localRandomValue", $"\"{Hex(63)}\"", "'localRandomValue' is not 64 bytes" },
+            {
+                "pulse.localRandomValue",
+                $"\"{Hex(HashBytes - 1)}\"",
+                "'localRandomValue' is not 64 bytes"
+            },
             { "pulse.outputValue", "\"not hex\"", "'outputValue' is not hexadecimal" },
+            { "pulse.signatureValue", "\"\"", "'signatureValue' has 0 bytes" },
+            {
+                "pulse.signatureValue",
+                $"\"{Hex(MaxSignatureBytes + 1)}\"",
+                "'signatureValue' has 1025 bytes"
+            },
             { "pulse.precommitmentValue", "\"ABC\"", "'precommitmentValue' is not hexadecimal" },
             { "pulse.external.sourceId", "\"not hex\"", "'external.sourceId' is not hexadecimal" },
-            { "pulse.external.value", $"\"{Hex(65)}\"", "'external.value' is not 64 bytes" },
+            {
+                "pulse.external.value",
+                $"\"{Hex(HashBytes + 1)}\"",
+                "'external.value' is not 64 bytes"
+            },
             {
                 "pulse.listValues.1.value",
-                $"\"{Hex(63)}\"",
+                $"\"{Hex(HashBytes - 1)}\"",
                 "'listValues[].value' is not 64 bytes"
             },
             { "pulse.listValues", "[]", "'listValues'" },
@@ -141,8 +161,8 @@ public class NistPulseTests
         Assert.Equal(NistFixtures.LatestTimestamp, pulse.Timestamp);
         Assert.Equal<byte>(output, pulse.Output);
         Assert.Equal<byte>(previous, pulse.Previous);
-        Assert.Equal(64, pulse.LocalRandomValue.Length);
-        Assert.Equal(64, pulse.Precommitment.Length);
+        Assert.Equal(HashBytes, pulse.LocalRandomValue.Length);
+        Assert.Equal(HashBytes, pulse.Precommitment.Length);
         Assert.Equal(512, pulse.Signature.Length);
     }
 
@@ -201,6 +221,19 @@ public class NistPulseTests
         Assert.Contains(fragment, exception.Message, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(MaxSignatureBytes)]
+    public void Parse_WhenSignatureHasOneToTheMostBytes_ReadsIt(int bytes)
+    {
+        var signature = $"\"{Hex(bytes)}\"";
+        var document = Document(NistFixtures.LatestIndex, "pulse.signatureValue", signature);
+
+        var pulse = NistPulse.Parse(document);
+
+        Assert.Equal(bytes, pulse.Signature.Length);
+    }
+
     #endregion
 
     #region Verify Tests
@@ -241,7 +274,7 @@ public class NistPulseTests
         var document = Document(
             NistFixtures.LatestIndex,
             "pulse.localRandomValue",
-            $"\"{Hex(64)}\""
+            $"\"{Hex(HashBytes)}\""
         );
         var pulse = NistPulse.Parse(document);
         var certificateDer = NistFixtures.Certificate("5b6386e6");
@@ -371,7 +404,7 @@ public class NistPulseTests
         using var certificate = signer.Certificate();
         var builder = NistPulseBuilder.For(5) with
         {
-            AfterSigning = node => node["outputValue"] = Hex(64),
+            AfterSigning = node => node["outputValue"] = Hex(HashBytes),
         };
         var json = builder.Build(signer);
         var pulse = ParseBuilt(json);
@@ -390,10 +423,11 @@ public class NistPulseTests
     {
         using var signer = new NistTestSigner();
         using var certificate = signer.Certificate();
+        const int cutBytes = 255;
         var builder = NistPulseBuilder.For(5) with
         {
             AfterSigning = node =>
-                node["signatureValue"] = ((string?)node["signatureValue"])?[..(255 * 2)],
+                node["signatureValue"] = ((string?)node["signatureValue"])?[..(cutBytes * 2)],
         };
         var json = builder.Build(signer);
         var pulse = ParseBuilt(json);
@@ -435,6 +469,27 @@ public class NistPulseTests
         var exception = Assert.Throws<NistFormatException>(() => pulse.VerifyFollows(predecessor));
 
         Assert.Contains("does not precede", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyFollows_WhenPredecessorIsOnAnotherChain_Throws()
+    {
+        using var signer = new NistTestSigner();
+        var predecessorBuilder = NistPulseBuilder.For(10) with { ChainIndex = 3 };
+        var predecessorJson = predecessorBuilder.Build(signer);
+        var previous = NistPulseBuilder.OutputOf(predecessorJson);
+        var pulseBuilder = NistPulseBuilder.For(11) with { Previous = previous };
+        var pulseJson = pulseBuilder.Build(signer);
+        var predecessor = ParseBuilt(predecessorJson);
+        var pulse = ParseBuilt(pulseJson);
+
+        var exception = Assert.Throws<NistFormatException>(() => pulse.VerifyFollows(predecessor));
+
+        Assert.Contains(
+            "Pulse 10 of chain 3 does not precede pulse 11 of chain 2.",
+            exception.Message,
+            StringComparison.Ordinal
+        );
     }
 
     [Fact]

@@ -15,6 +15,8 @@ namespace NCode.Randomness.Nist.Tests.TestNist;
 /// </summary>
 internal sealed record NistPulseBuilder
 {
+    private const int HashBytes = 64;
+
     private static DateTimeOffset Epoch { get; } = new(2026, 11, 25, 12, 0, 0, TimeSpan.Zero);
 
     public static NistPulseBuilder For(long index)
@@ -62,11 +64,11 @@ internal sealed record NistPulseBuilder
 
     public DateTimeOffset Timestamp { get; init; } = Epoch;
 
-    public byte[] LocalRandomValue { get; init; } = new byte[64];
+    public byte[] LocalRandomValue { get; init; } = new byte[HashBytes];
 
-    public byte[] Previous { get; init; } = new byte[64];
+    public byte[] Previous { get; init; } = new byte[HashBytes];
 
-    public byte[] Precommitment { get; init; } = new byte[64];
+    public byte[] Precommitment { get; init; } = new byte[HashBytes];
 
     public bool IncludeExternal { get; init; } = true;
 
@@ -75,7 +77,7 @@ internal sealed record NistPulseBuilder
     public string Build(NistTestSigner signer)
     {
         ArgumentNullException.ThrowIfNull(signer);
-        var zeros = Convert.ToHexString(new byte[64]);
+        var zeros = Convert.ToHexString(new byte[HashBytes]);
         var pulse = new JsonObject
         {
             ["uri"] = $"https://beacon.example/beacon/2.0/chain/{ChainIndex}/pulse/{PulseIndex}",
