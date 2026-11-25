@@ -27,6 +27,31 @@ public class DagCborTests
         Assert.Equal(expected, Convert.ToHexStringLower(DagCbor.Encode(Ipld.Integer(value))));
     }
 
+    [Theory]
+    [InlineData(1.5, "fb3ff8000000000000")]
+    [InlineData(31.6, "fb403f99999999999a")]
+    [InlineData(-0.0, "fb8000000000000000")]
+    public void Encode_WithFloat_UsesEightBytes(double value, string expected)
+    {
+        var node = new IpldFloat(value);
+        var encoded = DagCbor.Encode(node);
+        var hex = Convert.ToHexStringLower(encoded);
+
+        Assert.Equal(expected, hex);
+    }
+
+    [Theory]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    public void Encode_WithNonFiniteFloat_Throws(double value)
+    {
+        var node = new IpldFloat(value);
+
+        var exception = Assert.Throws<TwineFormatException>(() => DagCbor.Encode(node));
+
+        Assert.Contains("has no encoding", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Encode_WithMap_SortsKeysByLengthThenBytes()
     {

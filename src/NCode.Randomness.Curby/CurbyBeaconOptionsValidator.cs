@@ -13,6 +13,24 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
 {
     private const string Prefix = CurbyBeaconOptions.SectionName + ":";
 
+    /// <summary>
+    /// Adds a failure when a chain identifier setting is not a Twine content identifier.
+    /// </summary>
+    /// <param name="failures">The failures found so far.</param>
+    /// <param name="key">The name of the setting, within the section.</param>
+    /// <param name="value">The value of the setting.</param>
+    private static void CheckChainId(List<string> failures, string key, string? value)
+    {
+        try
+        {
+            Cid.Parse(value ?? string.Empty);
+        }
+        catch (TwineFormatException exception)
+        {
+            failures.Add($"{Prefix}{key} is not a Twine content identifier: {exception.Message}");
+        }
+    }
+
     public ValidateOptionsResult Validate(string? name, CurbyBeaconOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -32,16 +50,9 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
             );
         }
 
-        try
-        {
-            Cid.Parse(options.ChainId ?? string.Empty);
-        }
-        catch (TwineFormatException exception)
-        {
-            failures.Add(
-                $"{Prefix}{nameof(options.ChainId)} is not a Twine content identifier: {exception.Message}"
-            );
-        }
+        CheckChainId(failures, nameof(options.ChainId), options.ChainId);
+        CheckChainId(failures, nameof(options.QuantumChainId), options.QuantumChainId);
+        CheckChainId(failures, nameof(options.BellChainId), options.BellChainId);
 
         if (options.MaxResponseBytes < 1024)
         {

@@ -18,13 +18,17 @@ product does.
   `GetItem`, `GetItems`, `GetString` and `AsRandom`.
 - `IRandomnessBeacon` and `BeaconPulse`, the port a beacon adapter implements, registered with `AddBeacon<TBeacon>()`.
 - A background beacon collector with `Continuous`, `InitializeOnly` and `Offline` modes, per-fetch timeouts,
-  exponential back-off with jitter, and an optional `RequireInitialPulse` start check.
+  exponential back-off with jitter, an optional `RequireInitialPulse` start check, and a pulse age limit per beacon,
+  `MaxPulseAgeByBeacon` ([ADR-1008](docs/decisions/1008-pulse-staleness-is-judged-per-beacon.md)).
 - `IBeaconStatus`, the health check `AddRandomnessBeacons()`, and the metrics `ncode.randomness.beacon.pulses` and
   `ncode.randomness.generator.reseeds`.
 - Reproducible draws: `IVerifiableRandomFactory` and `VerifiableRandom`, algorithm `ncode-randomness-draw/1`, specified
   in `docs/draws.md` with a reference implementation.
-- `NCode.Randomness.Curby`: the CURBy beacon, `AddCurbyBeacon()`, over the CURBy-RNG Twine chain, with settings in
-  `RandomnessBeacons:Curby`.
+- `NCode.Randomness.Curby`: the CURBy beacon, `AddCurbyBeacon()`, over the CURBy-RNG Twine chain, and the CURBy-Q
+  beacon, `AddCurbyQuantumBeacon()`, named `curby-q`, over the rounds of the CURBy-Q (DIRNG) chain, with settings in
+  `RandomnessBeacons:Curby`
+  ([#1](https://github.com/NCodeGroup/Randomness/issues/1),
+  [ADR-1007](docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)).
 
 ### Security
 
@@ -33,6 +37,13 @@ product does.
 - CURBy pulses are verified before use: the chain hashes to a pinned content identifier, every document hashes to its
   content identifier and has only the members Twine defines, every signature is canonical RS256 by the chain's key,
   and every salt matches its precommitment, so no server can change a pulse's randomness without breaking a check.
+- CURBy-Q rounds are verified before use: the chain hashes to a pinned content identifier, every pulse of the round is
+  signed by its key and follows the one before, a pulse of the pinned Bell chain answers the request with the
+  precommitted data hash before the precommit, and the seed expands by SHAKE256 from the seed-chain pulse after the
+  precommit to the parameters the round commits to. The Bell-test certificate and the Trevisan extraction are verified
+  only out of process, by CURBy's `curby_verify`
+  ([#1](https://github.com/NCodeGroup/Randomness/issues/1),
+  [ADR-1007](docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)).
 - Pulses that roll back, switch chains, reuse an accepted round with other content, or are out of date by their
   timestamp are refused.
 - Dependency injection registers the secure generator only as `ISecureRandom`, never as the plain `IRandomSource`, and

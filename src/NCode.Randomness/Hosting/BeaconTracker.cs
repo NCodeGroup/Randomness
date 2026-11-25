@@ -12,8 +12,8 @@ namespace NCode.Randomness.Hosting;
 /// <summary>
 /// Decides whether each fetched pulse is mixed in, and keeps every beacon's state. A pulse is refused when it claims
 /// another beacon, belongs to another chain than the beacon's first accepted pulse, is older than the last one
-/// accepted, is out of date by its own timestamp, or reuses an accepted round with different content, which only an
-/// equivocating beacon or a forged mirror would serve.
+/// accepted, is out of date by its own timestamp against its beacon's limit, or reuses an accepted round with
+/// different content, which only an equivocating beacon or a forged mirror would serve.
 /// </summary>
 internal sealed class BeaconTracker : IBeaconStatus
 {
@@ -34,6 +34,24 @@ internal sealed class BeaconTracker : IBeaconStatus
         Pool = pool;
         Options = options.Value;
         Time = time;
+        var limits = Options.MaxPulseAgeByBeacon.ToFrozenDictionary(StringComparer.Ordinal);
+        var registered = string.Join(", ", Names);
+        foreach (var name in limits.Keys.Order(StringComparer.Ordinal))
+        {
+            if (!Indexes.ContainsKey(name))
+            {
+                throw new InvalidOperationException(
+                    $"{RandomnessOptions.SectionName}:{nameof(RandomnessOptions.MaxPulseAgeByBeacon)} names '{name}', which no registered randomness beacon has. The registered beacons are {registered}."
+                );
+            }
+        }
+
+        MaxPulseAges =
+        [
+            .. Names.Select(name =>
+                limits.TryGetValue(name, out var limit) ? limit : Options.MaxPulseAge
+            ),
+        ];
     }
 
     public BeaconMode Mode => Options.Mode;
@@ -50,6 +68,12 @@ internal sealed class BeaconTracker : IBeaconStatus
     }
 
     private ImmutableArray<string> Names { get; }
+
+    /// <summary>
+    /// Gets the longest age of a pulse for each beacon, in the order of <see cref="Names"/>: the limit the options
+    /// name for the beacon, or <see cref="RandomnessOptions.MaxPulseAge"/> when they name none.
+    /// </summary>
+    private ImmutableArray<TimeSpan> MaxPulseAges { get; }
 
     private FrozenDictionary<string, int> Indexes { get; }
 
@@ -77,7 +101,7 @@ internal sealed class BeaconTracker : IBeaconStatus
         lock (Gate)
         {
             var state = States[index];
-            var error = Judge(beacon, pulse, state.LastPulse, now);
+            var error = Judge(index, pulse, state.LastPulse, now);
             if (error is { } refused)
             {
                 return Record(index, now, refused);
@@ -120,14 +144,17 @@ internal sealed class BeaconTracker : IBeaconStatus
         && pulse.Round == last.Round
         && string.Equals(pulse.Id, last.Id, StringComparison.Ordinal);
 
-    private BeaconError? Judge(
-        string beacon,
-        BeaconPulse pulse,
-        BeaconPulse? last,
-        DateTimeOffset now
-    )
+    /// <summary>
+    /// Decides whether a pulse is acceptable, and returns the reason it is not.
+    /// </summary>
+    /// <param name="index">The index of the beacon in the registered order.</param>
+    /// <param name="pulse">The pulse to judge.</param>
+    /// <param name="last">The last pulse accepted from the beacon, if any.</param>
+    /// <param name="now">The current time.</param>
+    /// <returns>The error that refuses the pulse, or <see langword="null"/> when it is acceptable.</returns>
+    private BeaconError? Judge(int index, BeaconPulse pulse, BeaconPulse? last, DateTimeOffset now)
     {
-        if (!string.Equals(pulse.Beacon, beacon, StringComparison.Ordinal))
+        if (!string.Equals(pulse.Beacon, Names[index], StringComparison.Ordinal))
         {
             return BeaconError.InvalidPulse;
         }
@@ -156,7 +183,7 @@ internal sealed class BeaconTracker : IBeaconStatus
         }
 
         var age = now - pulse.Timestamp;
-        return age > Options.MaxPulseAge || -age > Options.MaxClockSkew
+        return age > MaxPulseAges[index] || -age > Options.MaxClockSkew
             ? BeaconError.StalePulse
             : null;
     }

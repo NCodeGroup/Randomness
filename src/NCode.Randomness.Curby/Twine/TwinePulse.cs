@@ -131,7 +131,14 @@ internal sealed class TwinePulse
         }
     }
 
-    private static DateTimeOffset ParseTimestamp(string text)
+    /// <summary>
+    /// Parses a pulse timestamp, an ISO 8601 UTC time such as <c>2025-08-22T19:42:38.156Z</c> with up to seven
+    /// fractional digits.
+    /// </summary>
+    /// <param name="text">The timestamp text from the pulse's payload.</param>
+    /// <returns>The time, in UTC.</returns>
+    /// <exception cref="TwineFormatException"><paramref name="text"/> is not an ISO 8601 UTC time.</exception>
+    internal static DateTimeOffset ParseTimestamp(string text)
     {
         if (
             !DateTimeOffset.TryParseExact(

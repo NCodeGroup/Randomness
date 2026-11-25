@@ -76,6 +76,8 @@ NCode.Randomness.RandomnessOptions.MaxClockSkew.get -> System.TimeSpan
 NCode.Randomness.RandomnessOptions.MaxClockSkew.set -> void
 NCode.Randomness.RandomnessOptions.MaxPulseAge.get -> System.TimeSpan
 NCode.Randomness.RandomnessOptions.MaxPulseAge.set -> void
+NCode.Randomness.RandomnessOptions.MaxPulseAgeByBeacon.get -> System.Collections.Generic.Dictionary<string!, System.TimeSpan>!
+NCode.Randomness.RandomnessOptions.MaxPulseAgeByBeacon.set -> void
 NCode.Randomness.RandomnessOptions.MaxRetryDelay.get -> System.TimeSpan
 NCode.Randomness.RandomnessOptions.MaxRetryDelay.set -> void
 NCode.Randomness.RandomnessOptions.Mode.get -> NCode.Randomness.BeaconMode

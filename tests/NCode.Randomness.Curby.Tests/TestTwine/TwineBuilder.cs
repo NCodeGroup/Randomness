@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers.Text;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using NCode.Randomness.Curby.Twine;
@@ -16,6 +17,12 @@ namespace NCode.Randomness.Curby.Tests.TestTwine;
 /// </summary>
 internal sealed class TwineBuilder : IDisposable
 {
+    /// <summary>
+    /// Formats <paramref name="time"/> as a pulse's <c>timestamp</c>: UTC with milliseconds, as CURBy writes it.
+    /// </summary>
+    internal static string FormatTimestamp(DateTimeOffset time) =>
+        time.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
+
     public TwineBuilder(
         int keySize = 2048,
         string specification = "twine/1.0.x/rng/1.0.x",
@@ -89,29 +96,47 @@ internal sealed class TwineBuilder : IDisposable
         DateTimeOffset timestamp
     )
     {
+        var nextDigest = Sha3.HashData512(nextSecret);
+        var pre = Ipld.Bytes([0x14, 0x40, .. nextDigest]);
+        var saltBytes = Ipld.Bytes(salt);
+        var time = FormatTimestamp(timestamp);
+        var timestampText = Ipld.Text(time);
+        var payload = Ipld.Map(("pre", pre), ("salt", saltBytes), ("timestamp", timestampText));
+        return Content(index, previous, payload);
+    }
+
+    /// <summary>
+    /// Builds the content of a pulse with the given payload, for a chain of any family.
+    /// </summary>
+    public IpldMap Content(
+        long index,
+        Cid? previous,
+        IpldMap payload,
+        params (Cid Chain, Cid Value)[] mixins
+    )
+    {
         IpldNode[] links = previous is null ? [] : [Ipld.Link(previous)];
+        var chainLink = Ipld.Link(ChainCid);
+        var indexNode = Ipld.Integer(index);
+        var linksNode = Ipld.List(links);
+        IpldNode[] mixinMaps =
+        [
+            .. mixins.Select(mixin =>
+            {
+                var mixinChain = Ipld.Link(mixin.Chain);
+                var mixinValue = Ipld.Link(mixin.Value);
+                return Ipld.Map(("chain", mixinChain), ("value", mixinValue));
+            }),
+        ];
+        var mixinsNode = Ipld.List(mixinMaps);
+        var sourceNode = Ipld.Text("test");
         return Ipld.Map(
-            ("chain", Ipld.Link(ChainCid)),
-            ("index", Ipld.Integer(index)),
-            ("links", Ipld.List(links)),
-            ("mixins", Ipld.List()),
-            (
-                "payload",
-                Ipld.Map(
-                    ("pre", Ipld.Bytes([0x14, 0x40, .. Sha3.HashData512(nextSecret)])),
-                    ("salt", Ipld.Bytes(salt)),
-                    (
-                        "timestamp",
-                        Ipld.Text(
-                            timestamp.UtcDateTime.ToString(
-                                "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
-                                System.Globalization.CultureInfo.InvariantCulture
-                            )
-                        )
-                    )
-                )
-            ),
-            ("source", Ipld.Text("test"))
+            ("chain", chainLink),
+            ("index", indexNode),
+            ("links", linksNode),
+            ("mixins", mixinsNode),
+            ("payload", payload),
+            ("source", sourceNode)
         );
     }
 

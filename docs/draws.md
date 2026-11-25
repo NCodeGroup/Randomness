@@ -12,7 +12,8 @@ A draw's values are public to everyone who reads the pulse. Never derive a key, 
 1. **Commit first.** Before the round is published, publish the beacon (`curby`), a future round number, the context
    label, the list of entrants in its final order, and the code or this algorithm's name. CURBy publishes a round
    every minute, so the latest round plus 60 is about an hour ahead. Committing first is what stops anyone from
-   choosing a pulse that favors them.
+   choosing a pulse that favors them. CURBy-Q rounds (beacon `curby-q`) are numbered by round, and the ID is the
+   randomness pulse's CID.
 2. **Wait for the round, then draw.**
 
    ```csharp
@@ -34,7 +35,8 @@ as taking the first published round after it.
 All lengths are counts of bytes. `LP(x)` is the 4-byte big-endian length of `x` followed by `x`; text is UTF-8.
 
 1. **Instantiate** HMAC_DRBG with HMAC-SHA-512 (NIST SP 800-90A Rev. 1, section 10.1.2) with:
-   - entropy input: the pulse's randomness (for CURBy, the 64-byte SHA3-512 digest in the pulse's CID);
+   - entropy input: the pulse's randomness (for CURBy, the 64-byte SHA3-512 digest in the pulse's CID; for CURBy-Q,
+     beacon `curby-q`, the round's 64-byte `randomness`);
    - nonce: `LP(beacon) || LP(chain) || round as an 8-byte big-endian integer || LP(pulse ID)`;
    - personalization string: `LP("ncode-randomness-draw/1") || LP(context)`.
 2. **Stream** the outputs of consecutive generate requests of exactly 64 bytes each, with no additional input, and

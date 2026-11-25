@@ -9,8 +9,8 @@ namespace NCode.Randomness.Curby.Twine;
 
 /// <summary>
 /// Writes the IPLD data model as DAG-CBOR, the canonical encoding a CID hashes: definite lengths, the shortest
-/// integer heads, map keys sorted by encoded length and then bytewise, and links as tag 42 over a byte string of 0x00
-/// followed by the CID.
+/// integer heads, floats as 64-bit IEEE 754 (0xfb), map keys sorted by encoded length and then bytewise, and links as
+/// tag 42 over a byte string of 0x00 followed by the CID.
 /// </summary>
 internal static class DagCbor
 {
@@ -71,6 +71,19 @@ internal static class DagCbor
                 break;
             case IpldNull:
                 writer.Write<byte>([0xF6]);
+                break;
+            case IpldFloat number:
+                if (!double.IsFinite(number.Value))
+                {
+                    throw new TwineFormatException(
+                        $"DAG-CBOR has no encoding for the float {number.Value}."
+                    );
+                }
+
+                var span = writer.GetSpan(9);
+                span[0] = 0xFB;
+                BinaryPrimitives.WriteDoubleBigEndian(span[1..], number.Value);
+                writer.Advance(9);
                 break;
             default:
                 throw new TwineFormatException($"{node.GetType().Name} has no DAG-CBOR encoding.");

@@ -24,7 +24,8 @@ public enum BeaconError
     InvalidPulse = 2,
 
     /// <summary>
-    /// The pulse is older than <see cref="RandomnessOptions.MaxPulseAge"/>, or dated further ahead than
+    /// The pulse is older than <see cref="RandomnessOptions.MaxPulseAge"/> or the beacon's entry in
+    /// <see cref="RandomnessOptions.MaxPulseAgeByBeacon"/>, or dated further ahead than
     /// <see cref="RandomnessOptions.MaxClockSkew"/>.
     /// </summary>
     StalePulse = 3,

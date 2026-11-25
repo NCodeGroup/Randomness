@@ -3,6 +3,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NCode.Randomness.Curby.Tests.Fixtures;
 
 namespace NCode.Randomness.Curby.Tests;
 
@@ -29,6 +30,24 @@ public class CurbyLiveTests
         );
         Assert.Equal(64, pulse.Randomness.Length);
         Assert.Equal(pulse.Round - 10, round.Round);
+    }
+
+    [LiveFact]
+    public async Task GetPulseAsync_AgainstCurbyQ_VerifiesAPublishedRound()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider();
+        var beacon = provider.GetRequiredService<CurbyQuantumBeacon>();
+
+        var pulse = await beacon.GetPulseAsync(CurbyQuantumFixtures.Round, CancellationToken.None);
+        var latest = await beacon.GetLatestPulseAsync(CancellationToken.None);
+
+        var randomness = Convert.ToHexStringLower(pulse.Randomness);
+
+        Assert.Equal(CurbyQuantumFixtures.ResultId, pulse.Id);
+        Assert.Equal(CurbyQuantumFixtures.Randomness, randomness);
+        Assert.True(latest.Round >= CurbyQuantumFixtures.Round);
     }
 
     [LiveFact]

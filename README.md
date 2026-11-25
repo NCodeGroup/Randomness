@@ -30,7 +30,7 @@ Boulder only stops the extra diversification.
 | Package | What it holds |
 |---|---|
 | `NCode.Randomness` | The secure generator, typed values and ranges, the beacon port, the background collector, draws, a health check and metrics |
-| `NCode.Randomness.Curby` | The CURBy adapter: pulses of the CURBy-RNG Twine chain, verified against a pinned chain |
+| `NCode.Randomness.Curby` | The CURBy adapter: pulses of the CURBy-RNG chain and rounds of the CURBy-Q chain, each verified against a pinned chain |
 
 ## Quick Start
 
@@ -114,6 +114,11 @@ Python that reproduces any draw without .NET.
   each document must hash to its content identifier, each signature must be RS256 by the chain's key, and each salt
   must match the previous pulse's precommitment
   ([ADR-1003](docs/decisions/1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md)).
+- Every CURBy-Q round is verified as CURBy's client verifies it: each pulse is signed by the pinned chain, the Bell
+  response and the seed pulse are in causal order with the round's pulses, and the seed expands to the right number of
+  bits. The Bell-test certificate and the Trevisan extraction are not verified in process; CURBy's `curby_verify` tool
+  audits them
+  ([ADR-1007](docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)).
 - Documents must hold only the members Twine defines and signatures must be canonically encoded, so a server cannot
   grind a pulse's randomness without breaking its signature or hash.
 - Pulses that roll back, switch chains, equivocate or are out of date are refused

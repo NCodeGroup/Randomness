@@ -13,6 +13,39 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
     private const string Prefix = RandomnessOptions.SectionName + ":";
     private static TimeSpan MaxTimerPeriod { get; } =
         TimeSpan.FromMilliseconds(uint.MaxValue - 1.0);
+    private static TimeSpan MinimumPulseAge { get; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// Adds a failure for each per-beacon pulse age limit that is missing, has an empty beacon name, or lies outside the
+    /// range a timer accepts, in beacon-name order.
+    /// </summary>
+    /// <param name="failures">The list that receives a message for each failure.</param>
+    /// <param name="options">The options whose per-beacon limits are checked.</param>
+    private static void CheckBeaconLimits(List<string> failures, RandomnessOptions options)
+    {
+        if (options.MaxPulseAgeByBeacon is null)
+        {
+            failures.Add($"{Prefix}{nameof(options.MaxPulseAgeByBeacon)} must not be null.");
+            return;
+        }
+
+        var entries = options.MaxPulseAgeByBeacon.OrderBy(
+            entry => entry.Key,
+            StringComparer.Ordinal
+        );
+        foreach (var (key, value) in entries)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                failures.Add(
+                    $"{Prefix}{nameof(options.MaxPulseAgeByBeacon)} has an empty beacon name."
+                );
+            }
+
+            var limitKey = $"{nameof(options.MaxPulseAgeByBeacon)}:{key}";
+            CheckPeriod(failures, limitKey, value, MinimumPulseAge);
+        }
+    }
 
     public ValidateOptionsResult Validate(string? name, RandomnessOptions options)
     {
@@ -43,12 +76,8 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
             options.FetchTimeout,
             TimeSpan.FromMilliseconds(1)
         );
-        CheckPeriod(
-            failures,
-            nameof(options.MaxPulseAge),
-            options.MaxPulseAge,
-            TimeSpan.FromSeconds(1)
-        );
+        CheckPeriod(failures, nameof(options.MaxPulseAge), options.MaxPulseAge, MinimumPulseAge);
+        CheckBeaconLimits(failures, options);
         CheckPeriod(failures, nameof(options.MaxClockSkew), options.MaxClockSkew, TimeSpan.Zero);
         CheckPeriod(
             failures,

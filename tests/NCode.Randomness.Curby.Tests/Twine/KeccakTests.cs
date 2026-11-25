@@ -52,6 +52,40 @@ public class KeccakTests
             },
         };
 
+    // Each input is bytes (7i + 1) mod 256 of the first length; each output comes from Python's hashlib.shake_256, an
+    // independent implementation:
+    // python3 -c "import hashlib; print(hashlib.shake_256(bytes((i*7+1)%256 for i in range(n))).hexdigest(m))"
+    public static TheoryData<int, int, string> ShakeVectors { get; } =
+        new()
+        {
+            { 0, 32, "46b9dd2b0ba88d13233b3feb743eeb243fcd52ea62b81b82b50c27646ed5762f" },
+            {
+                3,
+                64,
+                "3409c8a9824031dd65dc94d5dd752018aab6accd4294e49b29515f005a66a380d18d04b012c826627b8b3a6967c9eb5e8e869b67f03adf44e25ebc99fbc67ae0"
+            },
+            {
+                135,
+                64,
+                "d2fbe0a6ded494501cc37fd4f5da330b23e16601b12e4c37f332fdeb44311e6323db9fafa88327234ab271a50e5e9f55570595e8cec78296d0f3f4e2388d6391"
+            },
+            {
+                136,
+                64,
+                "982c21d1d328ea0c182357958a9f776ca6a1811bf0f2c64b14262edef5d201c681a1883aa04988575f429adbb00859983e8f07e2047d6dd591730e57e1529c00"
+            },
+            {
+                137,
+                64,
+                "aca65e9d4a27361044d570d20712ab5d6f8a43bfc0f9d4ef0b6f52ff7e6075271197657d0b9253be1731921fda2c480ea1b03b264fc9cf894be1da65890adc98"
+            },
+            {
+                200,
+                300,
+                "2b693042fe67a83d2e039504933abd2044f4c863397be89bd1d6a60185b021947bdfa165aabbe10ec9aa174dc8f4f19237103652fdfade36214c4cdaa5ae76079edf94aa2f5767d81f5e47906eeadbf0b2942ea02841be4c059e1dbc35b4d8824ad8eeb70716bd313d258fad7b7a60a61fc4a030340b5235d00318dd4628d9dc5aa4126ae5d7058ca2ed29ca55452b7b59b87bd35493ebc6aefffa51d14befda5b0b81ceccda12ae0970486ea2d35f670897e00df8eefc1f7e7d72e4b6f2f2445ab93593471b283e6230430792132afcd6f4ace62b0ec5082f0ce3ae4848cafbdff071f5a36dd7561a57e5b81e5b9efb9937a560e47660187774847e72c8dc13cb35ee19cb4c33f19796aedd7a391b7a1d7fd6f0b365d14dc51e841225abd2fe963a28b23196ffb168552c6f"
+            },
+        };
+
     #region Sha3_512 Tests
 
     [Theory]
@@ -93,6 +127,59 @@ public class KeccakTests
     public void Sha3_512_WithSmallDestination_Throws()
     {
         Assert.Throws<ArgumentException>(() => Keccak.Sha3_512([], new byte[63]));
+    }
+
+    #endregion
+
+    #region Shake256 Tests
+
+    [Theory]
+    [MemberData(nameof(ShakeVectors))]
+    public void Shake256_WithInput_MatchesTheReferenceOutput(
+        int length,
+        int outputLength,
+        string expected
+    )
+    {
+        var output = new byte[outputLength];
+        var input = Input(length);
+
+        Keccak.Shake256(input, output);
+        var hex = Convert.ToHexStringLower(output);
+
+        Assert.Equal(expected, hex);
+    }
+
+    [Theory]
+    [MemberData(nameof(ShakeVectors))]
+    public void Sha3Shake256_WithInput_MatchesTheReferenceOutput(
+        int length,
+        int outputLength,
+        string expected
+    )
+    {
+        var output = new byte[outputLength];
+        var input = Input(length);
+
+        Sha3.Shake256(input, output);
+        var hex = Convert.ToHexStringLower(output);
+
+        Assert.Equal(expected, hex);
+    }
+
+    [Shake256PlatformFact]
+    public void Shake256_WithRandomInputs_MatchesThePlatform()
+    {
+        for (var length = 0; length < 300; length += 13)
+        {
+            var input = RandomNumberGenerator.GetBytes(length);
+            var output = new byte[(3 * length) + 1];
+
+            Keccak.Shake256(input, output);
+            var expected = Shake256.HashData(input, output.Length);
+
+            Assert.Equal(expected, output);
+        }
     }
 
     #endregion

@@ -20,6 +20,8 @@ internal static class Ipld
 
     public static IpldInteger Integer(long value) => new(value);
 
+    public static IpldFloat Float(double value) => new(value);
+
     public static IpldBytes Bytes(byte[] value) => new(value);
 
     public static IpldLink Link(Cid cid) => new(cid);

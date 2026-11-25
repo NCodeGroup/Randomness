@@ -1,6 +1,6 @@
 # 1002. Beacons are adapters collected in the background, and an outage degrades, never fails
 
-- **Status:** Accepted
+- **Status:** Accepted (amended by 1008)
 - **Date:** 2026-11-25
 - **Deciders:** NCode Group maintainers
 

@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Immutable;
 using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
@@ -9,14 +10,35 @@ using NCode.Randomness.Curby.Twine;
 namespace NCode.Randomness.Curby.Http;
 
 /// <summary>
-/// Reads Twine documents from the HTTP API: JSON only, no redirects, and the body read under a byte limit while it
-/// streams, since <c>Content-Length</c> is only a hint.
+/// Reads Twine documents and raw bytes from the HTTP API: one expected media type per request, no redirects, and the
+/// body read under a byte limit while it streams, since <c>Content-Length</c> is only a hint.
 /// </summary>
 internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconOptions> options)
 {
     private const string JsonMediaType = "application/json";
+    private const string OctetStreamMediaType = "application/octet-stream";
 
     private static JsonDocumentOptions ParseOptions { get; } = new() { MaxDepth = 32 };
+
+    /// <summary>
+    /// Parses <paramref name="body"/> as JSON, accepting nesting up to 32 levels deep.
+    /// </summary>
+    /// <param name="body">The response body, as UTF-8 JSON.</param>
+    /// <returns>The root element of the parsed document.</returns>
+    /// <exception cref="TwineFormatException"><paramref name="body"/> is not valid JSON.</exception>
+    private static JsonElement ParseJson(byte[] body)
+    {
+        try
+        {
+            return JsonElement.Parse(body, ParseOptions);
+        }
+        catch (JsonException exception)
+        {
+            throw new TwineFormatException(
+                $"The Twine API answered with malformed JSON: {exception.Message}"
+            );
+        }
+    }
 
     private IHttpClientFactory Clients { get; } = clients;
 
@@ -31,10 +53,86 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
         CancellationToken cancellationToken
     )
     {
+        var body = await GetBodyAsync(path, JsonMediaType, cancellationToken).ConfigureAwait(false);
+        if (body is null)
+        {
+            return null;
+        }
+
+        var json = ParseJson(body);
+        return TwineDocument.Parse(json);
+    }
+
+    /// <summary>
+    /// Fetches the JSON array of documents at <paramref name="path"/>, relative to the base address, or returns an
+    /// empty array when the API answers 404.
+    /// </summary>
+    /// <param name="path">The path to fetch, relative to the base address.</param>
+    /// <param name="cancellationToken">The token that cancels the request and the read.</param>
+    /// <returns>The documents of the array, or an empty array when the API answers 404.</returns>
+    public async ValueTask<ImmutableArray<TwineDocument>> GetDocumentsAsync(
+        string path,
+        CancellationToken cancellationToken
+    )
+    {
+        var body = await GetBodyAsync(path, JsonMediaType, cancellationToken).ConfigureAwait(false);
+        if (body is null)
+        {
+            return [];
+        }
+
+        var json = ParseJson(body);
+        if (json.ValueKind != JsonValueKind.Array)
+        {
+            throw new TwineFormatException(
+                $"The Twine API answered with a JSON {json.ValueKind}, not an array."
+            );
+        }
+
+        var count = json.GetArrayLength();
+        var documents = ImmutableArray.CreateBuilder<TwineDocument>(count);
+        foreach (var element in json.EnumerateArray())
+        {
+            var document = TwineDocument.Parse(element);
+            documents.Add(document);
+        }
+
+        return documents.MoveToImmutable();
+    }
+
+    /// <summary>
+    /// Fetches the raw bytes at <paramref name="path"/>, relative to the base address, or returns
+    /// <see langword="null"/> when the API answers 404.
+    /// </summary>
+    /// <param name="path">The path to fetch, relative to the base address.</param>
+    /// <param name="cancellationToken">The token that cancels the request and the read.</param>
+    /// <returns>The response body, or <see langword="null"/> when the API answers 404.</returns>
+    public ValueTask<byte[]?> GetBytesAsync(string path, CancellationToken cancellationToken) =>
+        GetBodyAsync(path, OctetStreamMediaType, cancellationToken);
+
+    /// <summary>
+    /// Sends a GET request for <paramref name="path"/>, relative to the base address, that accepts only
+    /// <paramref name="mediaType"/>, and returns the body read under the byte limit, or <see langword="null"/> when the
+    /// API answers 404.
+    /// </summary>
+    /// <param name="path">The path to fetch, relative to the base address.</param>
+    /// <param name="mediaType">The one media type the request accepts and the response must have.</param>
+    /// <param name="cancellationToken">The token that cancels the request and the read.</param>
+    /// <returns>The response body, or <see langword="null"/> when the API answers 404.</returns>
+    /// <exception cref="HttpRequestException">The API answered a status other than success or 404.</exception>
+    /// <exception cref="TwineFormatException">
+    /// The response has another media type than <paramref name="mediaType"/>, or its body is larger than the limit.
+    /// </exception>
+    private async ValueTask<byte[]?> GetBodyAsync(
+        string path,
+        string mediaType,
+        CancellationToken cancellationToken
+    )
+    {
         var client = Clients.CreateClient(CurbyDefaults.HttpClientName);
         var address = new Uri(Options.BaseAddress, path);
         using var request = new HttpRequestMessage(HttpMethod.Get, address);
-        request.Headers.Accept.ParseAdd(JsonMediaType);
+        request.Headers.Accept.ParseAdd(mediaType);
         using var response = await client
             .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
             .ConfigureAwait(false);
@@ -52,27 +150,15 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
             );
         }
 
-        var mediaType = response.Content.Headers.ContentType?.MediaType;
-        if (!string.Equals(mediaType, JsonMediaType, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new TwineFormatException($"The Twine API answered with '{mediaType}', not JSON.");
-        }
-
-        var body = await ReadLimitedAsync(response.Content, cancellationToken)
-            .ConfigureAwait(false);
-        JsonElement json;
-        try
-        {
-            json = JsonElement.Parse(body, ParseOptions);
-        }
-        catch (JsonException exception)
+        var actual = response.Content.Headers.ContentType?.MediaType;
+        if (!string.Equals(actual, mediaType, StringComparison.OrdinalIgnoreCase))
         {
             throw new TwineFormatException(
-                $"The Twine API answered with malformed JSON: {exception.Message}"
+                $"The Twine API answered with '{actual}', not '{mediaType}'."
             );
         }
 
-        return TwineDocument.Parse(json);
+        return await ReadLimitedAsync(response.Content, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<byte[]> ReadLimitedAsync(

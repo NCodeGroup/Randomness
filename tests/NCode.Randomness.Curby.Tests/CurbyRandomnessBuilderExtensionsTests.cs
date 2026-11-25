@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using NCode.Randomness.Curby.Http;
 
 namespace NCode.Randomness.Curby.Tests;
 
@@ -115,6 +116,183 @@ public class CurbyRandomnessBuilderExtensionsTests
             exception.Message,
             StringComparison.Ordinal
         );
+    }
+
+    #endregion
+
+    #region AddCurbyQuantumBeacon Tests
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_Twice_RegistersOneBeaconNamedCurbyQ()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyQuantumBeacon().AddCurbyQuantumBeacon();
+        var providerOptions = new ServiceProviderOptions { ValidateOnBuild = true };
+        await using var provider = services.BuildServiceProvider(providerOptions);
+
+        var beacons = provider.GetServices<IRandomnessBeacon>();
+        var beacon = Assert.Single(beacons);
+        var resolved = provider.GetRequiredService<CurbyQuantumBeacon>();
+        var status = provider.GetRequiredService<IBeaconStatus>();
+        var beaconStatus = Assert.Single(status.Beacons);
+
+        Assert.Equal(CurbyDefaults.QuantumBeaconName, beacon.Name);
+        Assert.Same(beacon, resolved);
+        Assert.Equal(CurbyDefaults.QuantumBeaconName, beaconStatus.Name);
+    }
+
+    [Fact]
+    public async Task AddCurbyBeacon_WithTheQuantumBeacon_RegistersBothBeaconsOverOneClient()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyBeacon().AddCurbyQuantumBeacon();
+        var providerOptions = new ServiceProviderOptions { ValidateOnBuild = true };
+        await using var provider = services.BuildServiceProvider(providerOptions);
+
+        var names = provider.GetServices<IRandomnessBeacon>().Select(beacon => beacon.Name);
+        var orderedNames = names.Order(StringComparer.Ordinal);
+
+        Assert.Equal([CurbyDefaults.BeaconName, CurbyDefaults.QuantumBeaconName], orderedNames);
+        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwineApi));
+    }
+
+    [Fact]
+    public async Task AddCurbyBeacon_WithTheQuantumBeacon_SharesOneChainCache()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyBeacon().AddCurbyQuantumBeacon();
+        var providerOptions = new ServiceProviderOptions { ValidateOnBuild = true };
+        await using var provider = services.BuildServiceProvider(providerOptions);
+
+        var chains = provider.GetRequiredService<TwineChainCache>();
+
+        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwineChainCache));
+        var again = provider.GetRequiredService<TwineChainCache>();
+        Assert.Same(chains, again);
+    }
+
+    [Fact]
+    public void AddCurbyQuantumBeacon_AfterTwineApiIsRegistered_RegistersTheChainCache()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<TwineApi>();
+        services.AddRandomness().AddCurbyQuantumBeacon();
+
+        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwineChainCache));
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithConfiguration_BindsTheSection()
+    {
+        var chainSetting = KeyValuePair.Create(
+            "QuantumChainId",
+            (string?)CurbyDefaults.QuantumChainId
+        );
+        var maxBytesSetting = KeyValuePair.Create("MaxResponseBytes", (string?)"8192");
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection([chainSetting, maxBytesSetting])
+            .Build();
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyQuantumBeacon(configuration);
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<CurbyBeaconOptions>>().Value;
+
+        Assert.Equal(CurbyDefaults.QuantumChainId, options.QuantumChainId);
+        Assert.Equal(8192, options.MaxResponseBytes);
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_ByDefault_AllowsThirtyMinuteOldPulses()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyBeacon().AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
+
+        var limit = Assert.Single(options.MaxPulseAgeByBeacon);
+        var expectedLimit = TimeSpan.FromMinutes(30);
+        Assert.Equal(CurbyDefaults.QuantumBeaconName, limit.Key);
+        Assert.Equal(expectedLimit, limit.Value);
+        Assert.DoesNotContain(CurbyDefaults.BeaconName, options.MaxPulseAgeByBeacon.Keys);
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithHostLimit_KeepsIt()
+    {
+        var services = new ServiceCollection();
+        var hostLimit = TimeSpan.FromMinutes(45);
+        services
+            .AddRandomness(options =>
+                options.MaxPulseAgeByBeacon[CurbyDefaults.QuantumBeaconName] = hostLimit
+            )
+            .AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
+
+        var limit = options.MaxPulseAgeByBeacon[CurbyDefaults.QuantumBeaconName];
+        Assert.Equal(hostLimit, limit);
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithLongerMaxPulseAge_AddsNoLimit()
+    {
+        var services = new ServiceCollection();
+        var hostMaxAge = TimeSpan.FromHours(1);
+        services.AddRandomness(options => options.MaxPulseAge = hostMaxAge).AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
+
+        Assert.Empty(options.MaxPulseAgeByBeacon);
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithMaxPulseAgeOfThirtyMinutes_AddsNoLimit()
+    {
+        var services = new ServiceCollection();
+        var hostMaxAge = TimeSpan.FromMinutes(30);
+        services.AddRandomness(options => options.MaxPulseAge = hostMaxAge).AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
+
+        Assert.Empty(options.MaxPulseAgeByBeacon);
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithInvalidQuantumChain_FailsTheHostAtStart()
+    {
+        var settings = new HostApplicationBuilderSettings();
+        var builder = Host.CreateEmptyApplicationBuilder(settings);
+        builder
+            .Services.AddRandomness(options => options.Mode = BeaconMode.Offline)
+            .AddCurbyQuantumBeacon(options => options.QuantumChainId = "not-a-cid");
+        using var host = builder.Build();
+
+        var exception = await Assert.ThrowsAsync<OptionsValidationException>(() =>
+            host.StartAsync()
+        );
+
+        Assert.Contains(
+            "RandomnessBeacons:Curby:QuantumChainId",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithConfigure_AppliesTheOptions()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyQuantumBeacon(options => options.MaxResponseBytes = 8192);
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<CurbyBeaconOptions>>().Value;
+
+        Assert.Equal(8192, options.MaxResponseBytes);
     }
 
     #endregion

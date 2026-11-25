@@ -10,9 +10,23 @@ namespace NCode.Randomness.Curby.Tests.Twine;
 
 public class TwineVerificationTests
 {
+    private const string RngFamily = "rng";
+
     private static Cid Pinned { get; } = Cid.Parse(CurbyFixtures.ChainId);
 
     private static DateTimeOffset Start { get; } = new(2026, 11, 25, 0, 0, 0, TimeSpan.Zero);
+
+    internal static TwineDocument Document(string json) =>
+        TwineDocument.Parse(JsonElement.Parse(json));
+
+    internal static TwineChain VerifyCurbyChain()
+    {
+        var chainDocument = Document(CurbyFixtures.Chain);
+        return TwineChain.Verify(chainDocument, Pinned, RngFamily);
+    }
+
+    private static List<JsonElement> RoundPulses() =>
+        [.. JsonElement.Parse(CurbyQuantumFixtures.RoundJson).EnumerateArray()];
 
     #region CURBy Fixture Tests
 
@@ -79,9 +93,10 @@ public class TwineVerificationTests
     public void Verify_WithCurbyChainAgainstAnotherPin_Throws()
     {
         using var builder = new TwineBuilder();
+        var chainDocument = Document(CurbyFixtures.Chain);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
-            TwineChain.Verify(Document(CurbyFixtures.Chain), builder.ChainCid)
+            TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily)
         );
 
         Assert.Contains("pinned", exception.Message, StringComparison.Ordinal);
@@ -109,14 +124,110 @@ public class TwineVerificationTests
 
     #endregion
 
+    #region Parse Tests
+
+    [Fact]
+    public void Parse_WithCurbyQDocuments_RecomputesEveryCid()
+    {
+        var bellPulse = CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex);
+        var firstSeedPulse = CurbyQuantumFixtures.SeedPulse(
+            CurbyQuantumFixtures.FirstSeedPulseIndex
+        );
+        var secondSeedPulse = CurbyQuantumFixtures.SeedPulse(
+            CurbyQuantumFixtures.SecondSeedPulseIndex
+        );
+        var thirdSeedPulse = CurbyQuantumFixtures.SeedPulse(
+            CurbyQuantumFixtures.ThirdSeedPulseIndex
+        );
+        List<string> documents =
+        [
+            CurbyQuantumFixtures.Chain,
+            CurbyQuantumFixtures.BellChain,
+            CurbyQuantumFixtures.SeedChain,
+            bellPulse,
+            firstSeedPulse,
+            secondSeedPulse,
+            thirdSeedPulse,
+        ];
+        var roundDocuments = RoundPulses().Select(element => element.GetRawText()).ToList();
+        documents.AddRange(roundDocuments);
+
+        foreach (var json in documents)
+        {
+            var document = Document(json);
+            var expected = CurbyFixtures.CidOf(json);
+            var actual = document.Cid.ToString();
+
+            Assert.Equal(expected, actual);
+        }
+    }
+
+    #endregion
+
+    #region Verify Tests
+
+    [Fact]
+    public void Verify_WithCurbyQPulses_AcceptsEachSignature()
+    {
+        var quantumDocument = Document(CurbyQuantumFixtures.Chain);
+        var quantumCid = Cid.Parse(CurbyQuantumFixtures.ChainId);
+        var bellDocument = Document(CurbyQuantumFixtures.BellChain);
+        var bellCid = Cid.Parse(CurbyQuantumFixtures.BellChainId);
+        var seedDocument = Document(CurbyQuantumFixtures.SeedChain);
+        var seedCid = Cid.Parse(CurbyQuantumFixtures.SeedChainId);
+        using var quantum = TwineChain.Verify(quantumDocument, quantumCid, "diqrng");
+        using var bell = TwineChain.Verify(bellDocument, bellCid, "bell");
+        using var seed = TwineChain.Verify(seedDocument, seedCid, null);
+
+        var round = RoundPulses()
+            .Select(element =>
+            {
+                var json = element.GetRawText();
+                var document = Document(json);
+                return TwineSignedPulse.Verify(document, quantum);
+            })
+            .ToList();
+        var responseJson = CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex);
+        var responseDocument = Document(responseJson);
+        var response = TwineSignedPulse.Verify(responseDocument, bell);
+        var seeds = new[]
+        {
+            CurbyQuantumFixtures.FirstSeedPulseIndex,
+            CurbyQuantumFixtures.SecondSeedPulseIndex,
+            CurbyQuantumFixtures.ThirdSeedPulseIndex,
+        }
+            .Select(index =>
+            {
+                var seedJson = CurbyQuantumFixtures.SeedPulse(index);
+                var document = Document(seedJson);
+                return TwineSignedPulse.Verify(document, seed);
+            })
+            .ToList();
+        var requestId = round[0].Cid.ToString();
+        var precommitId = round[1].Cid.ToString();
+        var resultId = round[2].Cid.ToString();
+        var responseId = response.Cid.ToString();
+        var seedPulseId = seeds[2].Cid.ToString();
+
+        Assert.Equal(3, round.Count);
+        Assert.Equal(CurbyQuantumFixtures.RequestId, requestId);
+        Assert.Equal(CurbyQuantumFixtures.PrecommitId, precommitId);
+        Assert.Equal(CurbyQuantumFixtures.ResultId, resultId);
+        Assert.Equal(CurbyQuantumFixtures.BellResponseId, responseId);
+        Assert.Equal(CurbyQuantumFixtures.SeedPulseId, seedPulseId);
+    }
+
+    #endregion
+
     #region Chain Rule Tests
 
     [Fact]
     public void Verify_WithBuiltChain_Succeeds()
     {
         using var builder = new TwineBuilder();
+        var chainDocument = Document(builder.ChainJson);
 
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
 
         Assert.Equal(builder.ChainCid, chain.Cid);
     }
@@ -125,21 +236,60 @@ public class TwineVerificationTests
     public void Verify_WithUnknownSpecification_Throws()
     {
         using var builder = new TwineBuilder(specification: "twine/2.0.x/rng/1.0.x");
+        var chainDocument = Document(builder.ChainJson);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
-            TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid)
+            TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily)
         );
 
         Assert.Contains("twine/2.0.x", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
+    public void Verify_WithChainOfAnotherFamily_Throws()
+    {
+        using var builder = new TwineBuilder(specification: "twine/1.0.x/bell/1.0.x");
+        var document = Document(builder.ChainJson);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwineChain.Verify(document, builder.ChainCid, RngFamily)
+        );
+
+        Assert.Contains("not twine/1.x/rng/1.x", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithoutFamily_AcceptsAnyTwineOneChain()
+    {
+        using var builder = new TwineBuilder(specification: "twine/1.0.x/bell/1.0.x");
+        var document = Document(builder.ChainJson);
+
+        using var chain = TwineChain.Verify(document, builder.ChainCid, null);
+
+        Assert.Equal(builder.ChainCid, chain.Cid);
+    }
+
+    [Fact]
+    public void Verify_WithoutFamilyAndAnotherTwineVersion_Throws()
+    {
+        using var builder = new TwineBuilder(specification: "twine/2.0.x/mirror/1.0.x");
+        var document = Document(builder.ChainJson);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwineChain.Verify(document, builder.ChainCid, null)
+        );
+
+        Assert.Contains("not twine/1.x.", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Verify_WithShortKey_Throws()
     {
         using var builder = new TwineBuilder(keySize: 1024);
+        var chainDocument = Document(builder.ChainJson);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
-            TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid)
+            TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily)
         );
 
         Assert.Contains("2048", exception.Message, StringComparison.Ordinal);
@@ -155,9 +305,10 @@ public class TwineVerificationTests
     public void Verify_WithDisallowedHeader_Throws(string header)
     {
         using var builder = new TwineBuilder(header: header);
+        var chainDocument = Document(builder.ChainJson);
 
         Assert.Throws<TwineFormatException>(() =>
-            TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid)
+            TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily)
         );
     }
 
@@ -165,8 +316,9 @@ public class TwineVerificationTests
     public void Verify_WithHeaderNamingTypeAndKey_Succeeds()
     {
         using var builder = new TwineBuilder(header: """{"alg":"RS256","typ":"JWT","kid":"1"}""");
+        var chainDocument = Document(builder.ChainJson);
 
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
 
         Assert.Equal(builder.ChainCid, chain.Cid);
     }
@@ -179,7 +331,8 @@ public class TwineVerificationTests
     public void Verify_WithBuiltPulses_FollowEachOther()
     {
         using var builder = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var pulses = builder
             .Pulses(3, Start)
             .Select(pulse => TwinePulse.Verify(Document(pulse.Json), chain))
@@ -195,7 +348,8 @@ public class TwineVerificationTests
     public void Verify_WithSignatureOverOtherContent_Throws()
     {
         using var builder = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
         var other = builder.PulseContent(2, null, new byte[64], new byte[64], Start);
         var forged = builder.Seal(content, builder.Sign(other));
@@ -212,7 +366,8 @@ public class TwineVerificationTests
     {
         using var builder = new TwineBuilder();
         using var impostor = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
         var forged = builder.Seal(content, impostor.Sign(content));
 
@@ -227,7 +382,8 @@ public class TwineVerificationTests
     public void VerifyFollows_WhenSaltBreaksThePrecommitment_Throws()
     {
         using var builder = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var first = builder.Pulses(1, Start)[0];
         var content = builder.PulseContent(
             1,
@@ -249,7 +405,8 @@ public class TwineVerificationTests
     public void VerifyFollows_WhenRoundIsNotTheNext_Throws()
     {
         using var builder = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var first = builder.Pulses(1, Start)[0];
         var content = builder.PulseContent(
             5,
@@ -279,7 +436,8 @@ public class TwineVerificationTests
     )
     {
         using var builder = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
         var payload = Ipld.Map(
             ("pre", Ipld.Bytes([0x14, 0x40, .. new byte[preLength - 2]])),
@@ -333,7 +491,8 @@ public class TwineVerificationTests
         // Flipping an unused trailing bit spells the same signature another way; the spelling is hashed into the
         // pulse's CID, so accepting it would let a server grind the randomness.
         using var builder = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
         var signature = builder.Sign(content);
         const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -351,7 +510,8 @@ public class TwineVerificationTests
     public void Verify_WithSignatureHoldingWhiteSpace_Throws()
     {
         using var builder = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
         var signature = builder.Sign(content);
         var respelled = builder.Seal(content, signature[..^4] + " " + signature[^4..]);
@@ -367,7 +527,8 @@ public class TwineVerificationTests
     public void Verify_WithSignatureLongerThanTheModulus_Throws()
     {
         using var builder = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
         var parts = builder.Sign(content).Split('.');
         var padded = System.Buffers.Text.Base64Url.EncodeToString([
@@ -387,7 +548,8 @@ public class TwineVerificationTests
     public void Verify_WithNegativeIndex_Throws()
     {
         using var builder = new TwineBuilder();
-        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var chainDocument = Document(builder.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily);
         var content = builder.PulseContent(-1, null, new byte[64], new byte[64], Start);
 
         Assert.Throws<TwineFormatException>(() =>
@@ -396,10 +558,4 @@ public class TwineVerificationTests
     }
 
     #endregion
-
-    internal static TwineDocument Document(string json) =>
-        TwineDocument.Parse(JsonElement.Parse(json));
-
-    private static TwineChain VerifyCurbyChain() =>
-        TwineChain.Verify(Document(CurbyFixtures.Chain), Pinned);
 }

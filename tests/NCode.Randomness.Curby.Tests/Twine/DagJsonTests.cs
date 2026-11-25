@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using System.Text.Json;
 using NCode.Randomness.Curby.Tests.Fixtures;
 using NCode.Randomness.Curby.Twine;
@@ -55,14 +56,35 @@ public class DagJsonTests
         Assert.Contains("'a'", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Read_WithIntegerBeyondInt64_Throws()
+    {
+        Assert.Throws<TwineFormatException>(() => Read("18446744073709551615"));
+    }
+
     [Theory]
     [InlineData("1.5")]
     [InlineData("1e3")]
     [InlineData("1.0")]
-    [InlineData("18446744073709551615")]
-    public void Read_WithNumberThatIsNotAnInteger_Throws(string json)
+    [InlineData("-0.0")]
+    [InlineData("1.0842021724855042e-20")]
+    public void Read_WithFractionOrExponent_ReadsAFloat(string json)
     {
-        Assert.Throws<TwineFormatException>(() => Read(json));
+        var read = Read(json);
+        var node = Assert.IsType<IpldFloat>(read);
+        var expected = double.Parse(json, NumberStyles.Float, CultureInfo.InvariantCulture);
+        var expectedBits = BitConverter.DoubleToInt64Bits(expected);
+        var actualBits = BitConverter.DoubleToInt64Bits(node.Value);
+
+        Assert.Equal(expectedBits, actualBits);
+    }
+
+    [Fact]
+    public void Read_WithFloatBeyondDouble_Throws()
+    {
+        var exception = Assert.Throws<TwineFormatException>(() => Read("1e400"));
+
+        Assert.Contains("not a finite", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

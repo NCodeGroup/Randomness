@@ -69,6 +69,22 @@ public class RandomnessServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public async Task AddRandomness_WithConfiguration_BindsBeaconLimits()
+    {
+        var configuration = Configure(("MaxPulseAgeByBeacon:b", "00:30:00"));
+        var beacon = new FakeBeacon("b");
+        var services = new ServiceCollection();
+        services.AddRandomness(configuration);
+        services.AddSingleton<IRandomnessBeacon>(beacon);
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
+
+        var expected = TimeSpan.FromMinutes(30);
+        Assert.Equal(expected, options.MaxPulseAgeByBeacon["b"]);
+    }
+
+    [Fact]
     public async Task AddRandomness_WithMisspelledConfigurationKey_FailsOnRead()
     {
         var configuration = Configure(("Mdoe", "Offline"));

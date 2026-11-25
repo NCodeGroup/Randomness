@@ -4,7 +4,7 @@
 namespace NCode.Randomness.Curby;
 
 /// <summary>
-/// Settings for the CURBy beacon, bound from the <c>RandomnessBeacons:Curby</c> configuration section, beside the <c>Randomness</c> section of the core options, whose strict binding refuses any key it does not know.
+/// Settings for the CURBy and CURBy-Q beacons, which share them, bound from the <c>RandomnessBeacons:Curby</c> configuration section, beside the <c>Randomness</c> section of the core options, whose strict binding refuses any key it does not know.
 /// </summary>
 public sealed class CurbyBeaconOptions
 {
@@ -24,6 +24,16 @@ public sealed class CurbyBeaconOptions
     /// Gets or sets the content identifier of the chain to trust. The default is <see cref="CurbyDefaults.RngChainId"/>.
     /// </summary>
     public string ChainId { get; set; } = CurbyDefaults.RngChainId;
+
+    /// <summary>
+    /// Gets or sets the content identifier of the CURBy-Q chain to trust. The default is <see cref="CurbyDefaults.QuantumChainId"/>.
+    /// </summary>
+    public string QuantumChainId { get; set; } = CurbyDefaults.QuantumChainId;
+
+    /// <summary>
+    /// Gets or sets the content identifier of the Bell chain to trust, on which the Bell experiment answers each CURBy-Q request. The default is <see cref="CurbyDefaults.BellChainId"/>.
+    /// </summary>
+    public string BellChainId { get; set; } = CurbyDefaults.BellChainId;
 
     /// <summary>
     /// Gets or sets the largest response body read, in bytes. The default is 256 KiB; a pulse is about 4 KiB.

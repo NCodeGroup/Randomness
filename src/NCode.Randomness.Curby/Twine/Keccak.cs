@@ -7,12 +7,14 @@ using System.Numerics;
 namespace NCode.Randomness.Curby.Twine;
 
 /// <summary>
-/// SHA3-512 as FIPS 202 specifies it: the Keccak-f[1600] permutation in a sponge with a rate of 72 bytes and the SHA-3
-/// domain padding 0x06 ... 0x80. It hashes only public data here, so it makes no constant-time claim.
+/// SHA3-512 (rate 72, padding 0x06) and SHAKE256 (rate 136, padding 0x1F) as FIPS 202 specifies them: the Keccak-f[1600]
+/// permutation in a sponge with the padding 0x80 in the last byte of the rate. It hashes only public data here, so it
+/// makes no constant-time claim.
 /// </summary>
 internal static class Keccak
 {
-    private const int Rate = 72;
+    private const int Sha3_512Rate = 72;
+    private const int Shake256Rate = 136;
     private const int Rounds = 24;
 
     private static ReadOnlySpan<ulong> RoundConstants =>
@@ -81,17 +83,17 @@ internal static class Keccak
 
         Span<ulong> state = stackalloc ulong[25];
         state.Clear();
-        while (source.Length >= Rate)
+        while (source.Length >= Sha3_512Rate)
         {
-            Absorb(state, source[..Rate]);
-            source = source[Rate..];
+            Absorb(state, source[..Sha3_512Rate]);
+            source = source[Sha3_512Rate..];
         }
 
-        Span<byte> last = stackalloc byte[Rate];
+        Span<byte> last = stackalloc byte[Sha3_512Rate];
         last.Clear();
         source.CopyTo(last);
         last[source.Length] ^= 0x06;
-        last[Rate - 1] ^= 0x80;
+        last[Sha3_512Rate - 1] ^= 0x80;
         Absorb(state, last);
         for (var i = 0; i < Sha3.Sha3_512Length / sizeof(ulong); i++)
         {
@@ -99,9 +101,56 @@ internal static class Keccak
         }
     }
 
+    /// <summary>
+    /// Computes the SHAKE256 extendable-output function of <paramref name="source"/>, filling
+    /// <paramref name="destination"/> with output.
+    /// </summary>
+    /// <param name="source">The data to hash.</param>
+    /// <param name="destination">The buffer to fill; its length sets the output length.</param>
+    public static void Shake256(ReadOnlySpan<byte> source, Span<byte> destination)
+    {
+        Span<ulong> state = stackalloc ulong[25];
+        state.Clear();
+        while (source.Length >= Shake256Rate)
+        {
+            Absorb(state, source[..Shake256Rate]);
+            source = source[Shake256Rate..];
+        }
+
+        Span<byte> block = stackalloc byte[Shake256Rate];
+        block.Clear();
+        source.CopyTo(block);
+        block[source.Length] ^= 0x1F;
+        block[Shake256Rate - 1] ^= 0x80;
+        Absorb(state, block);
+
+        while (true)
+        {
+            for (var i = 0; i < Shake256Rate / sizeof(ulong); i++)
+            {
+                BinaryPrimitives.WriteUInt64LittleEndian(block[(i * sizeof(ulong))..], state[i]);
+            }
+
+            var count = Math.Min(Shake256Rate, destination.Length);
+            block[..count].CopyTo(destination);
+            destination = destination[count..];
+            if (destination.IsEmpty)
+            {
+                return;
+            }
+
+            Permute(state);
+        }
+    }
+
+    /// <summary>
+    /// XORs a block of whole 8-byte lanes into the start of the state and permutes it.
+    /// </summary>
+    /// <param name="state">The 25 lanes of the sponge state.</param>
+    /// <param name="block">The block to absorb, whose length is the sponge's rate.</param>
     private static void Absorb(Span<ulong> state, ReadOnlySpan<byte> block)
     {
-        for (var i = 0; i < Rate / sizeof(ulong); i++)
+        for (var i = 0; i < block.Length / sizeof(ulong); i++)
         {
             state[i] ^= BinaryPrimitives.ReadUInt64LittleEndian(block[(i * sizeof(ulong))..]);
         }

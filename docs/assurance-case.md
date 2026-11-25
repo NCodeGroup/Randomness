@@ -28,13 +28,14 @@ network, the beacon API, any mirror, and the beacon operator's future behavior a
 | --- | --- | --- |
 | Attacker reads the beacon and predicts secret output | Yes | R1: beacon pulses are only additional input to an OS-seeded HMAC_DRBG ([ADR-1000](decisions/1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md)) |
 | A compromised API or mirror serves forged pulses or a forged key | Yes | R2: the chain CID is pinned and fixes the key; every document's CID and RS256 signature is checked ([ADR-1003](decisions/1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md)) |
-| Replay of an old pulse, or a rolled-back chain | Yes | R3: rounds must not decrease, and pulses older than `MaxPulseAge` are refused |
+| Replay of an old pulse, or a rolled-back chain | Yes | R3: rounds must not decrease, and pulses older than their beacon's limit (`MaxPulseAge`, or its `MaxPulseAgeByBeacon` entry) are refused |
 | Equivocation: two different pulses for one round | Yes | R3: a second pulse for an accepted round with other content is refused, and a beacon cannot switch chains |
 | A server grinds a pulse's CID, its randomness, without changing what is signed | Yes | R2: documents must have exactly the members Twine defines, and signatures must be canonical base64url of exactly the modulus length |
 | The beacon operator grinds its own output | Partly | RS256 (deterministic) signatures and the salt precommitment, as CURBy's protocol defines; the operator still knows a pulse before publishing it, so draws commit to a future round ([draws.md](draws.md)) |
+| The CURBy-Q operator publishes randomness its Bell data and seed don't produce | Partly | Pinned CURBy-Q and Bell chains, signatures, the Bell response and seed in causal order, and the seed's expansion are checked; the hypothesis test and Trevisan extraction are checked only out of process by `curby_verify` ([ADR-1007](decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)) |
 | A draw organizer picks a favorable pulse | Yes | The commit-first procedure in [draws.md](draws.md) |
 | Beacon outage or slowness | Yes | R4: background collection, timeouts, back-off, circuit breaker, `Degraded` health ([ADR-1002](decisions/1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md)) |
-| Oversized or malformed responses | Yes | Byte limit while streaming, strict DAG-JSON, no redirects, JSON content type only |
+| Oversized or malformed responses | Yes | Byte limit while streaming, strict DAG-JSON, no redirects, JSON content type only, or `application/octet-stream` for CURBy-Q's round parameters, every response read under the `MaxResponseBytes` streaming limit |
 | Modulo bias in ranges | Yes | Rejection sampling in every bounded value |
 | Disclosure of process memory | No | Out of scope; R6 limits what remains after disposal |
 | A weak operating-system CSPRNG | Partly | Fresh beacon pulses diversify every reseed, for example after a virtual machine snapshot is restored |
@@ -61,8 +62,9 @@ network, the beacon API, any mirror, and the beacon operator's future behavior a
 ## Evidence
 
 - **Known answers:** the HMAC_DRBG passes the 32 SHA-512 vectors of NIST CAVP; the managed SHA3-512 matches an
-  independent implementation and the platform's; the Twine verifier accepts documents CURBy served and recomputes
-  their CIDs; draws match a reference implementation that shares no code with the library.
+  independent implementation and the platform's, as does the managed SHAKE256; the Twine verifier accepts documents
+  CURBy served, CURBy-Q's included, and recomputes their CIDs; draws match a reference implementation that shares no
+  code with the library.
 - **Negative tests:** each verification rule is broken in isolation with documents signed by a test key: wrong pin,
   wrong chain, bad or foreign signature, disallowed JWS headers, broken precommitment, wrong ordering, malformed
   payloads; and each acceptance rule (rollback, equivocation, staleness).
