@@ -444,6 +444,27 @@ public class QuantumRoundTests
         );
     }
 
+    [Fact]
+    public void IsBellResponse_WithMistypedRef_Throws()
+    {
+        using var builder = new QuantumRoundBuilder();
+        var built = builder.Build();
+        var result = BuiltResult(builder, built);
+        var dataHash = Ipld.Text(builder.DataHash);
+        var reference = Ipld.Text(result.Request.Cid.ToString());
+        var payload = Ipld.Map(("dataHash", dataHash), ("ref", reference));
+        var content = builder.Bell.Content(0, null, payload);
+        var sealedPulse = builder.Bell.Seal(content);
+        var chainDocument = TwineVerificationTests.Document(builder.Bell.ChainJson);
+        using var chain = TwineChain.Verify(chainDocument, builder.Bell.ChainCid, "bell");
+        var pulseDocument = TwineVerificationTests.Document(sealedPulse.Json);
+        var response = TwineSignedPulse.Verify(pulseDocument, chain);
+
+        var exception = Assert.Throws<TwineFormatException>(() => result.IsBellResponse(response));
+
+        Assert.Contains("'ref' has the wrong type", exception.Message, StringComparison.Ordinal);
+    }
+
     #endregion
 
     #region MixesPrecommit Tests

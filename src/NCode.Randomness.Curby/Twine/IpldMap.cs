@@ -23,16 +23,20 @@ internal sealed class IpldMap(ImmutableArray<KeyValuePair<string, IpldNode>> ent
             ? value.As<T>(key)
             : throw new TwineFormatException($"The field '{key}' is missing.");
 
+    /// <summary>
+    /// Reads the field <paramref name="key"/>: returns false when the map has no such field, and throws a
+    /// <see cref="TwineFormatException"/> when the field holds another kind of node than <typeparamref name="T"/>.
+    /// </summary>
     public bool TryGet<T>(string key, [NotNullWhen(true)] out T? value)
         where T : IpldNode
     {
-        if (Lookup.TryGetValue(key, out var node) && node is T typed)
+        if (!Lookup.TryGetValue(key, out var node))
         {
-            value = typed;
-            return true;
+            value = null;
+            return false;
         }
 
-        value = null;
-        return false;
+        value = node.As<T>(key);
+        return true;
     }
 }

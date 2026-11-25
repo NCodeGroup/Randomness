@@ -117,19 +117,33 @@ public class DagJsonTests
         );
     }
 
+    #endregion
+
+    #region TryGet Tests
+
     [Fact]
-    public void TryGet_WithMissingOrMistypedField_ReturnsFalse()
+    public void TryGet_WithMissingField_ReturnsFalse()
     {
         var read = Read("""{"a":1}""");
         var map = Assert.IsType<IpldMap>(read);
 
-        var foundMissing = map.TryGet<IpldInteger>("b", out var missing);
-        var foundMistyped = map.TryGet<IpldString>("a", out var mistyped);
+        var found = map.TryGet<IpldInteger>("b", out var value);
 
-        Assert.False(foundMissing);
-        Assert.Null(missing);
-        Assert.False(foundMistyped);
-        Assert.Null(mistyped);
+        Assert.False(found);
+        Assert.Null(value);
+    }
+
+    [Fact]
+    public void TryGet_WithMistypedField_Throws()
+    {
+        var read = Read("""{"a":1}""");
+        var map = Assert.IsType<IpldMap>(read);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            map.TryGet<IpldString>("a", out _)
+        );
+
+        Assert.Contains("wrong type", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -141,7 +155,8 @@ public class DagJsonTests
         var found = map.TryGet<IpldInteger>("a", out var value);
 
         Assert.True(found);
-        Assert.Equal(1, value!.Value);
+        Assert.NotNull(value);
+        Assert.Equal(1, value.Value);
     }
 
     #endregion

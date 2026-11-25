@@ -64,7 +64,8 @@ internal sealed class QuantumResult
 
     /// <summary>
     /// Returns whether <paramref name="pulse"/>, a pulse of the Bell chain, is the response to this round's request:
-    /// its payload links the request in <c>ref</c> and holds a <c>dataHash</c>, which must be the precommit's.
+    /// its payload links the request in <c>ref</c> and holds a <c>dataHash</c>, which must be the precommit's. A
+    /// <c>ref</c> or <c>dataHash</c> of another type refuses the pulse.
     /// </summary>
     /// <param name="pulse">The Bell pulse to examine.</param>
     public bool IsBellResponse(TwineSignedPulse pulse)
