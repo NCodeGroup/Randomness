@@ -14,9 +14,10 @@ public sealed class NistBeaconOptions
     public const string SectionName = "RandomnessBeacons:Nist";
 
     /// <summary>
-    /// Gets or sets the base address of the NIST HTTP API, an absolute <c>https</c> URL ending in <c>/</c>. The default
-    /// is <see cref="NistDefaults.BaseAddress"/>. A mirror serves the same data: every pulse is verified against the
-    /// pinned certificates, so a mirror can withhold pulses but never forge one.
+    /// Gets or sets the base address of the NIST HTTP API, an absolute <c>https</c> URL ending in <c>/</c>, with no
+    /// user info, query or fragment. The default is <see cref="NistDefaults.BaseAddress"/>. A mirror serves the same
+    /// data: every pulse is verified against the pinned certificates, so a mirror can withhold pulses but never forge
+    /// one.
     /// </summary>
     public Uri BaseAddress { get; set; } = new(NistDefaults.BaseAddress);
 

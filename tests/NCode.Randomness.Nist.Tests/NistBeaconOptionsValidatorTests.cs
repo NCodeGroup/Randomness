@@ -27,11 +27,32 @@ public class NistBeaconOptionsValidatorTests
         Assert.True(result.Succeeded);
     }
 
+    [Fact]
+    public void Validate_WithSmallestResponseLimit_Succeeds()
+    {
+        var options = new NistBeaconOptions { MaxResponseBytes = 1024 };
+
+        var result = new NistBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public void Validate_WithChainIndexOne_Succeeds()
+    {
+        var options = new NistBeaconOptions { ChainIndex = 1 };
+
+        var result = new NistBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
     [Theory]
     [InlineData("http://beacon.nist.gov/beacon/2.0/")]
     [InlineData("https://beacon.nist.gov/beacon/2.0")]
     [InlineData("https://beacon.nist.gov/beacon/2.0/?x=1")]
     [InlineData("https://beacon.nist.gov/beacon/2.0/#x")]
+    [InlineData("https://user:secret@beacon.nist.gov/beacon/2.0/")]
     public void Validate_WithUnsafeBaseAddress_Fails(string address)
     {
         var options = new NistBeaconOptions { BaseAddress = new Uri(address) };

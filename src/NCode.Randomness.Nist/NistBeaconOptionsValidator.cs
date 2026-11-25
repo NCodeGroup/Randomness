@@ -12,6 +12,10 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
 {
     private const string Prefix = NistBeaconOptions.SectionName + ":";
 
+    private const int MinResponseBytes = 1024;
+
+    private const long MinChainIndex = 1;
+
     private const int CertificateIdLength = 128;
 
     /// <summary>
@@ -47,18 +51,19 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
             || !address.IsAbsoluteUri
             || address.Scheme != Uri.UriSchemeHttps
             || !address.AbsolutePath.EndsWith('/')
+            || address.UserInfo.Length > 0
             || address.Query.Length > 0
             || address.Fragment.Length > 0
         )
         {
             failures.Add(
-                $"{Prefix}{nameof(options.BaseAddress)} must be an absolute https URL ending in '/', with no query or fragment."
+                $"{Prefix}{nameof(options.BaseAddress)} must be an absolute https URL ending in '/', with no user info, query or fragment."
             );
         }
 
-        if (options.ChainIndex < 1)
+        if (options.ChainIndex < MinChainIndex)
         {
-            failures.Add($"{Prefix}{nameof(options.ChainIndex)} must be at least 1.");
+            failures.Add($"{Prefix}{nameof(options.ChainIndex)} must be at least {MinChainIndex}.");
         }
 
         var ids = options.CertificateIds;
@@ -78,7 +83,7 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
                 if (!IsCertificateId(id))
                 {
                     failures.Add(
-                        $"{Prefix}{nameof(options.CertificateIds)}:{i} is not a certificate identifier: 128 hexadecimal digits."
+                        $"{Prefix}{nameof(options.CertificateIds)}:{i} is not a certificate identifier: {CertificateIdLength} hexadecimal digits."
                     );
                 }
                 else if (!seen.Add(id) && repeated.Add(id))
@@ -90,9 +95,11 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
             }
         }
 
-        if (options.MaxResponseBytes < 1024)
+        if (options.MaxResponseBytes < MinResponseBytes)
         {
-            failures.Add($"{Prefix}{nameof(options.MaxResponseBytes)} must be at least 1024.");
+            failures.Add(
+                $"{Prefix}{nameof(options.MaxResponseBytes)} must be at least {MinResponseBytes}."
+            );
         }
 
         return failures.Count == 0

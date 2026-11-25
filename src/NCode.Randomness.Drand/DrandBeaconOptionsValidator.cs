@@ -12,6 +12,8 @@ internal sealed class DrandBeaconOptionsValidator : IValidateOptions<DrandBeacon
 {
     private const string Prefix = DrandBeaconOptions.SectionName + ":";
 
+    private const int MinResponseBytes = 1024;
+
     public ValidateOptionsResult Validate(string? name, DrandBeaconOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -22,18 +24,21 @@ internal sealed class DrandBeaconOptionsValidator : IValidateOptions<DrandBeacon
             || !address.IsAbsoluteUri
             || address.Scheme != Uri.UriSchemeHttps
             || !address.AbsolutePath.EndsWith('/')
+            || address.UserInfo.Length > 0
             || address.Query.Length > 0
             || address.Fragment.Length > 0
         )
         {
             failures.Add(
-                $"{Prefix}{nameof(options.BaseAddress)} must be an absolute https URL ending in '/', with no query or fragment."
+                $"{Prefix}{nameof(options.BaseAddress)} must be an absolute https URL ending in '/', with no user info, query or fragment."
             );
         }
 
-        if (options.MaxResponseBytes < 1024)
+        if (options.MaxResponseBytes < MinResponseBytes)
         {
-            failures.Add($"{Prefix}{nameof(options.MaxResponseBytes)} must be at least 1024.");
+            failures.Add(
+                $"{Prefix}{nameof(options.MaxResponseBytes)} must be at least {MinResponseBytes}."
+            );
         }
 
         return failures.Count == 0

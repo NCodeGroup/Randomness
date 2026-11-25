@@ -14,9 +14,9 @@ public sealed class DrandBeaconOptions
     public const string SectionName = "RandomnessBeacons:Drand";
 
     /// <summary>
-    /// Gets or sets the base address of the drand HTTP API, an absolute <c>https</c> URL ending in <c>/</c>. The default
-    /// is <see cref="DrandDefaults.BaseAddress"/>. A mirror serves the same data: every round is verified against the
-    /// pinned group key, so a mirror can withhold rounds but never forge one.
+    /// Gets or sets the base address of the drand HTTP API, an absolute <c>https</c> URL ending in <c>/</c>, with no
+    /// user info, query or fragment. The default is <see cref="DrandDefaults.BaseAddress"/>. A mirror serves the same
+    /// data: every round is verified against the pinned group key, so a mirror can withhold rounds but never forge one.
     /// </summary>
     public Uri BaseAddress { get; set; } = new(DrandDefaults.BaseAddress);
 

@@ -15,11 +15,22 @@ public class DrandBeaconOptionsValidatorTests
         Assert.True(result.Succeeded);
     }
 
+    [Fact]
+    public void Validate_WithSmallestResponseLimit_Succeeds()
+    {
+        var options = new DrandBeaconOptions { MaxResponseBytes = 1024 };
+
+        var result = new DrandBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
     [Theory]
     [InlineData("http://api.drand.sh/")]
     [InlineData("https://api.drand.sh/v2")]
     [InlineData("https://api.drand.sh/?x=1")]
     [InlineData("https://api.drand.sh/#x")]
+    [InlineData("https://user:secret@api.drand.sh/")]
     public void Validate_WithUnsafeBaseAddress_Fails(string address)
     {
         var options = new DrandBeaconOptions { BaseAddress = new Uri(address) };
