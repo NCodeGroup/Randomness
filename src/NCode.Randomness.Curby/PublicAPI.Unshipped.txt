@@ -2,7 +2,10 @@
 const NCode.Randomness.Curby.CurbyBeaconOptions.SectionName = "RandomnessBeacons:Curby" -> string!
 const NCode.Randomness.Curby.CurbyDefaults.BaseAddress = "https://api.entwine.me/" -> string!
 const NCode.Randomness.Curby.CurbyDefaults.BeaconName = "curby" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.BellChainId = "bafyriqe3zxf5g4ifgqhea5zozxpdcfi5qcpkfpogtxzbizmmuxdjuzuq44a2cifbr7xplo4kcfsdz2c5pxfxektavrqxxb3nvbmclxz7qiz6e" -> string!
 const NCode.Randomness.Curby.CurbyDefaults.HttpClientName = "NCode.Randomness.Curby" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.QuantumBeaconName = "curby-q" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.QuantumChainId = "bafyriqhijw5soalbtppuwwjbskfiriqy6swa5qd5trgbzx4nypnu7mp7iyhx7m2iin2nxnglmngvjgirzb7bvlisxq3uygoik7ozbybxnftiw" -> string!
 const NCode.Randomness.Curby.CurbyDefaults.RngChainId = "bafyriqci6f3st2mg7gq733ho4zvvth32zpy2mtiylixwmhoz6d627eo3jfpmbxepe54u2zdvymonq5sp3armtm4rodxsynsirr5g3xsbd3q4s" -> string!
 NCode.Randomness.Curby.CurbyBeaconOptions
 NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.get -> System.Uri!
