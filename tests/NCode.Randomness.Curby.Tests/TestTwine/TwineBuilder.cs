@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers.Text;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using NCode.Randomness.Curby.Twine;
@@ -16,6 +17,12 @@ namespace NCode.Randomness.Curby.Tests.TestTwine;
 /// </summary>
 internal sealed class TwineBuilder : IDisposable
 {
+    /// <summary>
+    /// Formats <paramref name="time"/> as a pulse's <c>timestamp</c>: UTC with milliseconds, as CURBy writes it.
+    /// </summary>
+    internal static string FormatTimestamp(DateTimeOffset time) =>
+        time.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
+
     public TwineBuilder(
         int keySize = 2048,
         string specification = "twine/1.0.x/rng/1.0.x",
@@ -92,10 +99,7 @@ internal sealed class TwineBuilder : IDisposable
         var nextDigest = Sha3.HashData512(nextSecret);
         var pre = Ipld.Bytes([0x14, 0x40, .. nextDigest]);
         var saltBytes = Ipld.Bytes(salt);
-        var time = timestamp.UtcDateTime.ToString(
-            "yyyy-MM-dd'T'HH:mm:ss.fff'Z'",
-            System.Globalization.CultureInfo.InvariantCulture
-        );
+        var time = FormatTimestamp(timestamp);
         var timestampText = Ipld.Text(time);
         var payload = Ipld.Map(("pre", pre), ("salt", saltBytes), ("timestamp", timestampText));
         return Content(index, previous, payload);

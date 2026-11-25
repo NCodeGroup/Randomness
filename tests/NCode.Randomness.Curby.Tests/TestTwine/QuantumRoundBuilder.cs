@@ -1,7 +1,6 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using NCode.Randomness.Curby.Twine;
@@ -18,10 +17,12 @@ internal sealed class QuantumRoundBuilder : IDisposable
 
     private static byte[] DefaultDataDigest { get; } = Sha3.HashData512("bell data"u8);
 
-    private static string Timestamp(ref int clock) =>
-        Start
-            .AddSeconds(clock++)
-            .UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
+    /// <summary>
+    /// Formats the timestamp of the pulse at position <paramref name="index"/> of the round, one second after the
+    /// pulse before it.
+    /// </summary>
+    private static string Timestamp(int index) =>
+        TwineBuilder.FormatTimestamp(Start.AddSeconds(index));
 
     public TwineBuilder Quantum { get; } = new(specification: "twine/1.0.x/diqrng/1.0.x");
 
@@ -29,59 +30,81 @@ internal sealed class QuantumRoundBuilder : IDisposable
 
     public TwineBuilder Seed { get; } = new(specification: "twine/1.0.x/mirror/1.0.x");
 
+    /// <summary>
+    /// Gets the round number the pulses carry.
+    /// </summary>
     public long Round { get; init; } = 7;
 
     /// <summary>
-    /// The seed length in bits.
+    /// Gets the seed length in bits.
     /// </summary>
     public int SeedLength { get; init; } = 2048;
 
+    /// <summary>
+    /// Gets the <c>dataHash</c> of the precommit and the randomness pulse.
+    /// </summary>
     public string DataHash { get; init; } = Convert.ToHexStringLower(DefaultDataDigest);
 
     /// <summary>
-    /// The <c>dataHash</c> of the Bell response, or null for <see cref="DataHash"/>.
+    /// Gets the <c>dataHash</c> of the Bell response, or null for <see cref="DataHash"/>.
     /// </summary>
     public string? BellResponseDataHash { get; init; }
 
+    /// <summary>
+    /// Gets how many status pulses follow the Bell response.
+    /// </summary>
     public int BellPulsesAfterResponse { get; init; } = 1;
 
+    /// <summary>
+    /// Gets the precommit's <c>rule.count</c>, the number of seed pulses between the first that mixes in the
+    /// precommit and the one the seed expands from.
+    /// </summary>
     public int SeedCount { get; init; } = 1;
 
     /// <summary>
-    /// Whether the Bell chain is built from status pulses only, so no pulse answers the request.
+    /// Gets whether the Bell chain is built from status pulses only, so no pulse answers the request.
     /// </summary>
     public bool OmitBellResponse { get; init; }
 
     /// <summary>
-    /// Whether the seed chain starts with the first pulse that mixes in the precommit, and the precommit mixes in no
-    /// seed pulse.
+    /// Gets whether the seed chain starts with the first pulse that mixes in the precommit, and the precommit mixes
+    /// in no seed pulse.
     /// </summary>
     public bool OmitSeedPulseZero { get; init; }
 
     /// <summary>
-    /// Whether the precommit mixes in a pulse of the Bell chain; false leaves the mixin out.
+    /// Gets whether the precommit mixes in a pulse of the Bell chain; false leaves the mixin out.
     /// </summary>
     public bool PrecommitMixesBell { get; init; } = true;
 
     /// <summary>
-    /// Whether the randomness pulse mixes in a pulse of the seed chain; false leaves the mixin out.
+    /// Gets whether the randomness pulse mixes in a pulse of the seed chain; false leaves the mixin out.
     /// </summary>
     public bool ResultMixesSeed { get; init; } = true;
 
     /// <summary>
-    /// How many seed pulses after pulse 0 mix in the precommit, or null for <see cref="SeedCount"/> + 1. The seed
-    /// expands from the pulse <see cref="SeedCount"/> after the first of them either way.
+    /// Gets how many seed pulses after pulse 0 mix in the precommit, or null for <see cref="SeedCount"/> + 1. The
+    /// seed expands from the pulse <see cref="SeedCount"/> after the first of them either way.
     /// </summary>
     public int? SeedPulsesMixingPrecommit { get; init; }
 
+    /// <summary>
+    /// Gets the edit applied to the request pulse's payload.
+    /// </summary>
     public Func<IpldMap, IpldMap> EditRequest { get; init; } = static payload => payload;
 
+    /// <summary>
+    /// Gets the edit applied to the precommit pulse's payload.
+    /// </summary>
     public Func<IpldMap, IpldMap> EditPrecommit { get; init; } = static payload => payload;
 
+    /// <summary>
+    /// Gets the edit applied to the randomness pulse's payload.
+    /// </summary>
     public Func<IpldMap, IpldMap> EditResult { get; init; } = static payload => payload;
 
     /// <summary>
-    /// Writes the parameters document from the expanded seed.
+    /// Gets the function that writes the parameters document from the expanded seed.
     /// </summary>
     public Func<byte[], string> Parameters { get; init; } =
         static seed => $$"""{"nBitsOut":512,"seed":"{{Convert.ToBase64String(seed)}}"}""";
@@ -90,14 +113,15 @@ internal sealed class QuantumRoundBuilder : IDisposable
     {
         var clock = 0;
 
-        var request = BuildRequest(ref clock);
+        var request = BuildRequest(clock);
+        clock++;
 
         var bellPulses = new List<(string Json, Cid Cid)>();
         if (!OmitBellResponse)
         {
             var responseDataHash = Ipld.Text(BellResponseDataHash ?? DataHash);
             var requestLink = Ipld.Link(request.Cid);
-            var responseTime = Timestamp(ref clock);
+            var responseTime = Timestamp(clock++);
             var responseTimestamp = Ipld.Text(responseTime);
             var responseType = Ipld.Text("result");
             var responsePayload = Ipld.Map(
@@ -114,7 +138,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
         while (bellPulses.Count <= BellPulsesAfterResponse)
         {
             var statusCode = Ipld.Integer(0);
-            var statusTime = Timestamp(ref clock);
+            var statusTime = Timestamp(clock++);
             var statusTimestamp = Ipld.Text(statusTime);
             var statusType = Ipld.Text("status");
             var statusPayload = Ipld.Map(
@@ -132,7 +156,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
         if (!OmitSeedPulseZero)
         {
             var firstSeedRound = Ipld.Integer(100);
-            var firstSeedTime = Timestamp(ref clock);
+            var firstSeedTime = Timestamp(clock++);
             var firstSeedTimestamp = Ipld.Text(firstSeedTime);
             var firstSeedPayload = Ipld.Map(
                 ("round", firstSeedRound),
@@ -152,7 +176,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
         var seedChain = Ipld.Link(Seed.ChainCid);
         var seedLength = Ipld.Integer(SeedLength);
         var precommitStage = Ipld.Text("precommit");
-        var precommitTime = Timestamp(ref clock);
+        var precommitTime = Timestamp(clock++);
         var precommitTimestamp = Ipld.Text(precommitTime);
         var precommitMap = Ipld.Map(
             ("dataHash", precommitDataHash),
@@ -188,7 +212,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
         for (var i = firstMixing; i < firstMixing + mixingCount; i++)
         {
             var seedPulseRound = Ipld.Integer(100 + i);
-            var seedPulseTime = Timestamp(ref clock);
+            var seedPulseTime = Timestamp(clock++);
             var seedPulseTimestamp = Ipld.Text(seedPulseTime);
             var seedPulsePayload = Ipld.Map(
                 ("round", seedPulseRound),
@@ -223,7 +247,7 @@ internal sealed class QuantumRoundBuilder : IDisposable
         var randomnessBytes = Ipld.Bytes(randomness);
         var resultRound = Ipld.Integer(Round);
         var resultStage = Ipld.Text("randomness");
-        var resultTime = Timestamp(ref clock);
+        var resultTime = Timestamp(clock++);
         var resultTimestamp = Ipld.Text(resultTime);
         var resultMap = Ipld.Map(
             ("dataHash", resultDataHash),
@@ -256,11 +280,12 @@ internal sealed class QuantumRoundBuilder : IDisposable
     public string ErrorRoundJson(string reason)
     {
         var clock = 0;
-        var request = BuildRequest(ref clock);
+        var request = BuildRequest(clock);
+        clock++;
         var errorReason = Ipld.Text(reason);
         var errorRound = Ipld.Integer(Round);
         var errorStage = Ipld.Text("error");
-        var errorTime = Timestamp(ref clock);
+        var errorTime = Timestamp(clock++);
         var errorTimestamp = Ipld.Text(errorTime);
         var errorPayload = Ipld.Map(
             ("reason", errorReason),
@@ -280,14 +305,17 @@ internal sealed class QuantumRoundBuilder : IDisposable
         Seed.Dispose();
     }
 
-    private (string Json, Cid Cid) BuildRequest(ref int clock)
+    /// <summary>
+    /// Builds the request pulse at position <paramref name="index"/> of the round, which sets its timestamp.
+    /// </summary>
+    private (string Json, Cid Cid) BuildRequest(int index)
     {
         var beta = Ipld.Float(0.5);
         var nBitsOut = Ipld.Integer(512);
         var parameters = Ipld.Map(("beta", beta), ("nBitsOut", nBitsOut));
         var round = Ipld.Integer(Round);
         var stage = Ipld.Text("request");
-        var time = Timestamp(ref clock);
+        var time = Timestamp(index);
         var timestamp = Ipld.Text(time);
         var map = Ipld.Map(
             ("parameters", parameters),
