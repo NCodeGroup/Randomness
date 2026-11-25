@@ -131,13 +131,17 @@ public class RandomnessHostBuilderTests
     {
         public string Name => "named";
 
-        public ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken) =>
-            ValueTask.FromResult(Pulses.Create(Name, 1, DateTimeOffset.UtcNow));
+        public ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken)
+        {
+            var pulse = Pulses.Create(Name, 1, DateTimeOffset.UtcNow);
+            return ValueTask.FromResult(pulse);
+        }
 
-        public ValueTask<BeaconPulse> GetPulseAsync(
-            long round,
-            CancellationToken cancellationToken
-        ) => ValueTask.FromResult(Pulses.Create(Name, round, DateTimeOffset.UtcNow));
+        public ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken)
+        {
+            var pulse = Pulses.Create(Name, round, DateTimeOffset.UtcNow);
+            return ValueTask.FromResult(pulse);
+        }
     }
 
     private sealed class FailingHostedService : IHostedService
