@@ -99,11 +99,13 @@ public sealed class CurbyPulseVerifier
     )
     {
         pulse.VerifyFollows(predecessor);
+        var chainId = chain.Cid.ToString();
+        var id = pulse.Cid.ToString();
         return new BeaconPulse(
             CurbyDefaults.BeaconName,
-            chain.Cid.ToString(),
+            chainId,
             pulse.Index,
-            pulse.Cid.ToString(),
+            id,
             pulse.Timestamp,
             pulse.Cid.Digest
         );
