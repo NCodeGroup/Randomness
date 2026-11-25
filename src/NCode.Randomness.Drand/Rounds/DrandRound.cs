@@ -26,6 +26,10 @@ internal sealed class DrandRound
     /// </summary>
     private const int RandomnessLength = 32;
 
+    // These are the options DrandApi parses a response with.
+    private static JsonDocumentOptions JsonOptions { get; } =
+        new() { MaxDepth = 16, AllowDuplicateProperties = false };
+
     /// <summary>
     /// Gets the domain separation tag of the quicknet signature scheme: RFC 9380 hash-to-curve for G1 with
     /// SHA-256, as the BLS signature ciphersuite names it.
@@ -42,6 +46,36 @@ internal sealed class DrandRound
         Span<byte> bytes = stackalloc byte[sizeof(long)];
         BinaryPrimitives.WriteInt64BigEndian(bytes, round);
         SHA256.HashData(bytes, destination);
+    }
+
+    /// <summary>
+    /// Parses a round document from its UTF-8 JSON, as the HTTP API serves it, and verifies its signature against the
+    /// group public key of <paramref name="chain"/>.
+    /// </summary>
+    /// <param name="utf8Json">The UTF-8 JSON document the chain's endpoint served for one round.</param>
+    /// <param name="chain">The pinned chain.</param>
+    /// <returns>The verified round.</returns>
+    /// <exception cref="DrandFormatException">
+    /// The document is not valid JSON, is malformed, or its signature does not verify.
+    /// </exception>
+    public static DrandRound Verify(ReadOnlySpan<byte> utf8Json, DrandChain chain)
+    {
+        ArgumentNullException.ThrowIfNull(chain);
+
+        JsonElement json;
+        try
+        {
+            json = JsonElement.Parse(utf8Json, JsonOptions);
+        }
+        catch (JsonException exception)
+        {
+            throw new DrandFormatException(
+                $"The drand round is not valid JSON: {exception.Message}",
+                exception
+            );
+        }
+
+        return Verify(json, chain);
     }
 
     /// <summary>
@@ -195,7 +229,7 @@ internal sealed class DrandRound
     }
 
     /// <summary>
-    /// Initializes a round from verified parts; only <see cref="Verify"/> builds a round.
+    /// Initializes a round from verified parts; only <see cref="Verify(JsonElement, DrandChain)"/> builds a round.
     /// </summary>
     /// <param name="round">The number of the round.</param>
     /// <param name="signature">The verified 48-byte signature.</param>
