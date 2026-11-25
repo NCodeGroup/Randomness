@@ -14,6 +14,25 @@ namespace NCode.Randomness.Drand;
 public sealed class DrandRoundVerifier
 {
     /// <summary>
+    /// Returns a verified round as the drand beacon's pulse.
+    /// </summary>
+    /// <param name="chain">The pinned chain the round was verified against.</param>
+    /// <param name="round">The verified round.</param>
+    /// <returns>The beacon pulse.</returns>
+    internal static BeaconPulse ToBeaconPulse(DrandChain chain, DrandRound round)
+    {
+        var id = Convert.ToHexStringLower(round.Signature);
+        return new BeaconPulse(
+            DrandDefaults.BeaconName,
+            chain.Hash,
+            round.Round,
+            id,
+            round.Timestamp,
+            round.Randomness
+        );
+    }
+
+    /// <summary>
     /// Initializes the verifier to pin the quicknet chain.
     /// </summary>
     public DrandRoundVerifier()
@@ -53,24 +72,5 @@ public sealed class DrandRoundVerifier
                 exception
             );
         }
-    }
-
-    /// <summary>
-    /// Returns a verified round as the drand beacon's pulse.
-    /// </summary>
-    /// <param name="chain">The pinned chain the round was verified against.</param>
-    /// <param name="round">The verified round.</param>
-    /// <returns>The beacon pulse.</returns>
-    internal static BeaconPulse ToBeaconPulse(DrandChain chain, DrandRound round)
-    {
-        var id = Convert.ToHexStringLower(round.Signature);
-        return new BeaconPulse(
-            DrandDefaults.BeaconName,
-            chain.Hash,
-            round.Round,
-            id,
-            round.Timestamp,
-            round.Randomness
-        );
     }
 }

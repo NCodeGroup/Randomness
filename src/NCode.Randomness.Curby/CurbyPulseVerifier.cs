@@ -19,27 +19,6 @@ public sealed class CurbyPulseVerifier
     internal const string RngFamily = "rng";
 
     /// <summary>
-    /// Initializes the verifier to pin the CURBy-RNG chain.
-    /// </summary>
-    public CurbyPulseVerifier()
-        : this(CurbyDefaults.RngChainId) { }
-
-    /// <summary>
-    /// Initializes the verifier to pin a chain.
-    /// </summary>
-    /// <param name="chainId">The content identifier (CID) of the chain to pin.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="chainId"/> is <see langword="null"/>.</exception>
-    /// <exception cref="ArgumentException">
-    /// <paramref name="chainId"/> is empty, white space or not a Twine content identifier.
-    /// </exception>
-    public CurbyPulseVerifier(string chainId)
-    {
-        PinnedChain = ParseChainId(chainId, nameof(chainId));
-    }
-
-    private Cid PinnedChain { get; }
-
-    /// <summary>
     /// Parses a chain identifier a verifier's constructor takes.
     /// </summary>
     /// <param name="chainId">The content identifier (CID) of the chain to pin.</param>
@@ -62,6 +41,53 @@ public sealed class CurbyPulseVerifier
             );
         }
     }
+
+    /// <summary>
+    /// Checks that the pulse directly follows its predecessor and returns it as the CURBy beacon's pulse.
+    /// </summary>
+    /// <param name="chain">The verified chain.</param>
+    /// <param name="pulse">The verified pulse.</param>
+    /// <param name="predecessor">The verified pulse one round before <paramref name="pulse"/>.</param>
+    /// <returns>The beacon pulse.</returns>
+    internal static BeaconPulse ToBeaconPulse(
+        TwineChain chain,
+        TwinePulse pulse,
+        TwinePulse predecessor
+    )
+    {
+        pulse.VerifyFollows(predecessor);
+        var chainId = chain.Cid.ToString();
+        var id = pulse.Cid.ToString();
+        return new BeaconPulse(
+            CurbyDefaults.BeaconName,
+            chainId,
+            pulse.Index,
+            id,
+            pulse.Timestamp,
+            pulse.Cid.Digest
+        );
+    }
+
+    /// <summary>
+    /// Initializes the verifier to pin the CURBy-RNG chain.
+    /// </summary>
+    public CurbyPulseVerifier()
+        : this(CurbyDefaults.RngChainId) { }
+
+    /// <summary>
+    /// Initializes the verifier to pin a chain.
+    /// </summary>
+    /// <param name="chainId">The content identifier (CID) of the chain to pin.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="chainId"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="chainId"/> is empty, white space or not a Twine content identifier.
+    /// </exception>
+    public CurbyPulseVerifier(string chainId)
+    {
+        PinnedChain = ParseChainId(chainId, nameof(chainId));
+    }
+
+    private Cid PinnedChain { get; }
 
     /// <summary>
     /// Verifies a pulse against the pinned chain and returns it as the CURBy beacon returns it.
@@ -98,31 +124,5 @@ public sealed class CurbyPulseVerifier
                 exception
             );
         }
-    }
-
-    /// <summary>
-    /// Checks that the pulse directly follows its predecessor and returns it as the CURBy beacon's pulse.
-    /// </summary>
-    /// <param name="chain">The verified chain.</param>
-    /// <param name="pulse">The verified pulse.</param>
-    /// <param name="predecessor">The verified pulse one round before <paramref name="pulse"/>.</param>
-    /// <returns>The beacon pulse.</returns>
-    internal static BeaconPulse ToBeaconPulse(
-        TwineChain chain,
-        TwinePulse pulse,
-        TwinePulse predecessor
-    )
-    {
-        pulse.VerifyFollows(predecessor);
-        var chainId = chain.Cid.ToString();
-        var id = pulse.Cid.ToString();
-        return new BeaconPulse(
-            CurbyDefaults.BeaconName,
-            chainId,
-            pulse.Index,
-            id,
-            pulse.Timestamp,
-            pulse.Cid.Digest
-        );
     }
 }

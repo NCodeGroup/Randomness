@@ -18,6 +18,44 @@ namespace NCode.Randomness.Nist;
 public sealed class NistPulseVerifier
 {
     /// <summary>
+    /// Checks that the pulse is on the pinned chain.
+    /// </summary>
+    /// <param name="pulse">The pulse to check.</param>
+    /// <param name="chainIndex">The index of the pinned chain.</param>
+    /// <exception cref="NistFormatException">The pulse is on another chain.</exception>
+    internal static void VerifyChain(NistPulse pulse, long chainIndex)
+    {
+        if (pulse.ChainIndex != chainIndex)
+        {
+            throw new NistFormatException(
+                $"Pulse {pulse.PulseIndex} is on chain {pulse.ChainIndex}, not the pinned chain {chainIndex}."
+            );
+        }
+    }
+
+    /// <summary>
+    /// Checks that the pulse directly follows its predecessor and returns it as the NIST beacon's pulse.
+    /// </summary>
+    /// <param name="pulse">The verified pulse.</param>
+    /// <param name="predecessor">The verified pulse one index before <paramref name="pulse"/>.</param>
+    /// <returns>The beacon pulse.</returns>
+    /// <exception cref="NistFormatException">The pulse does not follow its predecessor.</exception>
+    internal static BeaconPulse ToBeaconPulse(NistPulse pulse, NistPulse predecessor)
+    {
+        pulse.VerifyFollows(predecessor);
+        var chain = pulse.ChainIndex.ToString(CultureInfo.InvariantCulture);
+        var id = Convert.ToHexString(pulse.Output);
+        return new BeaconPulse(
+            NistDefaults.BeaconName,
+            chain,
+            pulse.PulseIndex,
+            id,
+            pulse.Timestamp,
+            pulse.Output
+        );
+    }
+
+    /// <summary>
     /// Initializes the verifier to pin chain 2 and the certificates NIST signs it with.
     /// </summary>
     public NistPulseVerifier()
@@ -145,43 +183,5 @@ public sealed class NistPulseVerifier
         using var parsed = NistCertificate.Parse(certificate, pulse.CertificateId);
         pulse.Verify(parsed);
         return pulse;
-    }
-
-    /// <summary>
-    /// Checks that the pulse is on the pinned chain.
-    /// </summary>
-    /// <param name="pulse">The pulse to check.</param>
-    /// <param name="chainIndex">The index of the pinned chain.</param>
-    /// <exception cref="NistFormatException">The pulse is on another chain.</exception>
-    internal static void VerifyChain(NistPulse pulse, long chainIndex)
-    {
-        if (pulse.ChainIndex != chainIndex)
-        {
-            throw new NistFormatException(
-                $"Pulse {pulse.PulseIndex} is on chain {pulse.ChainIndex}, not the pinned chain {chainIndex}."
-            );
-        }
-    }
-
-    /// <summary>
-    /// Checks that the pulse directly follows its predecessor and returns it as the NIST beacon's pulse.
-    /// </summary>
-    /// <param name="pulse">The verified pulse.</param>
-    /// <param name="predecessor">The verified pulse one index before <paramref name="pulse"/>.</param>
-    /// <returns>The beacon pulse.</returns>
-    /// <exception cref="NistFormatException">The pulse does not follow its predecessor.</exception>
-    internal static BeaconPulse ToBeaconPulse(NistPulse pulse, NistPulse predecessor)
-    {
-        pulse.VerifyFollows(predecessor);
-        var chain = pulse.ChainIndex.ToString(CultureInfo.InvariantCulture);
-        var id = Convert.ToHexString(pulse.Output);
-        return new BeaconPulse(
-            NistDefaults.BeaconName,
-            chain,
-            pulse.PulseIndex,
-            id,
-            pulse.Timestamp,
-            pulse.Output
-        );
     }
 }

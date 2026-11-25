@@ -28,6 +28,57 @@ public sealed class CurbyQuantumRoundVerifier
     internal const string BellFamily = "bell";
 
     /// <summary>
+    /// Parses every supplied document and indexes it by its CID.
+    /// </summary>
+    /// <param name="documents">The UTF-8 JSON of the chain and pulse documents.</param>
+    /// <returns>The documents by CID.</returns>
+    private static Dictionary<Cid, TwineDocument> Index(
+        IReadOnlyCollection<ReadOnlyMemory<byte>> documents
+    )
+    {
+        var index = new Dictionary<Cid, TwineDocument>(documents.Count);
+        foreach (var document in documents)
+        {
+            var parsed = TwineDocument.Parse(document.Span);
+            index.TryAdd(parsed.Cid, parsed);
+        }
+
+        return index;
+    }
+
+    /// <summary>
+    /// Finds the document with a CID among the supplied ones.
+    /// </summary>
+    /// <param name="index">The supplied documents by CID.</param>
+    /// <param name="cid">The CID of the document.</param>
+    /// <param name="kind">What the document is, <c>chain</c> or <c>pulse</c>, for the message of a missing one.</param>
+    /// <returns>The document.</returns>
+    private static TwineDocument Find(Dictionary<Cid, TwineDocument> index, Cid cid, string kind) =>
+        index.GetValueOrDefault(cid)
+        ?? throw new TwineFormatException($"The documents hold no {kind} {cid}.");
+
+    /// <summary>
+    /// Returns a verified round as the CURBy-Q beacon's pulse.
+    /// </summary>
+    /// <param name="chain">The verified CURBy-Q chain.</param>
+    /// <param name="number">The round number.</param>
+    /// <param name="result">The round's verified pulses.</param>
+    /// <returns>The beacon pulse.</returns>
+    internal static BeaconPulse ToBeaconPulse(TwineChain chain, long number, QuantumResult result)
+    {
+        var chainId = chain.Cid.ToString();
+        var id = result.ResultPulse.Cid.ToString();
+        return new BeaconPulse(
+            CurbyDefaults.QuantumBeaconName,
+            chainId,
+            number,
+            id,
+            result.Timestamp,
+            result.Randomness
+        );
+    }
+
+    /// <summary>
     /// Initializes the verifier to pin the CURBy-Q and Bell chains.
     /// </summary>
     public CurbyQuantumRoundVerifier()
@@ -125,56 +176,5 @@ public sealed class CurbyQuantumRoundVerifier
                 exception
             );
         }
-    }
-
-    /// <summary>
-    /// Parses every supplied document and indexes it by its CID.
-    /// </summary>
-    /// <param name="documents">The UTF-8 JSON of the chain and pulse documents.</param>
-    /// <returns>The documents by CID.</returns>
-    private static Dictionary<Cid, TwineDocument> Index(
-        IReadOnlyCollection<ReadOnlyMemory<byte>> documents
-    )
-    {
-        var index = new Dictionary<Cid, TwineDocument>(documents.Count);
-        foreach (var document in documents)
-        {
-            var parsed = TwineDocument.Parse(document.Span);
-            index.TryAdd(parsed.Cid, parsed);
-        }
-
-        return index;
-    }
-
-    /// <summary>
-    /// Finds the document with a CID among the supplied ones.
-    /// </summary>
-    /// <param name="index">The supplied documents by CID.</param>
-    /// <param name="cid">The CID of the document.</param>
-    /// <param name="kind">What the document is, <c>chain</c> or <c>pulse</c>, for the message of a missing one.</param>
-    /// <returns>The document.</returns>
-    private static TwineDocument Find(Dictionary<Cid, TwineDocument> index, Cid cid, string kind) =>
-        index.GetValueOrDefault(cid)
-        ?? throw new TwineFormatException($"The documents hold no {kind} {cid}.");
-
-    /// <summary>
-    /// Returns a verified round as the CURBy-Q beacon's pulse.
-    /// </summary>
-    /// <param name="chain">The verified CURBy-Q chain.</param>
-    /// <param name="number">The round number.</param>
-    /// <param name="result">The round's verified pulses.</param>
-    /// <returns>The beacon pulse.</returns>
-    internal static BeaconPulse ToBeaconPulse(TwineChain chain, long number, QuantumResult result)
-    {
-        var chainId = chain.Cid.ToString();
-        var id = result.ResultPulse.Cid.ToString();
-        return new BeaconPulse(
-            CurbyDefaults.QuantumBeaconName,
-            chainId,
-            number,
-            id,
-            result.Timestamp,
-            result.Randomness
-        );
     }
 }
