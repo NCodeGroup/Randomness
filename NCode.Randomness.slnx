@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NCode.Randomness/NCode.Randomness.csproj" />
+    <Project Path="src/NCode.Randomness.Curby/NCode.Randomness.Curby.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NCode.Randomness.Tests/NCode.Randomness.Tests.csproj" />
+    <Project Path="tests/NCode.Randomness.Curby.Tests/NCode.Randomness.Curby.Tests.csproj" />
+  </Folder>
+</Solution>

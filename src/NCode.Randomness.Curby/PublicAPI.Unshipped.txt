@@ -1,0 +1,23 @@
+#nullable enable
+const NCode.Randomness.Curby.CurbyBeaconOptions.SectionName = "RandomnessBeacons:Curby" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.BaseAddress = "https://api.entwine.me/" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.BeaconName = "curby" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.HttpClientName = "NCode.Randomness.Curby" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.RngChainId = "bafyriqci6f3st2mg7gq733ho4zvvth32zpy2mtiylixwmhoz6d627eo3jfpmbxepe54u2zdvymonq5sp3armtm4rodxsynsirr5g3xsbd3q4s" -> string!
+NCode.Randomness.Curby.CurbyBeaconOptions
+NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.get -> System.Uri!
+NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.set -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.get -> string!
+NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.set -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.CurbyBeaconOptions() -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.get -> int
+NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.set -> void
+NCode.Randomness.Curby.CurbyDefaults
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon() -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon(System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!

@@ -1,0 +1,317 @@
+// Copyright © NCode Group
+// SPDX-License-Identifier: Apache-2.0
+
+using System.Text.Json;
+using NCode.Randomness.Curby.Tests.Fixtures;
+using NCode.Randomness.Curby.Tests.TestTwine;
+using NCode.Randomness.Curby.Twine;
+
+namespace NCode.Randomness.Curby.Tests.Twine;
+
+public class TwineVerificationTests
+{
+    private static Cid Pinned { get; } = Cid.Parse(CurbyFixtures.ChainId);
+
+    private static DateTimeOffset Start { get; } = new(2026, 11, 25, 0, 0, 0, TimeSpan.Zero);
+
+    #region CURBy Fixture Tests
+
+    [Fact]
+    public void Verify_WithCurbyChain_AcceptsThePinnedChain()
+    {
+        using var chain = VerifyCurbyChain();
+
+        Assert.Equal(Pinned, chain.Cid);
+        Assert.Equal(4096, chain.Key.KeySize);
+    }
+
+    [Fact]
+    public void Verify_WithCurbyPulses_ReadsEachField()
+    {
+        using var chain = VerifyCurbyChain();
+
+        var pulse = TwinePulse.Verify(
+            Document(CurbyFixtures.Pulse(CurbyFixtures.LatestRound)),
+            chain
+        );
+
+        Assert.Equal(CurbyFixtures.LatestRound, pulse.Index);
+        Assert.Equal(CurbyFixtures.LatestPulseId, pulse.Cid.ToString());
+        Assert.Equal(CurbyFixtures.LatestRandomness, Convert.ToHexStringLower(pulse.Cid.Digest));
+        Assert.Equal(CurbyFixtures.LatestTimestamp, pulse.Timestamp);
+        Assert.Equal(
+            CurbyFixtures.CidOf(CurbyFixtures.Pulse(CurbyFixtures.LatestRound - 1)),
+            pulse.Previous?.ToString()
+        );
+    }
+
+    [Fact]
+    public void VerifyFollows_WithConsecutiveCurbyPulses_AcceptsThePrecommitments()
+    {
+        using var chain = VerifyCurbyChain();
+        var first = TwinePulse.Verify(Document(CurbyFixtures.Pulse(1620421)), chain);
+        var second = TwinePulse.Verify(Document(CurbyFixtures.Pulse(1620422)), chain);
+        var third = TwinePulse.Verify(Document(CurbyFixtures.Pulse(1620423)), chain);
+
+        second.VerifyFollows(first);
+        third.VerifyFollows(second);
+
+        Assert.Throws<TwineFormatException>(() => third.VerifyFollows(first));
+    }
+
+    [Fact]
+    public void Parse_WithTamperedCurbyPulse_RefusesItsCid()
+    {
+        var json = CurbyFixtures
+            .Pulse(CurbyFixtures.LatestRound)
+            .Replace(
+                "2026-11-25T02:44:00.150Z",
+                "2026-11-25T02:44:00.151Z",
+                StringComparison.Ordinal
+            );
+
+        var exception = Assert.Throws<TwineFormatException>(() => Document(json));
+
+        Assert.Contains("hashes to", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithCurbyChainAgainstAnotherPin_Throws()
+    {
+        using var builder = new TwineBuilder();
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwineChain.Verify(Document(CurbyFixtures.Chain), builder.ChainCid)
+        );
+
+        Assert.Contains("pinned", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithPulseOfAnotherChain_Throws()
+    {
+        using var curby = VerifyCurbyChain();
+        using var builder = new TwineBuilder();
+        var pulse = builder.Pulses(1, Start)[0];
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwinePulse.Verify(Document(pulse.Json), curby)
+        );
+
+        Assert.Contains("belongs to chain", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Parse_WithNonObject_Throws()
+    {
+        Assert.Throws<TwineFormatException>(() => TwineDocument.Parse(JsonElement.Parse("[]")));
+    }
+
+    #endregion
+
+    #region Chain Rule Tests
+
+    [Fact]
+    public void Verify_WithBuiltChain_Succeeds()
+    {
+        using var builder = new TwineBuilder();
+
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+
+        Assert.Equal(builder.ChainCid, chain.Cid);
+    }
+
+    [Fact]
+    public void Verify_WithUnknownSpecification_Throws()
+    {
+        using var builder = new TwineBuilder(specification: "twine/2.0.x/rng/1.0.x");
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid)
+        );
+
+        Assert.Contains("twine/2.0.x", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithShortKey_Throws()
+    {
+        using var builder = new TwineBuilder(keySize: 1024);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid)
+        );
+
+        Assert.Contains("2048", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("""{"alg":"RS512"}""")]
+    [InlineData("""{"alg":"none"}""")]
+    [InlineData("""{"alg":"RS256","jwk":{}}""")]
+    [InlineData("""{"alg":"RS256","crit":["b64"],"b64":false}""")]
+    [InlineData("""{"typ":"JWT"}""")]
+    [InlineData("""[]""")]
+    public void Verify_WithDisallowedHeader_Throws(string header)
+    {
+        using var builder = new TwineBuilder(header: header);
+
+        Assert.Throws<TwineFormatException>(() =>
+            TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid)
+        );
+    }
+
+    [Fact]
+    public void Verify_WithHeaderNamingTypeAndKey_Succeeds()
+    {
+        using var builder = new TwineBuilder(header: """{"alg":"RS256","typ":"JWT","kid":"1"}""");
+
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+
+        Assert.Equal(builder.ChainCid, chain.Cid);
+    }
+
+    #endregion
+
+    #region Pulse Rule Tests
+
+    [Fact]
+    public void Verify_WithBuiltPulses_FollowEachOther()
+    {
+        using var builder = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var pulses = builder
+            .Pulses(3, Start)
+            .Select(pulse => TwinePulse.Verify(Document(pulse.Json), chain))
+            .ToList();
+
+        pulses[1].VerifyFollows(pulses[0]);
+        pulses[2].VerifyFollows(pulses[1]);
+
+        Assert.Null(pulses[0].Previous);
+    }
+
+    [Fact]
+    public void Verify_WithSignatureOverOtherContent_Throws()
+    {
+        using var builder = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
+        var other = builder.PulseContent(2, null, new byte[64], new byte[64], Start);
+        var forged = builder.Seal(content, builder.Sign(other));
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwinePulse.Verify(Document(forged.Json), chain)
+        );
+
+        Assert.Contains("other content", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithSignatureOfAnotherKey_Throws()
+    {
+        using var builder = new TwineBuilder();
+        using var impostor = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
+        var forged = builder.Seal(content, impostor.Sign(content));
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwinePulse.Verify(Document(forged.Json), chain)
+        );
+
+        Assert.Contains("does not verify", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyFollows_WhenSaltBreaksThePrecommitment_Throws()
+    {
+        using var builder = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var first = builder.Pulses(1, Start)[0];
+        var content = builder.PulseContent(
+            1,
+            first.Cid,
+            new byte[64],
+            new byte[64],
+            Start.AddMinutes(1)
+        );
+        var second = builder.Seal(content);
+        var previous = TwinePulse.Verify(Document(first.Json), chain);
+        var pulse = TwinePulse.Verify(Document(second.Json), chain);
+
+        var exception = Assert.Throws<TwineFormatException>(() => pulse.VerifyFollows(previous));
+
+        Assert.Contains("precommitment", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifyFollows_WhenRoundIsNotTheNext_Throws()
+    {
+        using var builder = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var first = builder.Pulses(1, Start)[0];
+        var content = builder.PulseContent(
+            5,
+            first.Cid,
+            new byte[64],
+            new byte[64],
+            Start.AddMinutes(1)
+        );
+        var previous = TwinePulse.Verify(Document(first.Json), chain);
+        var pulse = TwinePulse.Verify(Document(builder.Seal(content).Json), chain);
+
+        var exception = Assert.Throws<TwineFormatException>(() => pulse.VerifyFollows(previous));
+
+        Assert.Contains("does not precede", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(63, 66, "2026-11-25T00:00:00.000Z", "salt")]
+    [InlineData(64, 65, "2026-11-25T00:00:00.000Z", "precommitment")]
+    [InlineData(64, 66, "2026-11-25 00:00:00", "timestamp")]
+    [InlineData(64, 66, "2026-11-25T00:00:00.000+01:00", "timestamp")]
+    public void Verify_WithMalformedPayload_Throws(
+        int saltLength,
+        int preLength,
+        string timestamp,
+        string field
+    )
+    {
+        using var builder = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
+        var payload = Ipld.Map(
+            ("pre", Ipld.Bytes([0x14, 0x40, .. new byte[preLength - 2]])),
+            ("salt", Ipld.Bytes(new byte[saltLength])),
+            ("timestamp", Ipld.Text(timestamp))
+        );
+        var malformed = builder.Seal(content.With("payload", payload));
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwinePulse.Verify(Document(malformed.Json), chain)
+        );
+
+        Assert.Contains(field, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithNegativeIndex_Throws()
+    {
+        using var builder = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var content = builder.PulseContent(-1, null, new byte[64], new byte[64], Start);
+
+        Assert.Throws<TwineFormatException>(() =>
+            TwinePulse.Verify(Document(builder.Seal(content).Json), chain)
+        );
+    }
+
+    #endregion
+
+    internal static TwineDocument Document(string json) =>
+        TwineDocument.Parse(JsonElement.Parse(json));
+
+    private static TwineChain VerifyCurbyChain() =>
+        TwineChain.Verify(Document(CurbyFixtures.Chain), Pinned);
+}

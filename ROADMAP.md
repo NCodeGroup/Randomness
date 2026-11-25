@@ -12,8 +12,12 @@ maintainers say whether it fits.
 
 ## Next Twelve Months
 
-[//]: # "Maintainers: list what the project plans to do in the next twelve months, one bullet each."
-
+- **CURBy-Q.** Read the quantum DIRNG chain (CURBy-Q) as well, with the checks CURBy's client library makes, and
+  verify its Trevisan extraction where it can be done in process.
+- **More beacons.** Adapters for the NIST Randomness Beacon 2.0 and for drand (League of Entropy), so no single beacon
+  is a point of trust.
+- **Draws offline.** Verify a pulse document a user supplies, so a published draw can be checked without the network.
+- **Use without a host.** A builder that composes the secure generator and beacons without dependency injection.
 - **Supply chain.** Keep external inputs pinned and current
   ([ADR-0008](docs/decisions/project-template/0008-external-inputs-are-pinned-and-kept-current.md)),
   and raise the OpenSSF Scorecard score where the repository controls it
@@ -23,6 +27,6 @@ maintainers say whether it fits.
 
 ## Not Planned
 
-[//]: # "Maintainers: list what the project rules out, and why."
-
-- Nothing is ruled out yet.
+- **Beacon bytes as secrets.** No API serves a pulse's randomness as an `ISecureRandom`: it is public
+  ([ADR-1000](docs/decisions/1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md)).
+- **Fetching on demand.** No API makes a caller wait on a beacon for a secret value.

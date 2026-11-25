@@ -1,0 +1,166 @@
+// Copyright © NCode Group
+// SPDX-License-Identifier: Apache-2.0
+
+using System.Buffers.Text;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+
+namespace NCode.Randomness.Curby.Twine;
+
+/// <summary>
+/// Verifies a JWS in compact form signed with RS256 (RSASSA-PKCS1-v1_5 with SHA-256), the deterministic algorithm
+/// CURBy requires so a beacon cannot grind its own randomness. The protected header may hold only <c>alg</c>, which
+/// must be <c>RS256</c>, and <c>typ</c> or <c>kid</c>: any header that would bring its own key, a critical extension
+/// or an unencoded payload is refused.
+/// </summary>
+internal static class JwsRs256
+{
+    private const string Algorithm = "RS256";
+
+    private static UTF8Encoding Utf8 { get; } =
+        new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
+    public static void Verify(string compact, RSA key, ReadOnlySpan<byte> expectedPayload)
+    {
+        ArgumentNullException.ThrowIfNull(compact);
+        ArgumentNullException.ThrowIfNull(key);
+        Span<Range> parts = stackalloc Range[4];
+        if (compact.AsSpan().Split(parts, '.') != 3)
+        {
+            throw new TwineFormatException("A signature is a JWS in compact form: three parts.");
+        }
+
+        var header = compact.AsSpan(parts[0]);
+        var payload = DecodePart(compact.AsSpan(parts[1]), "payload");
+        var signature = DecodePart(compact.AsSpan(parts[2]), "signature");
+        ValidateHeader(DecodePart(header, "header"));
+        if (!CryptographicOperations.FixedTimeEquals(payload, expectedPayload))
+        {
+            throw new TwineFormatException("The signature signs other content.");
+        }
+
+        var signingInput = Encoding.ASCII.GetBytes(
+            compact[..(parts[1].End.GetOffset(compact.Length))]
+        );
+        if (
+            !key.VerifyData(
+                signingInput,
+                signature,
+                HashAlgorithmName.SHA256,
+                RSASignaturePadding.Pkcs1
+            )
+        )
+        {
+            throw new TwineFormatException("The RS256 signature does not verify.");
+        }
+    }
+
+    /// <summary>
+    /// Imports an RSA public key from a JWK of at least 2048 bits whose <c>alg</c>, when present, is RS256.
+    /// </summary>
+    public static RSA ImportKey(IpldMap jwk)
+    {
+        ArgumentNullException.ThrowIfNull(jwk);
+        if (!string.Equals(jwk.Get<IpldString>("kty").Value, "RSA", StringComparison.Ordinal))
+        {
+            throw new TwineFormatException("The chain key is not an RSA key.");
+        }
+
+        if (
+            jwk.Entries.Any(entry => entry.Key == "alg")
+            && !string.Equals(jwk.Get<IpldString>("alg").Value, Algorithm, StringComparison.Ordinal)
+        )
+        {
+            throw new TwineFormatException("The chain key is not an RS256 key.");
+        }
+
+        var parameters = new RSAParameters
+        {
+            Modulus = DecodePart(jwk.Get<IpldString>("n").Value, "n"),
+            Exponent = DecodePart(jwk.Get<IpldString>("e").Value, "e"),
+        };
+        var key = RSA.Create();
+        try
+        {
+            key.ImportParameters(parameters);
+        }
+        catch (CryptographicException exception)
+        {
+            key.Dispose();
+            throw new TwineFormatException(
+                $"The chain key is not a valid RSA key: {exception.Message}"
+            );
+        }
+
+        if (key.KeySize < 2048)
+        {
+            key.Dispose();
+            throw new TwineFormatException(
+                $"The chain key has {key.KeySize} bits; at least 2048 are required."
+            );
+        }
+
+        return key;
+    }
+
+    private static void ValidateHeader(byte[] header)
+    {
+        JsonElement json;
+        try
+        {
+            json = JsonElement.Parse(Utf8.GetString(header));
+        }
+        catch (Exception exception) when (exception is JsonException or DecoderFallbackException)
+        {
+            throw new TwineFormatException($"The JWS header is not JSON: {exception.Message}");
+        }
+
+        if (json.ValueKind != JsonValueKind.Object)
+        {
+            throw new TwineFormatException("The JWS header is not a JSON object.");
+        }
+
+        var algorithm = false;
+        foreach (var member in json.EnumerateObject())
+        {
+            switch (member.Name)
+            {
+                case "alg"
+                    when !algorithm
+                        && member.Value.ValueKind == JsonValueKind.String
+                        && member.Value.ValueEquals(Algorithm):
+                    algorithm = true;
+                    break;
+                case "typ" or "kid" when member.Value.ValueKind == JsonValueKind.String:
+                    break;
+                default:
+                    throw new TwineFormatException(
+                        $"The JWS header member '{member.Name}' is not allowed."
+                    );
+            }
+        }
+
+        if (!algorithm)
+        {
+            throw new TwineFormatException("The JWS header must name the RS256 algorithm.");
+        }
+    }
+
+    private static byte[] DecodePart(ReadOnlySpan<char> text, string part)
+    {
+        if (text.IsEmpty || text.Contains('='))
+        {
+            throw new TwineFormatException($"The JWS {part} is not unpadded base64url.");
+        }
+
+        try
+        {
+            return Base64Url.DecodeFromChars(text);
+        }
+        catch (FormatException)
+        {
+            throw new TwineFormatException($"The JWS {part} is not base64url.");
+        }
+    }
+}

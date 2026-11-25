@@ -34,6 +34,11 @@ One row per instrument; an empty table means NCode.Randomness defines none.
 
 | Name | Type | Unit | Attributes and their values | Owner |
 | --- | --- | --- | --- | --- |
+| `ncode.randomness.beacon.pulses` | Counter | `{pulse}` | `ncode.randomness.beacon`: the registered beacon names, such as `curby`; `ncode.randomness.outcome`: `accepted`, `unchanged`, `unavailable`, `not_found`, `invalid`, `stale`, `rolled_back` | `NCode.Randomness` meter, `BeaconCollector`: one per fetch |
+| `ncode.randomness.generator.reseeds` | Counter | `{reseed}` | `ncode.randomness.reseed.reason`: `beacon` (a new pulse was mixed in), `interval` (`ReseedInterval` passed), `volume` (`ReseedAfterBytes` produced) | `NCode.Randomness` meter, `DefaultSecureRandom`: one per shard reseed |
+
+The meter is named `NCode.Randomness` (`RandomnessDiagnostics.MeterName`) and created through `IMeterFactory`. Outbound
+calls to a beacon are measured by `System.Net.Http`'s own instruments on the adapter's named `HttpClient`.
 
 ## Activity Sources and Spans
 

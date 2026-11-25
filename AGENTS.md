@@ -42,4 +42,18 @@ How `/ship-plan` lands a reviewed plan. `integrate`: `pull-request` pushes the p
 
 ## Conventions
 
-- (Add the project's conventions here, and any template rule this project overrides.)
+- Secrets come only from `ISecureRandom`. Never derive a key, token, salt or nonce from `BeaconPulse.Randomness` or a
+  `VerifiableRandom` ([ADR-1000](docs/decisions/1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md)).
+- The sampling algorithms in `src/NCode.Randomness/Sampling/` and the draw derivation in `src/NCode.Randomness/Draws/`
+  are the published `ncode-randomness-draw/1` contract in `docs/draws.md`: a change that alters the bytes they read or
+  the values they return is a new algorithm name, with the document, its reference implementation and the pinned
+  tests changed together ([ADR-1004](docs/decisions/1004-reproducible-draws-are-a-versioned-specified-algorithm-and-never-a-secure-random.md)).
+- A beacon adapter is a package of its own that verifies every pulse against a pinned trust anchor before returning it,
+  as `docs/beacon-adapters.md` says; the core never changes for a vendor.
+- Fixtures in `tests/NCode.Randomness.Curby.Tests/Fixtures/` are documents CURBy served, byte for byte: never edit
+  them; fetch them again with the commands in their README.
+- Tests are hermetic. The live tests against CURBy run only with `NCODE_RANDOMNESS_LIVE_TESTS=1`:
+  `dotnet test tests/NCode.Randomness.Curby.Tests --filter "FullyQualifiedName~CurbyLiveTests"`.
+- Options classes have setters for `Action<TOptions>` callbacks, which overrides the template's `init`-only rule for
+  them ([ADR-1006](docs/decisions/1006-options-classes-have-setters-for-the-options-pattern.md)). The core binds
+  `Randomness` strictly, so each adapter binds a section of its own under `RandomnessBeacons`.

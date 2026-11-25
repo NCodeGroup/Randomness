@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Description>Cryptographically secure random numbers for .NET: an SP 800-90A HMAC_DRBG seeded by the operating system and strengthened by public randomness beacons, unbiased typed values and ranges, and reproducible draws from a verified beacon pulse.</Description>
+    <PackageTags>random rng csprng drbg entropy randomness-beacon curby cryptography</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+    <InternalsVisibleTo Include="NCode.Randomness.Tests" />
+  </ItemGroup>
+</Project>
