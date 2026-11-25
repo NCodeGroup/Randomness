@@ -54,6 +54,27 @@ public class RandomnessHostTests
     }
 
     [Fact]
+    public async Task DisposeAsync_WhenAServiceFailsToStop_StopsTheOthersAndDisposesTheGenerator()
+    {
+        var recording = new RecordingHostedService();
+        var stopFailing = new StopFailingHostedService();
+        var builder = RandomnessHost.CreateBuilder();
+        builder.Services.AddSingleton<IHostedService>(recording);
+        builder.Services.AddSingleton<IHostedService>(_ => stopFailing);
+        var host = await builder.BuildAsync(CancellationToken.None);
+
+        var exception = await Assert.ThrowsAsync<AggregateException>(async () =>
+            await host.DisposeAsync()
+        );
+
+        Assert.Contains(exception.InnerExceptions, inner =>
+            inner.Message == StopFailingHostedService.Message
+        );
+        Assert.Equal(1, recording.Stops);
+        Assert.Throws<ObjectDisposedException>(() => host.SecureRandom.Fill(new byte[4]));
+    }
+
+    [Fact]
     public async Task DisposeAsync_Twice_StopsTheServicesOnce()
     {
         var recording = new RecordingHostedService();

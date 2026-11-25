@@ -20,8 +20,10 @@ public class RandomnessHostBuilderTests
 
         await using var host = await builder.BuildAsync(CancellationToken.None);
 
+        var bytes = host.SecureRandom.GetBytes(32);
+
         Assert.IsType<DefaultSecureRandom>(host.SecureRandom);
-        Assert.Equal(32, host.SecureRandom.GetBytes(32).Length);
+        Assert.Equal(32, bytes.Length);
         Assert.Empty(host.BeaconStatus.Beacons);
     }
 
@@ -87,6 +89,27 @@ public class RandomnessHostBuilderTests
         Assert.Equal(FailingHostedService.Message, exception.Message);
         Assert.Equal(1, recording.Starts);
         Assert.Equal(1, recording.Stops);
+    }
+
+    [Fact]
+    public async Task BuildAsync_WhenAServiceFailsToStartAndAnotherFailsToStop_ThrowsBothAndDisposesTheProvider()
+    {
+        var stopFailing = new StopFailingHostedService();
+        var builder = RandomnessHost.CreateBuilder();
+        builder.Services.AddSingleton<IHostedService>(_ => stopFailing);
+        builder.Services.AddSingleton<IHostedService, FailingHostedService>();
+
+        var exception = await Assert.ThrowsAsync<AggregateException>(async () =>
+            await builder.BuildAsync(CancellationToken.None)
+        );
+
+        Assert.Contains(exception.InnerExceptions, inner =>
+            inner is InvalidOperationException && inner.Message == FailingHostedService.Message
+        );
+        Assert.Contains(exception.InnerExceptions, inner =>
+            inner is InvalidOperationException && inner.Message == StopFailingHostedService.Message
+        );
+        Assert.True(stopFailing.Disposed);
     }
 
     [Fact]
