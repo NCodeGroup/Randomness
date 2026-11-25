@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text;
 using NCode.Randomness.Drand.Bls;
 
 namespace NCode.Randomness.Drand.Tests.Bls;
@@ -50,7 +51,7 @@ public class G1HashToCurveTests
     )]
     public void Hash_WithRfcVector_ReturnsExpectedPoint(string message, string x, string y)
     {
-        var bytes = System.Text.Encoding.UTF8.GetBytes(message);
+        var bytes = Encoding.UTF8.GetBytes(message);
         var point = G1HashToCurve.Hash(bytes, Domain);
         var xBytes = point.X.ToArray();
         var yBytes = point.Y.ToArray();

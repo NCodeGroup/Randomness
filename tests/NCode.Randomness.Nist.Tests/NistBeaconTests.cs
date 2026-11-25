@@ -6,6 +6,7 @@ using System.Text;
 using NCode.Randomness.Nist.Http;
 using NCode.Randomness.Nist.Tests.Fixtures;
 using NCode.Randomness.Nist.Tests.TestNist;
+using Polly.CircuitBreaker;
 
 namespace NCode.Randomness.Nist.Tests;
 
@@ -198,7 +199,7 @@ public sealed class NistBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_WhenTheCircuitIsOpen_IsUnavailable()
     {
-        Server.Fail(PulsePath + "last", new Polly.CircuitBreaker.BrokenCircuitException("open"));
+        Server.Fail(PulsePath + "last", new BrokenCircuitException("open"));
         var beacon = Create();
 
         await BeaconAssert.AssertBeaconErrorAsync(

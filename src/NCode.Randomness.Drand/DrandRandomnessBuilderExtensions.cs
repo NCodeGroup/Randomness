@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -95,7 +96,7 @@ public static class DrandRandomnessBuilderExtensions
                     new SocketsHttpHandler
                     {
                         AllowAutoRedirect = false,
-                        AutomaticDecompression = System.Net.DecompressionMethods.All,
+                        AutomaticDecompression = DecompressionMethods.All,
                         PooledConnectionLifetime = TimeSpan.FromMinutes(5),
                     }
                 )

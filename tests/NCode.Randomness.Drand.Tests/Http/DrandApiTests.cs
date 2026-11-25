@@ -11,6 +11,9 @@ namespace NCode.Randomness.Drand.Tests.Http;
 
 public sealed class DrandApiTests : IDisposable
 {
+    // HttpStatusCode has no member for 425 Too Early.
+    private const HttpStatusCode TooEarly = (HttpStatusCode)425;
+
     private static string Path { get; } = DrandDefaults.ChainHash + "/public/latest";
     private static string Route { get; } = "/" + Path;
 
@@ -51,7 +54,7 @@ public sealed class DrandApiTests : IDisposable
 
     [Theory]
     [InlineData(HttpStatusCode.NotFound)]
-    [InlineData((HttpStatusCode)425)]
+    [InlineData(TooEarly)]
     public async Task GetAsync_WithNotFoundOrTooEarly_ReturnsNull(HttpStatusCode status)
     {
         Server.Answer(Route, status);

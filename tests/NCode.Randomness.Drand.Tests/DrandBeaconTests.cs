@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Net;
+using System.Text.Json;
 using NCode.Randomness.Drand.Http;
 using NCode.Randomness.Drand.Rounds;
 using NCode.Randomness.Drand.Tests.Fixtures;
 using NCode.Randomness.Drand.Tests.TestDrand;
+using Polly.CircuitBreaker;
 
 namespace NCode.Randomness.Drand.Tests;
 
 public sealed class DrandBeaconTests : IDisposable
 {
+    // HttpStatusCode has no member for 425 Too Early.
+    private const HttpStatusCode TooEarly = (HttpStatusCode)425;
+
     private static string QuicknetPath { get; } = $"/{DrandDefaults.ChainHash}/public/";
 
     private StubDrandServer Server { get; } = new();
@@ -30,7 +35,7 @@ public sealed class DrandBeaconTests : IDisposable
 
         var pulse = await beacon.GetLatestPulseAsync(CancellationToken.None);
 
-        var document = System.Text.Json.JsonElement.Parse(json);
+        var document = JsonElement.Parse(json);
         var signature = document.GetProperty("signature").GetString();
         var randomness = Convert.ToHexStringLower(pulse.Randomness);
         Assert.Equal(DrandDefaults.BeaconName, pulse.Beacon);
@@ -135,10 +140,7 @@ public sealed class DrandBeaconTests : IDisposable
     [Fact]
     public async Task GetLatestPulseAsync_WhenTheCircuitIsOpen_IsUnavailable()
     {
-        Server.Fail(
-            QuicknetPath + "latest",
-            new Polly.CircuitBreaker.BrokenCircuitException("open")
-        );
+        Server.Fail(QuicknetPath + "latest", new BrokenCircuitException("open"));
         var beacon = Create();
 
         await BeaconAssert.AssertBeaconErrorAsync(
@@ -305,7 +307,7 @@ public sealed class DrandBeaconTests : IDisposable
 
     [Theory]
     [InlineData(HttpStatusCode.NotFound)]
-    [InlineData((HttpStatusCode)425)]
+    [InlineData(TooEarly)]
     public async Task GetPulseAsync_WithUnpublishedRound_IsNotFound(HttpStatusCode status)
     {
         Server.Answer(QuicknetPath + "99999999", status);

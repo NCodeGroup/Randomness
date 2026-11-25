@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Security.Cryptography;
 using System.Text.Json;
 using NCode.Randomness.Drand.Rounds;
 using NCode.Randomness.Drand.Tests.Fixtures;
@@ -261,7 +262,7 @@ public class DrandRoundTests
     [Fact]
     public void MessageOf_WithRound_IsSha256OfBigEndianRound()
     {
-        var expected = System.Security.Cryptography.SHA256.HashData([0, 0, 0, 0, 0, 0, 0x03, 0xE8]);
+        var expected = SHA256.HashData([0, 0, 0, 0, 0, 0, 0x03, 0xE8]);
 
         var actual = new byte[32];
         DrandRound.MessageOf(1000, actual);
