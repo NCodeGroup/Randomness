@@ -50,10 +50,16 @@ How `/ship-plan` lands a reviewed plan. `integrate`: `pull-request` pushes the p
   tests changed together ([ADR-1004](docs/decisions/1004-reproducible-draws-are-a-versioned-specified-algorithm-and-never-a-secure-random.md)).
 - A beacon adapter is a package of its own that verifies every pulse against a pinned trust anchor before returning it,
   as `docs/beacon-adapters.md` says; the core never changes for a vendor.
-- Fixtures in `tests/NCode.Randomness.Curby.Tests/Fixtures/` are documents CURBy served, byte for byte: never edit
+- Fixtures in `tests/NCode.Randomness.Curby.Tests/Fixtures/`, `tests/NCode.Randomness.Nist.Tests/Fixtures/` and
+  `tests/NCode.Randomness.Drand.Tests/Fixtures/` are documents CURBy, NIST and drand served, byte for byte: never edit
   them; fetch them again with the commands in their README.
-- Tests are hermetic. The live tests against CURBy run only with `NCODE_RANDOMNESS_LIVE_TESTS=1`:
-  `dotnet test tests/NCode.Randomness.Curby.Tests --filter "FullyQualifiedName~CurbyLiveTests"`.
+- Tests are hermetic. The live tests against CURBy, NIST and drand run only with `NCODE_RANDOMNESS_LIVE_TESTS=1`:
+  `dotnet test tests/NCode.Randomness.Curby.Tests --filter "FullyQualifiedName~CurbyLiveTests"`,
+  `dotnet test tests/NCode.Randomness.Nist.Tests --filter "FullyQualifiedName~NistLiveTests"` and
+  `dotnet test tests/NCode.Randomness.Drand.Tests --filter "FullyQualifiedName~DrandLiveTests"`.
+- NIST replaces its certificate about once a year. A release adds the new identifier to `NistDefaults.CertificateIds`
+  ([ADR-1009](docs/decisions/1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md))
+  after the checks `src/NCode.Randomness.Nist/README.md` lists.
 - Options classes have setters for `Action<TOptions>` callbacks, which overrides the template's `init`-only rule for
   them ([ADR-1006](docs/decisions/1006-options-classes-have-setters-for-the-options-pattern.md)). The core binds
   `Randomness` strictly, so each adapter binds a section of its own under `RandomnessBeacons`.
