@@ -22,9 +22,11 @@ maintainers say whether it fits.
 - **Supply chain.** Keep external inputs pinned and current
   ([ADR-0008](docs/decisions/project-template/0008-external-inputs-are-pinned-and-kept-current.md)),
   and raise the OpenSSF Scorecard score where the repository controls it
-  ([ADR-0020](docs/decisions/project-template/0020-github-projects-are-scored-by-openssf-scorecard.md)).
+  ([ADR-0020](docs/decisions/project-template/0020-github-projects-are-scored-by-openssf-scorecard.md),
+  [#9](https://github.com/NCodeGroup/Randomness/issues/9)).
 - **OpenSSF Best Practices.** Reach the silver level, which needs a second owner for continuity
-  ([GOVERNANCE.md](GOVERNANCE.md#continuity), [docs/best-practices-badge.md](docs/best-practices-badge.md)).
+  ([GOVERNANCE.md](GOVERNANCE.md#continuity), [docs/best-practices-badge.md](docs/best-practices-badge.md),
+  [#10](https://github.com/NCodeGroup/Randomness/issues/10)).
 
 ## Not Planned
 
