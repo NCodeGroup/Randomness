@@ -75,3 +75,4 @@ records are indexed in [project-template/](project-template/README.md).
 | [1007](1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md) | CURBy-Q rounds are verified as CURBy's client verifies them, and their extraction is left to curby_verify (amends 1005) | Accepted |
 | [1008](1008-pulse-staleness-is-judged-per-beacon.md) | Pulse staleness is judged per beacon (amends 1002) | Accepted |
 | [1009](1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md) | NIST pulses are verified against pinned certificates and their hash chain before any byte is used | Accepted |
+| [1010](1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md) | drand rounds are verified against the pinned quicknet key with a managed BLS12-381 library | Accepted |
