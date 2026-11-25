@@ -25,11 +25,39 @@ internal sealed class NistCertificate : IDisposable
     private const int MinimumKeyBits = 2048;
 
     /// <summary>
+    /// The number of hexadecimal digits, 128, in a certificate identifier: the SHA-512 hash of a DER encoding.
+    /// </summary>
+    internal const int IdLength = 128;
+
+    /// <summary>
     /// Gets a strict UTF-8 encoding, without a byte order mark, that throws on invalid bytes or characters instead of
     /// replacing them.
     /// </summary>
     private static UTF8Encoding Utf8 { get; } =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
+    /// <summary>
+    /// Gets whether a value is a certificate identifier: 128 hexadecimal digits, the SHA-512 hash of a DER encoding.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> when the value is a certificate identifier.</returns>
+    internal static bool IsId(string? value)
+    {
+        if (value is null || value.Length != IdLength)
+        {
+            return false;
+        }
+
+        foreach (var c in value)
+        {
+            if (!Uri.IsHexDigit(c))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /// <summary>
     /// Loads an X.509 certificate from its DER encoding.

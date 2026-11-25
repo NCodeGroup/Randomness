@@ -48,7 +48,7 @@ public sealed class NistPulseVerifier
 
         foreach (var id in certificateIds)
         {
-            if (!NistBeaconOptionsValidator.IsCertificateId(id))
+            if (!NistCertificate.IsId(id))
             {
                 throw new ArgumentException(
                     $"'{id}' is not a certificate identifier: 128 hexadecimal digits.",
