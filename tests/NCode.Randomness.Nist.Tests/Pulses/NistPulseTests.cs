@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using NCode.Randomness.Nist.Pulses;
@@ -232,6 +233,38 @@ public class NistPulseTests
         var pulse = NistPulse.Parse(document);
 
         Assert.Equal(bytes, pulse.Signature.Length);
+    }
+
+    [Fact]
+    public void Parse_WithNistPulseBytes_ReadsItsIndex()
+    {
+        var json = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        var bytes = Encoding.UTF8.GetBytes(json);
+        var output = Convert.FromHexString(NistFixtures.LatestOutput);
+
+        var pulse = NistPulse.Parse(bytes);
+
+        Assert.Equal(NistFixtures.LatestIndex, pulse.PulseIndex);
+        Assert.Equal<byte>(output, pulse.Output);
+    }
+
+    [Fact]
+    public void Parse_WithMalformedJsonBytes_Throws()
+    {
+        var exception = Assert.Throws<NistFormatException>(() => NistPulse.Parse("{"u8));
+
+        Assert.Contains("not valid JSON", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Parse_WithDuplicateMemberBytes_Throws()
+    {
+        // The API path refuses repeated members too.
+        var exception = Assert.Throws<NistFormatException>(() =>
+            NistPulse.Parse("""{"pulse":{},"pulse":{}}"""u8)
+        );
+
+        Assert.Contains("not valid JSON", exception.Message, StringComparison.Ordinal);
     }
 
     #endregion

@@ -64,6 +64,35 @@ internal sealed class NistPulse
     private static UTF8Encoding Utf8 { get; } =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
+    // These are the options NistApi parses a response with.
+    private static JsonDocumentOptions JsonOptions { get; } =
+        new() { MaxDepth = 16, AllowDuplicateProperties = false };
+
+    /// <summary>
+    /// Parses a pulse document from its UTF-8 JSON, as the HTTP API serves it, and rebuilds the bytes its signature
+    /// covers.
+    /// </summary>
+    /// <param name="utf8Json">The UTF-8 JSON document the beacon served for one pulse.</param>
+    /// <returns>The parsed pulse.</returns>
+    /// <exception cref="NistFormatException">The document is not valid JSON, or not a well-formed pulse.</exception>
+    public static NistPulse Parse(ReadOnlySpan<byte> utf8Json)
+    {
+        JsonElement json;
+        try
+        {
+            json = JsonElement.Parse(utf8Json, JsonOptions);
+        }
+        catch (JsonException exception)
+        {
+            throw new NistFormatException(
+                $"The NIST pulse is not valid JSON: {exception.Message}",
+                exception
+            );
+        }
+
+        return Parse(json);
+    }
+
     /// <summary>
     /// Parses a pulse document and rebuilds the bytes its signature covers.
     /// </summary>
@@ -502,7 +531,7 @@ internal sealed class NistPulse
     }
 
     /// <summary>
-    /// Initializes a pulse from parsed parts; only <see cref="Parse"/> builds a pulse.
+    /// Initializes a pulse from parsed parts; only <see cref="Parse(JsonElement)"/> builds a pulse.
     /// </summary>
     /// <param name="version">The pulse format version.</param>
     /// <param name="cipherSuite">The cipher suite.</param>
