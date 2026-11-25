@@ -21,7 +21,8 @@ everyone who reads the beacon sees the same bytes. This library gives each use w
 |---|---|---|
 | Keys, tokens, salts, nonces, passwords | `ISecureRandom` | An SP 800-90A HMAC_DRBG seeded by the operating system and reseeded with every beacon pulse: at least as strong as the OS generator, whatever a beacon does |
 | A draw others can verify | `IVerifiableRandomFactory` | A deterministic stream from one verified pulse and a context label, reproducible by anyone, specified in [docs/draws.md](docs/draws.md) |
-| No dependency injection, or no beacon | `SystemRandomSource.Instance` | The operating system's generator behind the same API |
+| No dependency injection | `RandomnessHost` | The same generator and beacons, built and disposed by your code, for console tools and libraries |
+| No beacon at all | `SystemRandomSource.Instance` | The operating system's generator behind the same API |
 
 Random values never wait on the network: beacon pulses are fetched and verified in the background, and an outage in
 Boulder only stops the extra diversification.
@@ -76,6 +77,23 @@ random.Shuffle<int>(deck);                                  // Fisher–Yates
 var color = random.GetItem<string>(["red", "green", "blue"]);
 Random legacy = random.AsRandom();                          // for APIs that take a System.Random
 ```
+
+## Without Dependency Injection
+
+Console tools and libraries that run without a host build the same generator and beacons with `RandomnessHost`:
+
+```csharp
+var builder = RandomnessHost.CreateBuilder();
+builder.AddCurbyBeacon().AddNistBeacon().AddDrandBeacon();
+await using var randomness = await builder.BuildAsync(cancellationToken);
+
+byte[] key = randomness.SecureRandom.GetBytes(32);
+```
+
+`CreateBuilder` takes nothing, an `Action<RandomnessOptions>` or a configuration section, as `AddRandomness` does.
+`BuildAsync` checks every setting, as a host does at start, and starts collecting pulses in the background; disposing
+the host stops the collection and zeroes the generator's state. Add a logging provider through `builder.Services` to
+see the collector's logs.
 
 ## Modes
 
