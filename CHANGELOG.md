@@ -13,6 +13,11 @@ product does.
   buffered, seeded and reseeded from the operating system's CSPRNG, and reseeded with every beacon pulse mixed in, after
   `ReseedInterval` and after `ReseedAfterBytes`.
 - `SystemRandomSource.Instance`: the operating system's CSPRNG as an `ISecureRandom`.
+- `RandomnessHost`, for console tools and libraries without dependency injection: `RandomnessHost.CreateBuilder()`
+  takes the options, configuration section and beacons `AddRandomness()` takes, `BuildAsync()` validates the options
+  and starts the background beacon collection, and `DisposeAsync()` stops it and zeroes the generator's state
+  ([#4](https://github.com/NCodeGroup/Randomness/issues/4),
+  [ADR-1011](docs/decisions/1011-the-generator-is-composed-without-a-host-by-a-builder-over-a-private-service-container.md)).
 - `IRandomSource` extension members: unbiased `NextInteger<T>` for every integer type from `byte` to `UInt128`, with
   or without bounds, `NextDouble`, `NextSingle`, `NextBoolean`, `NextGuid` (version 4), `GetBytes`, `Shuffle`,
   `GetItem`, `GetItems`, `GetString` and `AsRandom`.
@@ -68,6 +73,7 @@ product does.
   fragment, so no credential written into a configured address reaches a logged request.
 - Pulses that roll back, switch chains, reuse an accepted round with other content, or are out of date by their
   timestamp are refused.
-- Dependency injection registers the secure generator only as `ISecureRandom`, never as the plain `IRandomSource`, and
-  a disposed generator or draw throws instead of returning bytes.
+- Dependency injection registers the secure generator, and `RandomnessHost` exposes it, only as `ISecureRandom`,
+  never as the plain `IRandomSource`, and a disposed generator or draw throws instead of returning bytes
+  ([#4](https://github.com/NCodeGroup/Randomness/issues/4)).
 - Generator state lives in pinned memory, served bytes are erased from the buffers, and state is zeroed on disposal.
