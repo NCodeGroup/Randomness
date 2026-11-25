@@ -23,7 +23,9 @@ public class CurbyPulseVerifierTests
     [Fact]
     public void Constructor_WithInvalidChainId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() => new CurbyPulseVerifier("not-a-cid"));
+        var exception = Assert.Throws<ArgumentException>(() => new CurbyPulseVerifier("not-a-cid"));
+
+        Assert.Equal("chainId", exception.ParamName);
     }
 
     #endregion

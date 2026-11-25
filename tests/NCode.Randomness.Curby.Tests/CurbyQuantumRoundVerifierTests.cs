@@ -68,17 +68,21 @@ public class CurbyQuantumRoundVerifierTests
     [Fact]
     public void Constructor_WithInvalidQuantumChainId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() =>
+        var exception = Assert.Throws<ArgumentException>(() =>
             new CurbyQuantumRoundVerifier("not-a-cid", CurbyDefaults.BellChainId)
         );
+
+        Assert.Equal("quantumChainId", exception.ParamName);
     }
 
     [Fact]
     public void Constructor_WithInvalidBellChainId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() =>
+        var exception = Assert.Throws<ArgumentException>(() =>
             new CurbyQuantumRoundVerifier(CurbyDefaults.QuantumChainId, "not-a-cid")
         );
+
+        Assert.Equal("bellChainId", exception.ParamName);
     }
 
     #endregion

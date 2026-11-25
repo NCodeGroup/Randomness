@@ -23,22 +23,40 @@ public class NistPulseVerifierTests
     [Fact]
     public void Constructor_WithChainIndexBelowOne_ThrowsArgumentOutOfRangeException()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
             new NistPulseVerifier(0, [NistFixtures.CurrentCertificateId])
         );
+
+        Assert.Equal("chainIndex", exception.ParamName);
     }
 
     [Fact]
     public void Constructor_WithNoCertificateIds_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() => new NistPulseVerifier(NistDefaults.ChainIndex, []));
+        var exception = Assert.Throws<ArgumentException>(() =>
+            new NistPulseVerifier(NistDefaults.ChainIndex, [])
+        );
+
+        Assert.Equal("certificateIds", exception.ParamName);
+        Assert.Contains(
+            "At least one certificate identifier",
+            exception.Message,
+            StringComparison.Ordinal
+        );
     }
 
     [Fact]
     public void Constructor_WithInvalidCertificateId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() =>
+        var exception = Assert.Throws<ArgumentException>(() =>
             new NistPulseVerifier(NistDefaults.ChainIndex, ["not-a-certificate-id"])
+        );
+
+        Assert.Equal("certificateIds", exception.ParamName);
+        Assert.Contains(
+            "is not a certificate identifier",
+            exception.Message,
+            StringComparison.Ordinal
         );
     }
 
