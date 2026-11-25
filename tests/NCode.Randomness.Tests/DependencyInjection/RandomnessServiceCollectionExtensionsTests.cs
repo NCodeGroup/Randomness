@@ -16,7 +16,7 @@ public class RandomnessServiceCollectionExtensionsTests
     #region AddRandomness Tests
 
     [Fact]
-    public async Task AddRandomness_Always_RegistersOneSecureGeneratorUnderBothContracts()
+    public async Task AddRandomness_Always_RegistersTheSecureGeneratorOnlyUnderItsSecureContract()
     {
         var services = new ServiceCollection();
         services.AddRandomness();
@@ -25,10 +25,8 @@ public class RandomnessServiceCollectionExtensionsTests
         );
 
         var secure = provider.GetRequiredService<ISecureRandom>();
-        var source = provider.GetRequiredService<IRandomSource>();
-
         Assert.IsType<DefaultSecureRandom>(secure);
-        Assert.Same(secure, source);
+        Assert.Null(provider.GetService<IRandomSource>());
         Assert.NotNull(provider.GetRequiredService<IBeaconStatus>());
         Assert.NotNull(provider.GetRequiredService<IVerifiableRandomFactory>());
         Assert.Single(provider.GetServices<IHostedService>());
@@ -44,7 +42,6 @@ public class RandomnessServiceCollectionExtensionsTests
         await using var provider = services.BuildServiceProvider();
 
         Assert.Same(SystemRandomSource.Instance, provider.GetRequiredService<ISecureRandom>());
-        Assert.Same(SystemRandomSource.Instance, provider.GetRequiredService<IRandomSource>());
     }
 
     [Fact]

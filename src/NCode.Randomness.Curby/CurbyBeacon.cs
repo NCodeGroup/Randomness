@@ -131,7 +131,21 @@ internal sealed class CurbyBeacon : IRandomnessBeacon, IDisposable
                 exception
             );
         }
+        catch (Exception exception) when (IsMalformed(exception, cancellationToken))
+        {
+            // Anything else the parser or verifier throws, such as an invalid UTF-16 escape, is bad data too.
+            throw new BeaconException(
+                BeaconError.InvalidPulse,
+                Name,
+                $"CURBy answered with data that cannot be read: {exception.Message}",
+                exception
+            );
+        }
     }
+
+    private static bool IsMalformed(Exception exception, CancellationToken cancellationToken) =>
+        exception is not (BeaconException or ObjectDisposedException or OperationCanceledException)
+        && !IsOutage(exception, cancellationToken);
 
     private static bool IsOutage(Exception exception, CancellationToken cancellationToken) =>
         exception is not BeaconException

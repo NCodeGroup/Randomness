@@ -6,8 +6,9 @@ This package fetches pulses of its CURBy-RNG chain, one a minute, and verifies e
 
 - the chain document hashes to the pinned content identifier `CurbyDefaults.RngChainId`, which fixes the chain's RSA
   key, so no server, mirror or certificate authority can substitute another;
-- the pulse and its predecessor each hash to their content identifiers (DAG-CBOR, SHA3-512) and carry an RS256
-  signature by the chain's key;
+- the pulse and its predecessor each hash to their content identifiers (DAG-CBOR, SHA3-512), hold only the members
+  Twine defines, and carry a canonically encoded RS256 signature by the chain's key, so no server can change a
+  pulse's randomness without breaking a check;
 - the predecessor is the pulse's first link and one round earlier, and the pulse's salt matches the predecessor's
   precommitment.
 

@@ -31,6 +31,10 @@ product does.
 - Beacon pulses are only additional input to the secure generator, so its output is at least as unpredictable as the
   operating system's generator, whatever a beacon publishes.
 - CURBy pulses are verified before use: the chain hashes to a pinned content identifier, every document hashes to its
-  content identifier, every signature is RS256 by the chain's key, and every salt matches its precommitment.
-- Pulses that roll back, reuse an accepted round with other content, or are out of date by their timestamp are refused.
+  content identifier and has only the members Twine defines, every signature is canonical RS256 by the chain's key,
+  and every salt matches its precommitment, so no server can change a pulse's randomness without breaking a check.
+- Pulses that roll back, switch chains, reuse an accepted round with other content, or are out of date by their
+  timestamp are refused.
+- Dependency injection registers the secure generator only as `ISecureRandom`, never as the plain `IRandomSource`, and
+  a disposed generator or draw throws instead of returning bytes.
 - Generator state lives in pinned memory, served bytes are erased from the buffers, and state is zeroed on disposal.

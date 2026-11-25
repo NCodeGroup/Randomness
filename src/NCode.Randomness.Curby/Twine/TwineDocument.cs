@@ -33,8 +33,12 @@ internal sealed class TwineDocument
         }
 
         var root = DagJson.Read(json).As<IpldMap>("document");
+        RequireExactly(root, "document", "cid", "data");
         var declared = root.Get<IpldLink>("cid").Cid;
         var data = root.Get<IpldMap>("data");
+        // The CID hashes all of data, and the signature covers only content: any other member would let a server
+        // change the CID, which is the randomness, without touching what is signed.
+        RequireExactly(data, "data", "content", "signature");
         var computed = Cid.ForBlock(DagCbor.Encode(data));
         if (!computed.Equals(declared))
         {
@@ -46,6 +50,22 @@ internal sealed class TwineDocument
         var content = data.Get<IpldMap>("content");
         var signature = data.Get<IpldString>("signature").Value;
         return new TwineDocument(declared, content, signature);
+    }
+
+    private static void RequireExactly(IpldMap map, string name, string first, string second)
+    {
+        foreach (var (key, _) in map.Entries)
+        {
+            if (
+                !string.Equals(key, first, StringComparison.Ordinal)
+                && !string.Equals(key, second, StringComparison.Ordinal)
+            )
+            {
+                throw new TwineFormatException(
+                    $"The {name} has the member '{key}', which Twine does not define."
+                );
+            }
+        }
     }
 
     /// <summary>

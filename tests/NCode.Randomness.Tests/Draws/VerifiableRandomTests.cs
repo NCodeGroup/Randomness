@@ -139,6 +139,17 @@ public class VerifiableRandomTests
         Assert.Throws<ObjectDisposedException>(() => draw.GetBytes(1));
     }
 
+    [Fact]
+    public void Dispose_WithBytesStillBuffered_ThrowsInsteadOfServingZeros()
+    {
+        var draw = VerifiableRandom.Create(CreateReferencePulse(), Context);
+        draw.GetBytes(1);
+
+        draw.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => draw.GetBytes(1));
+    }
+
     #endregion
 
     internal static BeaconPulse CreateReferencePulse() =>

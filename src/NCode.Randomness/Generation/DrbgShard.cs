@@ -74,12 +74,15 @@ internal sealed class DrbgShard : IDisposable
 
     private long BytesSinceSeed { get; set; }
 
+    private bool IsDisposed { get; set; }
+
     /// <summary>
     /// Fills <paramref name="destination"/>, reseeding first when the policy says so, and returns the reason it
     /// reseeded, or <see langword="null"/>.
     /// </summary>
     public string? Fill(Span<byte> destination, ReseedPolicy policy)
     {
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
         var reason = ReseedIfDue(policy);
         BytesSinceSeed += destination.Length;
         if (destination.Length >= BufferLength)
@@ -109,7 +112,9 @@ internal sealed class DrbgShard : IDisposable
 
     public void Dispose()
     {
+        IsDisposed = true;
         CryptographicOperations.ZeroMemory(Buffer);
+        Position = BufferLength;
         Drbg.Dispose();
     }
 

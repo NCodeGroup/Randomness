@@ -22,7 +22,7 @@ public static class RandomnessServiceCollectionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers <see cref="ISecureRandom"/> (also as <see cref="IRandomSource"/>), <see cref="IBeaconStatus"/>,
+        /// Registers <see cref="ISecureRandom"/>, <see cref="IBeaconStatus"/>,
         /// <see cref="IVerifiableRandomFactory"/> and the background beacon collector, with default options. Add beacons
         /// to the returned builder, such as with <c>AddCurbyBeacon()</c>; with none, the generator runs from the
         /// operating system's entropy alone.
@@ -91,9 +91,6 @@ public static class RandomnessServiceCollectionExtensions
             services.TryAddSingleton<DefaultSecureRandom>();
             services.TryAddSingleton<ISecureRandom>(provider =>
                 provider.GetRequiredService<DefaultSecureRandom>()
-            );
-            services.TryAddSingleton<IRandomSource>(provider =>
-                provider.GetRequiredService<ISecureRandom>()
             );
             services.TryAddSingleton<IVerifiableRandomFactory, DefaultVerifiableRandomFactory>();
             services.AddHostedService<BeaconCollector>();

@@ -65,9 +65,15 @@ public sealed class VerifiableRandom : IRandomSource, IDisposable
 
     private Lock Gate { get; } = new();
 
+    private bool IsDisposed { get; set; }
+
     /// <summary>
     /// Derives the stream of <paramref name="pulse"/> for <paramref name="context"/>.
     /// </summary>
+    /// <remarks>
+    /// The draw is as trustworthy as the pulse: this method verifies nothing. Pass a pulse a beacon adapter returned,
+    /// or use <see cref="IVerifiableRandomFactory.CreateAsync"/>, which fetches and verifies the round itself.
+    /// </remarks>
     /// <param name="pulse">A verified pulse, such as one from <see cref="IRandomnessBeacon.GetPulseAsync"/>.</param>
     /// <param name="context">What the draw is for, published with the round before the draw, such as
     /// <c>"raffle-2026-12-01"</c>; at most <see cref="MaxContextLength"/> characters. Different contexts give
@@ -93,6 +99,7 @@ public sealed class VerifiableRandom : IRandomSource, IDisposable
     {
         lock (Gate)
         {
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
             while (!destination.IsEmpty)
             {
                 if (Position == HmacDrbg.OutputLength)
@@ -114,7 +121,9 @@ public sealed class VerifiableRandom : IRandomSource, IDisposable
     {
         lock (Gate)
         {
+            IsDisposed = true;
             CryptographicOperations.ZeroMemory(Block);
+            Position = HmacDrbg.OutputLength;
             Drbg.Dispose();
         }
     }

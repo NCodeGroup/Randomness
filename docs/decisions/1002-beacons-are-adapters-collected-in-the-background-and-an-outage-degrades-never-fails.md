@@ -19,7 +19,8 @@ air-gapped; others want beacon input once at start and nothing afterwards.
 - **Background collection.** A hosted service runs one loop per beacon, so a slow beacon delays no other and no
   caller. Each fetch has its own timeout (`FetchTimeout`); failures back off exponentially from `RefreshInterval` up
   to `MaxRetryDelay`, scaled by a random factor in [0.5, 1).
-- **Acceptance.** A fetched pulse is mixed in only if it names its beacon, is not older than the last accepted round of
+- **Acceptance.** A fetched pulse is mixed in only if it names its beacon, belongs to the same chain as the beacon's
+  earlier pulses, is not older than the last accepted round of
   its chain (rollback), does not reuse an accepted round with other content (equivocation), and is no older than
   `MaxPulseAge` and no further ahead than `MaxClockSkew` by its own timestamp (a stalled beacon or mirror).
 - **Modes.** `Continuous` (the default) keeps fetching; `InitializeOnly` fetches until each beacon gave one pulse and

@@ -202,6 +202,15 @@ public sealed class CurbyBeaconTests : IDisposable
     }
 
     [Fact]
+    public async Task GetLatestPulseAsync_WhenTheAnswerHasAnInvalidEscape_IsInvalid()
+    {
+        Server.Serve(ChainPath, """{"cid":{"/":"x"},"data":{"content":"\ud800","signature":""}}""");
+        using var beacon = Create();
+
+        await AssertBeaconErrorAsync(BeaconError.InvalidPulse, beacon.GetLatestPulseAsync);
+    }
+
+    [Fact]
     public async Task GetLatestPulseAsync_WhenTheAnswerIsTooLarge_IsInvalid()
     {
         Options.MaxResponseBytes = 1024;

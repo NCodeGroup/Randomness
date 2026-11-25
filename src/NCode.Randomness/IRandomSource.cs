@@ -10,7 +10,8 @@ namespace NCode.Randomness;
 /// <remarks>
 /// An implementation is safe to call from many threads at once unless its documentation says otherwise. Whether its
 /// bytes are secret depends on the implementation: inject <see cref="ISecureRandom"/> where the bytes must be
-/// unpredictable to everyone, such as keys, tokens and nonces.
+/// unpredictable to everyone, such as keys, tokens and nonces. Dependency injection registers no
+/// <see cref="IRandomSource"/> on purpose, so code asks for the guarantee it needs by name.
 /// </remarks>
 public interface IRandomSource
 {

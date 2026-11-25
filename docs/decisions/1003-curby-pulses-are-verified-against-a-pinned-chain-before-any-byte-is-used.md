@@ -24,7 +24,11 @@ The CURBy adapter makes exactly the checks CURBy's own client library makes, and
    each signature is a compact JWS whose header names only `RS256` (with optional `typ` or `kid`), over the multihash
    of the SHA3-512 of the content's DAG-CBOR. RS256 is required because a deterministic signature leaves the beacon no
    choice that changes the CID, so it cannot grind its own randomness.
-3. The predecessor is the pulse's first link and exactly one round earlier, and the pulse's salt satisfies the
+3. The CID, and so the randomness, must be fixed by what is signed. A document holds exactly `cid` and `data`, and
+   `data` exactly `content` and `signature`; every JWS segment is canonical base64url, and the signature is exactly
+   the modulus length. Otherwise a server could add a member or respell the signature, leave the signed content
+   untouched, and grind the CID to pick a draw's outcome.
+4. The predecessor is the pulse's first link and exactly one round earlier, and the pulse's salt satisfies the
    predecessor's precommitment: SHA3-512(salt XOR the predecessor's digest) equals the predecessor's `pre`.
 
 ## Options considered

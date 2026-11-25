@@ -11,8 +11,9 @@ namespace NCode.Randomness.Hosting;
 
 /// <summary>
 /// Decides whether each fetched pulse is mixed in, and keeps every beacon's state. A pulse is refused when it claims
-/// another beacon, is older than the last one accepted, is out of date by its own timestamp, or reuses an accepted
-/// round with different content, which only an equivocating beacon or a forged mirror would serve.
+/// another beacon, belongs to another chain than the beacon's first accepted pulse, is older than the last one
+/// accepted, is out of date by its own timestamp, or reuses an accepted round with different content, which only an
+/// equivocating beacon or a forged mirror would serve.
 /// </summary>
 internal sealed class BeaconTracker : IBeaconStatus
 {
@@ -131,8 +132,15 @@ internal sealed class BeaconTracker : IBeaconStatus
             return BeaconError.InvalidPulse;
         }
 
-        if (last is not null && string.Equals(pulse.Chain, last.Chain, StringComparison.Ordinal))
+        if (last is not null)
         {
+            // A beacon's chain is fixed for the life of the process; one that switches chains could roll back
+            // through the other chain's rounds.
+            if (!string.Equals(pulse.Chain, last.Chain, StringComparison.Ordinal))
+            {
+                return BeaconError.InvalidPulse;
+            }
+
             if (pulse.Round < last.Round)
             {
                 return BeaconError.RolledBack;

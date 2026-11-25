@@ -34,6 +34,15 @@ internal static class JwsRs256
         var header = compact.AsSpan(parts[0]);
         var payload = DecodePart(compact.AsSpan(parts[1]), "payload");
         var signature = DecodePart(compact.AsSpan(parts[2]), "signature");
+        // PKCS #1 v1.5 signatures are deterministic, and with canonical encoding and the exact modulus length, each
+        // signature has one spelling, so the signature string, which the pulse's CID hashes, is fixed by the content.
+        if (signature.Length != key.KeySize / 8)
+        {
+            throw new TwineFormatException(
+                $"The signature has {signature.Length} bytes, not {key.KeySize / 8}."
+            );
+        }
+
         ValidateHeader(DecodePart(header, "header"));
         if (!CryptographicOperations.FixedTimeEquals(payload, expectedPayload))
         {
@@ -154,13 +163,22 @@ internal static class JwsRs256
             throw new TwineFormatException($"The JWS {part} is not unpadded base64url.");
         }
 
+        byte[] bytes;
         try
         {
-            return Base64Url.DecodeFromChars(text);
+            bytes = Base64Url.DecodeFromChars(text);
         }
         catch (FormatException)
         {
             throw new TwineFormatException($"The JWS {part} is not base64url.");
         }
+
+        // The decoder skips white space and ignores nonzero unused bits; re-encoding refuses both.
+        if (!text.SequenceEqual(Base64Url.EncodeToString(bytes)))
+        {
+            throw new TwineFormatException($"The JWS {part} is not canonical base64url.");
+        }
+
+        return bytes;
     }
 }

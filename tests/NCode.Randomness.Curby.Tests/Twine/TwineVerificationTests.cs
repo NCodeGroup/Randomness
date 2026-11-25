@@ -295,6 +295,94 @@ public class TwineVerificationTests
         Assert.Contains(field, exception.Message, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("data")]
+    [InlineData("document")]
+    public void Parse_WithMemberTwineDoesNotDefine_Throws(string where)
+    {
+        // An extra member changes the CID, and so the randomness, without touching the signed content.
+        using var builder = new TwineBuilder();
+        var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
+        var data = Ipld.Map(("content", content), ("signature", Ipld.Text(builder.Sign(content))));
+        if (where == "data")
+        {
+            data = data.With("nonce", Ipld.Integer(42));
+        }
+
+        var cid = Cid.ForBlock(DagCbor.Encode(data));
+        var root = Ipld.Map(("cid", Ipld.Link(cid)), ("data", data));
+        if (where == "document")
+        {
+            root = root.With("nonce", Ipld.Integer(42));
+        }
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            Document(DagJsonWriter.Write(root))
+        );
+
+        Assert.Contains(
+            $"The {where} has the member 'nonce'",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public void Verify_WithSignatureSpelledNonCanonically_Throws()
+    {
+        // Flipping an unused trailing bit spells the same signature another way; the spelling is hashed into the
+        // pulse's CID, so accepting it would let a server grind the randomness.
+        using var builder = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
+        var signature = builder.Sign(content);
+        const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+        var last = alphabet[alphabet.IndexOf(signature[^1], StringComparison.Ordinal) ^ 1];
+        var respelled = builder.Seal(content, signature[..^1] + last);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwinePulse.Verify(Document(respelled.Json), chain)
+        );
+
+        Assert.Contains("signature is not", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithSignatureHoldingWhiteSpace_Throws()
+    {
+        using var builder = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
+        var signature = builder.Sign(content);
+        var respelled = builder.Seal(content, signature[..^4] + " " + signature[^4..]);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwinePulse.Verify(Document(respelled.Json), chain)
+        );
+
+        Assert.Contains("signature is not", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithSignatureLongerThanTheModulus_Throws()
+    {
+        using var builder = new TwineBuilder();
+        using var chain = TwineChain.Verify(Document(builder.ChainJson), builder.ChainCid);
+        var content = builder.PulseContent(1, null, new byte[64], new byte[64], Start);
+        var parts = builder.Sign(content).Split('.');
+        var padded = System.Buffers.Text.Base64Url.EncodeToString([
+            0,
+            .. System.Buffers.Text.Base64Url.DecodeFromChars(parts[2]),
+        ]);
+        var forged = builder.Seal(content, $"{parts[0]}.{parts[1]}.{padded}");
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwinePulse.Verify(Document(forged.Json), chain)
+        );
+
+        Assert.Contains("257 bytes, not 256", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Verify_WithNegativeIndex_Throws()
     {

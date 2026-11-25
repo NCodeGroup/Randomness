@@ -192,6 +192,18 @@ public sealed class DefaultSecureRandomTests : IDisposable
         Assert.Throws<ObjectDisposedException>(() => random.GetBytes(1));
     }
 
+    [Fact]
+    public void Fill_OnShardDisposedWithBytesBuffered_ThrowsInsteadOfServingZeros()
+    {
+        using var shard = new DrbgShard(0, Entropy, Pool, Time);
+        var policy = ReseedPolicy.From(new RandomnessOptions());
+        shard.Fill(new byte[1], policy);
+
+        shard.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => shard.Fill(new byte[1], policy));
+    }
+
     #endregion
 
     private static IOptions<RandomnessOptions> Options(Action<RandomnessOptions>? configure = null)

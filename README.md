@@ -114,7 +114,9 @@ Python that reproduces any draw without .NET.
   each document must hash to its content identifier, each signature must be RS256 by the chain's key, and each salt
   must match the previous pulse's precommitment
   ([ADR-1003](docs/decisions/1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md)).
-- Pulses that roll back, equivocate or are out of date are refused
+- Documents must hold only the members Twine defines and signatures must be canonically encoded, so a server cannot
+  grind a pulse's randomness without breaking its signature or hash.
+- Pulses that roll back, switch chains, equivocate or are out of date are refused
   ([ADR-1002](docs/decisions/1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md)).
 - [docs/assurance-case.md](docs/assurance-case.md) states the requirements and the threat model.
 

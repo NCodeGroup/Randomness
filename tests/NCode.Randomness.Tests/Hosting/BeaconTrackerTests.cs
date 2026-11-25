@@ -88,14 +88,15 @@ public class BeaconTrackerTests
     }
 
     [Fact]
-    public void Accept_WithEarlierRoundOfAnotherChain_IsAccepted()
+    public void Accept_WithPulseOfAnotherChain_IsInvalid()
     {
         var tracker = Create("a");
         tracker.Accept("a", Pulses.Create("a", 5, Pulses.Epoch));
 
-        var result = tracker.Accept("a", Pulses.Create("a", 4, Pulses.Epoch, chain: "chain-2"));
+        var result = tracker.Accept("a", Pulses.Create("a", 6, Pulses.Epoch, chain: "chain-2"));
 
-        Assert.Equal(PulseOutcomes.Accepted, result.Outcome);
+        Assert.Equal(BeaconError.InvalidPulse, result.Error);
+        Assert.Equal(1, Pool.Current.Epoch);
     }
 
     [Fact]
