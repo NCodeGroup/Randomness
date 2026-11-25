@@ -12,6 +12,8 @@ namespace NCode.Randomness.Nist.Tests;
 /// </summary>
 public class NistLiveTests
 {
+    #region GetLatestPulseAsync Tests
+
     [LiveFact]
     public async Task GetLatestPulseAsync_AgainstNist_ReturnsARecentVerifiedPulse()
     {
@@ -32,6 +34,10 @@ public class NistLiveTests
         Assert.Equal(pulse.Round - 10, round.Round);
     }
 
+    #endregion
+
+    #region GetPulseAsync Tests
+
     [LiveFact]
     public async Task GetPulseAsync_AgainstNist_VerifiesAPublishedPulse()
     {
@@ -44,6 +50,10 @@ public class NistLiveTests
 
         Assert.Equal(NistFixtures.LatestOutput, pulse.Id);
     }
+
+    #endregion
+
+    #region StartAsync Tests
 
     [LiveFact]
     public async Task Host_AgainstNist_MixesAPulseBeforeItStarts()
@@ -64,4 +74,6 @@ public class NistLiveTests
         Assert.Equal(BeaconHealth.Healthy, onlyBeacon.Health);
         Assert.InRange(value, 1, 6);
     }
+
+    #endregion
 }

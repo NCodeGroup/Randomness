@@ -15,7 +15,7 @@ namespace NCode.Randomness.Nist.Tests.TestNist;
 /// </summary>
 internal sealed record NistPulseBuilder
 {
-    private static readonly DateTimeOffset Epoch = new(2026, 11, 25, 12, 0, 0, TimeSpan.Zero);
+    private static DateTimeOffset Epoch { get; } = new(2026, 11, 25, 12, 0, 0, TimeSpan.Zero);
 
     public static NistPulseBuilder For(long index)
     {

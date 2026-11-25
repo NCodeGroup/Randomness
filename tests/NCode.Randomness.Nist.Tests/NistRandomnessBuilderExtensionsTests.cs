@@ -12,7 +12,7 @@ namespace NCode.Randomness.Nist.Tests;
 
 public class NistRandomnessBuilderExtensionsTests
 {
-    private static readonly string ConfiguredId = new('b', 128);
+    private static string ConfiguredId { get; } = new('b', 128);
 
     #region AddNistBeacon Tests
 

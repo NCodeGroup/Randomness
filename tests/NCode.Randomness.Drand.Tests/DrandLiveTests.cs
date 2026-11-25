@@ -12,6 +12,8 @@ namespace NCode.Randomness.Drand.Tests;
 /// </summary>
 public class DrandLiveTests
 {
+    #region GetLatestPulseAsync Tests
+
     [LiveFact]
     public async Task GetLatestPulseAsync_AgainstDrand_ReturnsARecentVerifiedPulse()
     {
@@ -32,6 +34,10 @@ public class DrandLiveTests
         Assert.Equal(pulse.Round - 10, round.Round);
     }
 
+    #endregion
+
+    #region GetPulseAsync Tests
+
     [LiveFact]
     public async Task GetPulseAsync_AgainstDrand_VerifiesAPublishedRound()
     {
@@ -47,6 +53,10 @@ public class DrandLiveTests
 
         Assert.Equal(DrandFixtures.FirstRandomness, randomness);
     }
+
+    #endregion
+
+    #region StartAsync Tests
 
     [LiveFact]
     public async Task Host_AgainstDrand_MixesAPulseBeforeItStarts()
@@ -67,4 +77,6 @@ public class DrandLiveTests
         Assert.Equal(BeaconHealth.Healthy, onlyBeacon.Health);
         Assert.InRange(value, 1, 6);
     }
+
+    #endregion
 }

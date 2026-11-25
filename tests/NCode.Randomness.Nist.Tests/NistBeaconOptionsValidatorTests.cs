@@ -5,7 +5,7 @@ namespace NCode.Randomness.Nist.Tests;
 
 public class NistBeaconOptionsValidatorTests
 {
-    private static readonly string ValidId = new('a', 128);
+    private static string ValidId { get; } = new('a', 128);
 
     #region Validate Tests
 
