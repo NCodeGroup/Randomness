@@ -109,6 +109,73 @@ public class TwineVerificationTests
 
     #endregion
 
+    #region CURBy-Q Fixture Tests
+
+    [Fact]
+    public void Parse_WithCurbyQDocuments_RecomputesEveryCid()
+    {
+        var documents = new List<string>
+        {
+            CurbyQuantumFixtures.Chain,
+            CurbyQuantumFixtures.BellChain,
+            CurbyQuantumFixtures.SeedChain,
+            CurbyQuantumFixtures.BellPulse(59313),
+            CurbyQuantumFixtures.SeedPulse(1914066),
+            CurbyQuantumFixtures.SeedPulse(1914067),
+            CurbyQuantumFixtures.SeedPulse(1914068),
+        };
+        documents.AddRange(RoundPulses().Select(element => element.GetRawText()).ToList());
+
+        foreach (var json in documents)
+        {
+            var document = Document(json);
+
+            Assert.Equal(CurbyFixtures.CidOf(json), document.Cid.ToString());
+        }
+    }
+
+    [Fact]
+    public void Verify_WithCurbyQPulses_AcceptsEachSignature()
+    {
+        using var quantum = TwineChain.Verify(
+            Document(CurbyQuantumFixtures.Chain),
+            Cid.Parse(CurbyQuantumFixtures.ChainId),
+            "diqrng"
+        );
+        using var bell = TwineChain.Verify(
+            Document(CurbyQuantumFixtures.BellChain),
+            Cid.Parse(CurbyQuantumFixtures.BellChainId),
+            "bell"
+        );
+        using var seed = TwineChain.Verify(
+            Document(CurbyQuantumFixtures.SeedChain),
+            Cid.Parse(CurbyQuantumFixtures.SeedChainId),
+            null
+        );
+
+        var round = RoundPulses()
+            .Select(element => TwineSignedPulse.Verify(Document(element.GetRawText()), quantum))
+            .ToList();
+        var response = TwineSignedPulse.Verify(
+            Document(CurbyQuantumFixtures.BellPulse(59313)),
+            bell
+        );
+        var seeds = new[] { 1914066L, 1914067L, 1914068L }
+            .Select(index =>
+                TwineSignedPulse.Verify(Document(CurbyQuantumFixtures.SeedPulse(index)), seed)
+            )
+            .ToList();
+
+        Assert.Equal(3, round.Count);
+        Assert.Equal(CurbyQuantumFixtures.RequestId, round[0].Cid.ToString());
+        Assert.Equal(CurbyQuantumFixtures.PrecommitId, round[1].Cid.ToString());
+        Assert.Equal(CurbyQuantumFixtures.ResultId, round[2].Cid.ToString());
+        Assert.Equal(CurbyQuantumFixtures.BellResponseId, response.Cid.ToString());
+        Assert.Equal(CurbyQuantumFixtures.SeedPulseId, seeds[2].Cid.ToString());
+    }
+
+    #endregion
+
     #region Chain Rule Tests
 
     [Fact]
@@ -433,6 +500,9 @@ public class TwineVerificationTests
 
     internal static TwineDocument Document(string json) =>
         TwineDocument.Parse(JsonElement.Parse(json));
+
+    private static List<JsonElement> RoundPulses() =>
+        [.. JsonElement.Parse(CurbyQuantumFixtures.RoundJson).EnumerateArray()];
 
     private static TwineChain VerifyCurbyChain() =>
         TwineChain.Verify(Document(CurbyFixtures.Chain), Pinned, "rng");
