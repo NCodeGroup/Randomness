@@ -8,9 +8,8 @@ namespace NCode.Randomness.Drand.Tests.Bls;
 
 public class ExpandMessageXmdTests
 {
-    private static readonly byte[] Domain = Encoding.ASCII.GetBytes(
-        "QUUX-V01-CS02-with-expander-SHA256-128"
-    );
+    // RFC 9380 appendix K.1: expand_message_xmd(SHA-256) test vectors, DST QUUX-V01-CS02-with-expander-SHA256-128.
+    private static ReadOnlySpan<byte> Domain => "QUUX-V01-CS02-with-expander-SHA256-128"u8;
 
     #region Expand Tests
 
@@ -29,7 +28,8 @@ public class ExpandMessageXmdTests
     )
     {
         var input = Encoding.ASCII.GetBytes(message);
-        var actual = ExpandMessageXmd.Expand(input, Domain, length);
+        var actual = new byte[length];
+        ExpandMessageXmd.Expand(input, Domain, actual);
 
         var hex = Convert.ToHexStringLower(actual);
 
@@ -42,22 +42,47 @@ public class ExpandMessageXmdTests
     public void Expand_WithInvalidDomainLength_Throws(int domainLength)
     {
         var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
-            ExpandMessageXmd.Expand([1], new byte[domainLength], 32)
+            ExpandMessageXmd.Expand([1], new byte[domainLength], new byte[32])
         );
 
-        Assert.Contains("domain", exception.Message, StringComparison.Ordinal);
+        Assert.Equal("domain", exception.ParamName);
     }
 
     [Theory]
     [InlineData(0)]
     [InlineData(8161)]
-    public void Expand_WithInvalidLength_Throws(int length)
+    public void Expand_WithInvalidDestinationLength_Throws(int length)
     {
+        var destination = new byte[length];
+
         var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
-            ExpandMessageXmd.Expand([1], Domain, length)
+            ExpandMessageXmd.Expand([1], Domain, destination)
         );
 
-        Assert.Contains("length", exception.Message, StringComparison.Ordinal);
+        Assert.Equal("destination", exception.ParamName);
+    }
+
+    [Fact]
+    public void Expand_WithLongestDomain_FillsTheDestination()
+    {
+        var domain = new byte[255];
+        Array.Fill(domain, (byte)0x41);
+        var destination = new byte[32];
+
+        ExpandMessageXmd.Expand([1], domain, destination);
+
+        Assert.NotEqual(new byte[32], destination);
+    }
+
+    [Fact]
+    public void Expand_WithLongestDestination_FillsIt()
+    {
+        var destination = new byte[8160];
+
+        ExpandMessageXmd.Expand([1], Domain, destination);
+
+        var last = destination[^32..];
+        Assert.NotEqual(new byte[32], last);
     }
 
     #endregion

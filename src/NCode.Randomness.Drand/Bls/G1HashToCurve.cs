@@ -39,9 +39,10 @@ internal static class G1HashToCurve
     /// <returns>The two field elements.</returns>
     public static Fp[] HashToField(ReadOnlySpan<byte> message, ReadOnlySpan<byte> domain)
     {
-        var bytes = ExpandMessageXmd.Expand(message, domain, 128);
-        var first = bytes.AsSpan(0, 64);
-        var second = bytes.AsSpan(64, 64);
+        Span<byte> bytes = stackalloc byte[128];
+        ExpandMessageXmd.Expand(message, domain, bytes);
+        var first = bytes[..64];
+        var second = bytes[64..];
         var firstElement = FieldElements.Reduce(first);
         var secondElement = FieldElements.Reduce(second);
         return [firstElement, secondElement];

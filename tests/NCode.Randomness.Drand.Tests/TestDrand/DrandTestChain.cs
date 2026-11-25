@@ -26,7 +26,8 @@ internal static class DrandTestChain
 
     public static byte[] Sign(long round)
     {
-        var message = DrandRound.MessageOf(round);
+        Span<byte> message = stackalloc byte[SHA256.HashSizeInBytes];
+        DrandRound.MessageOf(round, message);
         var hashed = G1HashToCurve.Hash(message, DrandRound.Domain);
         var point = new G1Affine(hashed * SecretKey);
         return point.ToCompressed();

@@ -7,8 +7,9 @@ namespace NCode.Randomness.Drand.Tests.Bls;
 
 public class G1HashToCurveTests
 {
-    private static readonly byte[] Domain =
-        "QUUX-V01-CS02-with-BLS12381G1_XMD:SHA-256_SSWU_RO_"u8.ToArray();
+    // RFC 9380 appendix J.9.1: BLS12381G1_XMD:SHA-256_SSWU_RO_ test vectors (u, Q0, Q1 and P for msg "" and "abc").
+    private static ReadOnlySpan<byte> Domain =>
+        "QUUX-V01-CS02-with-BLS12381G1_XMD:SHA-256_SSWU_RO_"u8;
 
     #region HashToField Tests
 

@@ -53,15 +53,15 @@ internal sealed class DrandRound
     public DateTimeOffset Timestamp { get; }
 
     /// <summary>
-    /// Gets the message the group signs for a round: the SHA-256 of the round number as 8 big-endian bytes.
+    /// Writes the message the group signs for a round: the SHA-256 of the round number as 8 big-endian bytes.
     /// </summary>
     /// <param name="round">The round number.</param>
-    /// <returns>The 32-byte message.</returns>
-    internal static byte[] MessageOf(long round)
+    /// <param name="destination">Receives the 32-byte message.</param>
+    internal static void MessageOf(long round, Span<byte> destination)
     {
         Span<byte> bytes = stackalloc byte[sizeof(long)];
         BinaryPrimitives.WriteInt64BigEndian(bytes, round);
-        return SHA256.HashData(bytes);
+        SHA256.HashData(bytes, destination);
     }
 
     /// <summary>
@@ -99,7 +99,8 @@ internal sealed class DrandRound
         }
 
         var key = chain.PublicKey;
-        var message = MessageOf(round);
+        Span<byte> message = stackalloc byte[SHA256.HashSizeInBytes];
+        MessageOf(round, message);
         var hashed = G1HashToCurve.Hash(message, Domain);
         var generator = G2Affine.Generator;
         if (Bls12.Pairing(in point, in generator) != Bls12.Pairing(in hashed, in key))

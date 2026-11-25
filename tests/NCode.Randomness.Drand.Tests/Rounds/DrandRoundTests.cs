@@ -263,7 +263,8 @@ public class DrandRoundTests
     {
         var expected = System.Security.Cryptography.SHA256.HashData([0, 0, 0, 0, 0, 0, 0x03, 0xE8]);
 
-        var actual = DrandRound.MessageOf(1000);
+        var actual = new byte[32];
+        DrandRound.MessageOf(1000, actual);
 
         Assert.Equal(expected, actual);
     }
