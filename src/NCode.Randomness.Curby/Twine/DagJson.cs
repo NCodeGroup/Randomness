@@ -91,6 +91,15 @@ internal static class DagJson
         return new IpldList(items.MoveToImmutable());
     }
 
+    /// <summary>
+    /// Reads a JSON number as a DAG-JSON value: a number with a fraction or an exponent is a finite 64-bit float, and
+    /// any other number is a 64-bit integer.
+    /// </summary>
+    /// <param name="element">The JSON number to read.</param>
+    /// <returns>An <see cref="IpldFloat"/> or an <see cref="IpldInteger"/>.</returns>
+    /// <exception cref="TwineFormatException">
+    /// The number is not finite or does not fit a 64-bit float, or it is not a 64-bit integer.
+    /// </exception>
     private static IpldNode ReadNumber(JsonElement element)
     {
         var raw = element.GetRawText();

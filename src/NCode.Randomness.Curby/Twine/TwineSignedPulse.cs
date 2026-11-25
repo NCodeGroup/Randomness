@@ -12,6 +12,15 @@ namespace NCode.Randomness.Curby.Twine;
 /// </summary>
 internal sealed class TwineSignedPulse
 {
+    /// <summary>
+    /// Creates a pulse from values the caller has already verified.
+    /// </summary>
+    /// <param name="cid">The CID of the pulse's document.</param>
+    /// <param name="chain">The CID of the chain the pulse belongs to.</param>
+    /// <param name="index">The pulse's index on its chain.</param>
+    /// <param name="links">The CIDs of the pulses the pulse links to, the previous pulse of its chain first.</param>
+    /// <param name="mixins">The pulses the pulse mixes in, by the chain each one belongs to.</param>
+    /// <param name="payload">The pulse's payload.</param>
     private TwineSignedPulse(
         Cid cid,
         Cid chain,

@@ -84,6 +84,19 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
     public ValueTask<byte[]?> GetBytesAsync(string path, CancellationToken cancellationToken) =>
         GetBodyAsync(path, OctetStreamMediaType, cancellationToken);
 
+    /// <summary>
+    /// Sends a GET request for <paramref name="path"/>, relative to the base address, that accepts only
+    /// <paramref name="mediaType"/>, and returns the body read under the byte limit, or <see langword="null"/> when the
+    /// API answers 404.
+    /// </summary>
+    /// <param name="path">The path to fetch, relative to the base address.</param>
+    /// <param name="mediaType">The one media type the request accepts and the response must have.</param>
+    /// <param name="cancellationToken">The token that cancels the request and the read.</param>
+    /// <returns>The response body, or <see langword="null"/> when the API answers 404.</returns>
+    /// <exception cref="HttpRequestException">The API answered a status other than success or 404.</exception>
+    /// <exception cref="TwineFormatException">
+    /// The response has another media type than <paramref name="mediaType"/>, or its body is larger than the limit.
+    /// </exception>
     private async ValueTask<byte[]?> GetBodyAsync(
         string path,
         string mediaType,
@@ -122,6 +135,12 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
         return await ReadLimitedAsync(response.Content, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Parses <paramref name="body"/> as JSON, accepting nesting up to 32 levels deep.
+    /// </summary>
+    /// <param name="body">The response body, as UTF-8 JSON.</param>
+    /// <returns>The root element of the parsed document.</returns>
+    /// <exception cref="TwineFormatException"><paramref name="body"/> is not valid JSON.</exception>
     private static JsonElement ParseJson(byte[] body)
     {
         try

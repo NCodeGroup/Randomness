@@ -80,6 +80,12 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
             : ValidateOptionsResult.Fail(failures);
     }
 
+    /// <summary>
+    /// Adds a failure for each per-beacon pulse age limit that is missing, has an empty beacon name, or lies outside the
+    /// range a timer accepts, in beacon-name order.
+    /// </summary>
+    /// <param name="failures">The list that receives a message for each failure.</param>
+    /// <param name="options">The options whose per-beacon limits are checked.</param>
     private static void CheckBeaconLimits(List<string> failures, RandomnessOptions options)
     {
         if (options.MaxPulseAgeByBeacon is null)

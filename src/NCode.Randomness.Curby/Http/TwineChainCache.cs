@@ -60,6 +60,7 @@ internal sealed class TwineChainCache(TwineApi api) : IDisposable
         }
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         foreach (var chain in Chains.Values)
