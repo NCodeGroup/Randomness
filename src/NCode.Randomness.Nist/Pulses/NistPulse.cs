@@ -68,7 +68,7 @@ internal sealed class NistPulse
         var statusCode = ReadUInt32(pulse, "statusCode");
         WriteUInt32(signed, statusCode);
 
-        var signature = ReadHex(pulse, "signatureValue", minimumLength: 1, MaxSignatureLength);
+        var signature = ReadSignature(pulse);
         var output = ReadHash(pulse, "outputValue");
         var signedBytes = signed.WrittenSpan.ToArray();
         return new NistPulse(
@@ -87,6 +87,12 @@ internal sealed class NistPulse
         );
     }
 
+    /// <summary>
+    /// Appends the <c>external</c> member to the signed bytes when the pulse has one, in the layout the beacon signs.
+    /// </summary>
+    /// <param name="signed">The signed bytes to append to.</param>
+    /// <param name="pulse">The <c>pulse</c> object.</param>
+    /// <exception cref="NistFormatException">The member is not an object or one of its members is malformed.</exception>
     private static void WriteExternal(ArrayBufferWriter<byte> signed, JsonElement pulse)
     {
         if (
@@ -110,6 +116,16 @@ internal sealed class NistPulse
         WriteBytes(signed, value);
     }
 
+    /// <summary>
+    /// Appends every value of the <c>listValues</c> member to the signed bytes, in order, and returns the first,
+    /// which must be the previous pulse's output.
+    /// </summary>
+    /// <param name="signed">The signed bytes to append to.</param>
+    /// <param name="pulse">The <c>pulse</c> object.</param>
+    /// <returns>The value of type <c>previous</c>.</returns>
+    /// <exception cref="NistFormatException">
+    /// The member is not a non-empty array of values, or its first value is not of type <c>previous</c>.
+    /// </exception>
     private static byte[] WriteListValues(ArrayBufferWriter<byte> signed, JsonElement pulse)
     {
         var list = ReadMember(pulse, "listValues");
@@ -150,6 +166,12 @@ internal sealed class NistPulse
         return previous ?? throw new NistFormatException("The NIST pulse has no previous value.");
     }
 
+    /// <summary>
+    /// Parses the <c>timeStamp</c> text, a UTC time with milliseconds.
+    /// </summary>
+    /// <param name="text">The raw text of the member.</param>
+    /// <returns>The time, in UTC.</returns>
+    /// <exception cref="NistFormatException">The text is not a UTC time with milliseconds.</exception>
     private static DateTimeOffset ParseTimestamp(string text)
     {
         if (
@@ -170,6 +192,13 @@ internal sealed class NistPulse
         return timestamp;
     }
 
+    /// <summary>
+    /// Reads a member that must be a JSON object.
+    /// </summary>
+    /// <param name="parent">The object that holds the member.</param>
+    /// <param name="name">The name of the member.</param>
+    /// <returns>The member.</returns>
+    /// <exception cref="NistFormatException">The member is missing or not an object.</exception>
     private static JsonElement ReadObject(JsonElement parent, string name)
     {
         var member = ReadMember(parent, name);
@@ -181,6 +210,14 @@ internal sealed class NistPulse
         return member;
     }
 
+    /// <summary>
+    /// Reads a member of any type.
+    /// </summary>
+    /// <param name="parent">The object that holds the member.</param>
+    /// <param name="name">The name of the member.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <returns>The member.</returns>
+    /// <exception cref="NistFormatException">The member is missing.</exception>
     private static JsonElement ReadMember(JsonElement parent, string name, string? path = null)
     {
         if (!parent.TryGetProperty(name, out var member))
@@ -191,6 +228,14 @@ internal sealed class NistPulse
         return member;
     }
 
+    /// <summary>
+    /// Reads a member that must be a JSON string.
+    /// </summary>
+    /// <param name="parent">The object that holds the member.</param>
+    /// <param name="name">The name of the member.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <returns>The raw text of the member.</returns>
+    /// <exception cref="NistFormatException">The member is missing or not a string.</exception>
     private static string ReadString(JsonElement parent, string name, string? path = null)
     {
         var member = ReadMember(parent, name, path);
@@ -202,6 +247,14 @@ internal sealed class NistPulse
         return member.GetString() ?? string.Empty;
     }
 
+    /// <summary>
+    /// Reads a member that must be an unsigned 32-bit integer.
+    /// </summary>
+    /// <param name="parent">The object that holds the member.</param>
+    /// <param name="name">The name of the member.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <returns>The value of the member.</returns>
+    /// <exception cref="NistFormatException">The member is missing or not an unsigned 32-bit integer.</exception>
     private static uint ReadUInt32(JsonElement parent, string name, string? path = null)
     {
         var member = ReadMember(parent, name, path);
@@ -215,6 +268,13 @@ internal sealed class NistPulse
         return value;
     }
 
+    /// <summary>
+    /// Reads a chain or pulse index, an integer of at least 1.
+    /// </summary>
+    /// <param name="parent">The object that holds the member.</param>
+    /// <param name="name">The name of the member.</param>
+    /// <returns>The value of the member.</returns>
+    /// <exception cref="NistFormatException">The member is missing or not an integer of at least 1.</exception>
     private static long ReadIndex(JsonElement parent, string name)
     {
         var member = ReadMember(parent, name);
@@ -232,42 +292,74 @@ internal sealed class NistPulse
         return value;
     }
 
-    private static byte[] ReadHash(JsonElement parent, string name, string? path = null) =>
-        ReadHex(parent, name, HashLength, HashLength, path);
-
-    private static byte[] ReadHex(
-        JsonElement parent,
-        string name,
-        int minimumLength,
-        int maximumLength,
-        string? path = null
-    )
+    /// <summary>
+    /// Reads a member that must be 64 bytes of hexadecimal.
+    /// </summary>
+    /// <param name="parent">The object that holds the member.</param>
+    /// <param name="name">The name of the member.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <returns>The decoded 64 bytes.</returns>
+    /// <exception cref="NistFormatException">The member is missing, not hexadecimal or not 64 bytes.</exception>
+    private static byte[] ReadHash(JsonElement parent, string name, string? path = null)
     {
-        var text = ReadString(parent, name, path);
-        byte[] bytes;
-        try
+        var bytes = ReadHexBytes(parent, name, path);
+        if (bytes.Length != HashLength)
         {
-            bytes = Convert.FromHexString(text);
-        }
-        catch (FormatException)
-        {
-            throw new NistFormatException($"The NIST member '{path ?? name}' is not hexadecimal.");
-        }
-
-        if (bytes.Length < minimumLength || bytes.Length > maximumLength)
-        {
-            var expected =
-                minimumLength == maximumLength
-                    ? $"{minimumLength} bytes"
-                    : $"{minimumLength} to {maximumLength} bytes";
             throw new NistFormatException(
-                $"The NIST member '{path ?? name}' has {bytes.Length} bytes, not {expected}."
+                $"The NIST member '{path ?? name}' has {bytes.Length} bytes, not {HashLength} bytes."
             );
         }
 
         return bytes;
     }
 
+    /// <summary>
+    /// Reads the <c>signatureValue</c> member, hexadecimal of 1 to the maximum signature length in bytes.
+    /// </summary>
+    /// <param name="pulse">The <c>pulse</c> object.</param>
+    /// <returns>The decoded signature.</returns>
+    /// <exception cref="NistFormatException">
+    /// The member is missing, not hexadecimal or of a length outside 1 to the maximum.
+    /// </exception>
+    private static byte[] ReadSignature(JsonElement pulse)
+    {
+        var bytes = ReadHexBytes(pulse, "signatureValue", null);
+        if (bytes.Length < 1 || bytes.Length > MaxSignatureLength)
+        {
+            throw new NistFormatException(
+                $"The NIST member 'signatureValue' has {bytes.Length} bytes, not 1 to {MaxSignatureLength} bytes."
+            );
+        }
+
+        return bytes;
+    }
+
+    /// <summary>
+    /// Reads a member that must be a string of hexadecimal and decodes it.
+    /// </summary>
+    /// <param name="parent">The object that holds the member.</param>
+    /// <param name="name">The name of the member.</param>
+    /// <param name="path">The name to report for a nested member, or <see langword="null"/> to report <paramref name="name"/>.</param>
+    /// <returns>The decoded bytes, of any length.</returns>
+    /// <exception cref="NistFormatException">The member is missing, not a string or not hexadecimal.</exception>
+    private static byte[] ReadHexBytes(JsonElement parent, string name, string? path)
+    {
+        var text = ReadString(parent, name, path);
+        try
+        {
+            return Convert.FromHexString(text);
+        }
+        catch (FormatException)
+        {
+            throw new NistFormatException($"The NIST member '{path ?? name}' is not hexadecimal.");
+        }
+    }
+
+    /// <summary>
+    /// Appends a 4-byte big-endian unsigned integer to the signed bytes.
+    /// </summary>
+    /// <param name="signed">The signed bytes to append to.</param>
+    /// <param name="value">The value to append.</param>
     private static void WriteUInt32(ArrayBufferWriter<byte> signed, uint value)
     {
         var span = signed.GetSpan(sizeof(uint));
@@ -275,6 +367,11 @@ internal sealed class NistPulse
         signed.Advance(sizeof(uint));
     }
 
+    /// <summary>
+    /// Appends an 8-byte big-endian integer to the signed bytes.
+    /// </summary>
+    /// <param name="signed">The signed bytes to append to.</param>
+    /// <param name="value">The value to append.</param>
     private static void WriteInt64(ArrayBufferWriter<byte> signed, long value)
     {
         var span = signed.GetSpan(sizeof(long));
@@ -282,12 +379,23 @@ internal sealed class NistPulse
         signed.Advance(sizeof(long));
     }
 
+    /// <summary>
+    /// Appends bytes to the signed bytes, prefixed by their length as a 4-byte big-endian unsigned integer.
+    /// </summary>
+    /// <param name="signed">The signed bytes to append to.</param>
+    /// <param name="value">The bytes to append.</param>
     private static void WriteBytes(ArrayBufferWriter<byte> signed, ReadOnlySpan<byte> value)
     {
         WriteUInt32(signed, (uint)value.Length);
         signed.Write(value);
     }
 
+    /// <summary>
+    /// Appends text to the signed bytes as UTF-8, prefixed by its byte length as a 4-byte big-endian unsigned integer.
+    /// </summary>
+    /// <param name="signed">The signed bytes to append to.</param>
+    /// <param name="value">The text to append.</param>
+    /// <exception cref="NistFormatException">The text is not valid UTF-8.</exception>
     private static void WriteString(ArrayBufferWriter<byte> signed, string value)
     {
         int length;
@@ -306,6 +414,21 @@ internal sealed class NistPulse
         signed.Advance(written);
     }
 
+    /// <summary>
+    /// Initializes a pulse from parsed parts; only <see cref="Parse"/> builds a pulse.
+    /// </summary>
+    /// <param name="version">The pulse format version.</param>
+    /// <param name="cipherSuite">The cipher suite.</param>
+    /// <param name="certificateId">The identifier of the signing certificate.</param>
+    /// <param name="chainIndex">The index of the chain.</param>
+    /// <param name="pulseIndex">The index of the pulse within its chain.</param>
+    /// <param name="timestamp">The time the pulse was issued, in UTC.</param>
+    /// <param name="localRandomValue">The 64-byte local random value.</param>
+    /// <param name="previous">The previous pulse's output value, as this pulse lists it.</param>
+    /// <param name="precommitment">The precommitment of the next pulse's local random value.</param>
+    /// <param name="signature">The signature.</param>
+    /// <param name="output">The claimed 64-byte output value.</param>
+    /// <param name="signedBytes">The bytes the signature covers.</param>
     private NistPulse(
         string version,
         uint cipherSuite,

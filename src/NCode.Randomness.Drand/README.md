@@ -14,7 +14,8 @@ the beacon `drand`, and verifies each one before any byte is used:
 - the response answers the round that was asked for.
 
 Only the quicknet chain is supported: its chain hash, group public key, genesis time and period are constants in
-`DrandDefaults`, and no chain info document is fetched. Members of a round that the chain does not sign are ignored.
+`DrandDefaults`, and no chain info document is fetched. Other members of a round that the chain does not sign are
+ignored.
 
 The randomness is the 32-byte SHA-256 hash of the round's signature. The beacon's pulse carries the quicknet chain hash
 as its chain, the round number as its round, the signature in lowercase hex as its identifier, and the time the round

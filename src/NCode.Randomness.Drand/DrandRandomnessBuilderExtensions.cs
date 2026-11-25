@@ -104,6 +104,11 @@ public static class DrandRandomnessBuilderExtensions
         }
     }
 
+    /// <summary>
+    /// Sets the named client's resilience: a 10 s attempt timeout, a 25 s total timeout, two retries and a 60 s
+    /// circuit-breaker sampling window.
+    /// </summary>
+    /// <param name="options">The resilience options of the named client.</param>
     private static void ConfigureResilience(HttpStandardResilienceOptions options)
     {
         options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);

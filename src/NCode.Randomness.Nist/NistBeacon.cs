@@ -37,9 +37,11 @@ internal sealed class NistBeacon(
     /// </summary>
     private NistPulse? _lastVerified;
 
+    /// <inheritdoc/>
     public ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken) =>
         FetchAsync("last", null, cancellationToken);
 
+    /// <inheritdoc/>
     public ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken)
     {
         if (round < 2)
@@ -57,6 +59,16 @@ internal sealed class NistBeacon(
         return FetchAsync(selector, round, cancellationToken);
     }
 
+    /// <summary>
+    /// Fetches a pulse of the pinned chain and its predecessor, verifies both and maps the pulse to a beacon pulse.
+    /// </summary>
+    /// <param name="selector">The pulse selector of the path: <c>last</c> or a pulse index.</param>
+    /// <param name="round">The pulse index the caller asked for, or <see langword="null"/> for the latest.</param>
+    /// <param name="cancellationToken">The token that cancels the requests.</param>
+    /// <returns>The verified pulse.</returns>
+    /// <exception cref="BeaconException">
+    /// The pulse does not exist yet, an answer is malformed or does not verify, or the API is unavailable.
+    /// </exception>
     private async ValueTask<BeaconPulse> FetchAsync(
         string selector,
         long? round,
@@ -118,6 +130,13 @@ internal sealed class NistBeacon(
         }
     }
 
+    /// <summary>
+    /// Fetches a pulse of the pinned chain, checks its chain and verifies it against its pinned certificate.
+    /// </summary>
+    /// <param name="selector">The pulse selector of the path: <c>last</c> or a pulse index.</param>
+    /// <param name="cancellationToken">The token that cancels the requests.</param>
+    /// <returns>The verified pulse, or <see langword="null"/> when the API answers 404.</returns>
+    /// <exception cref="NistFormatException">The pulse is malformed, of another chain or does not verify.</exception>
     private async ValueTask<NistPulse?> GetVerifiedAsync(
         string selector,
         CancellationToken cancellationToken
@@ -146,6 +165,14 @@ internal sealed class NistBeacon(
         return pulse;
     }
 
+    /// <summary>
+    /// Gets the verified pulse one index before <paramref name="pulse"/>: the last verified pulse when it is that
+    /// pulse, otherwise a fetched one.
+    /// </summary>
+    /// <param name="pulse">The pulse whose predecessor is needed.</param>
+    /// <param name="cancellationToken">The token that cancels the requests.</param>
+    /// <returns>The verified predecessor.</returns>
+    /// <exception cref="NistFormatException">The API does not serve the predecessor or it does not verify.</exception>
     private async ValueTask<NistPulse> GetPredecessorAsync(
         NistPulse pulse,
         CancellationToken cancellationToken

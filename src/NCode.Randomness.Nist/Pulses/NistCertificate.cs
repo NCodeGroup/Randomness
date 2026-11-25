@@ -111,6 +111,13 @@ internal sealed class NistCertificate : IDisposable
         return new NistCertificate(id, key, notBefore, notAfter);
     }
 
+    /// <summary>
+    /// Initializes a certificate from parsed parts; only <see cref="Parse"/> builds a certificate.
+    /// </summary>
+    /// <param name="id">The SHA-512 identifier of the certificate's DER encoding.</param>
+    /// <param name="key">The RSA public key, which the certificate owns from now on.</param>
+    /// <param name="notBefore">The start of the certificate's validity, in UTC.</param>
+    /// <param name="notAfter">The end of the certificate's validity, in UTC.</param>
     private NistCertificate(byte[] id, RSA key, DateTimeOffset notBefore, DateTimeOffset notAfter)
     {
         Id = id;

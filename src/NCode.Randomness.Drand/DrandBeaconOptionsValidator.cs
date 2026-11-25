@@ -14,6 +14,7 @@ internal sealed class DrandBeaconOptionsValidator : IValidateOptions<DrandBeacon
 
     private const int MinResponseBytes = 1024;
 
+    /// <inheritdoc/>
     public ValidateOptionsResult Validate(string? name, DrandBeaconOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);

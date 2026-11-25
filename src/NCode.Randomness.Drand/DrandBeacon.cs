@@ -22,9 +22,11 @@ internal sealed class DrandBeacon(DrandApi api, DrandChain chain) : IRandomnessB
 
     private DrandChain Chain { get; } = chain;
 
+    /// <inheritdoc/>
     public ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken) =>
         FetchAsync("latest", null, cancellationToken);
 
+    /// <inheritdoc/>
     public ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken)
     {
         if (round < 1)
@@ -41,6 +43,16 @@ internal sealed class DrandBeacon(DrandApi api, DrandChain chain) : IRandomnessB
         return FetchAsync(selector, round, cancellationToken);
     }
 
+    /// <summary>
+    /// Fetches a round of the pinned chain, verifies it and maps it to a pulse.
+    /// </summary>
+    /// <param name="selector">The round selector of the path: <c>latest</c> or a round number.</param>
+    /// <param name="round">The round the caller asked for, or <see langword="null"/> for the latest.</param>
+    /// <param name="cancellationToken">The token that cancels the request.</param>
+    /// <returns>The verified pulse.</returns>
+    /// <exception cref="BeaconException">
+    /// The round does not exist yet, the answer is malformed or does not verify, or the API is unavailable.
+    /// </exception>
     private async ValueTask<BeaconPulse> FetchAsync(
         string selector,
         long? round,

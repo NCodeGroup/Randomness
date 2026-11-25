@@ -41,6 +41,7 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
         return true;
     }
 
+    /// <inheritdoc/>
     public ValidateOptionsResult Validate(string? name, NistBeaconOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);

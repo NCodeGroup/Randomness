@@ -98,6 +98,11 @@ internal static class G1HashToCurve
         return G1Isogeny.Map(x, y);
     }
 
+    /// <summary>
+    /// Evaluates the right-hand side of the isogenous curve <c>E'</c>: x³ + A·x + B.
+    /// </summary>
+    /// <param name="x">The x coordinate.</param>
+    /// <returns>The value of x³ + A·x + B.</returns>
     private static Fp Curve(Fp x)
     {
         return x.Square() * x + A * x + B;

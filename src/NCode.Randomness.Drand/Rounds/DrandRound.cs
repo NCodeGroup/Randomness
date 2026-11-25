@@ -11,7 +11,8 @@ namespace NCode.Randomness.Drand.Rounds;
 
 /// <summary>
 /// A round of a drand quicknet chain whose BLS12-381 signature verified against the chain's pinned group public
-/// key. Members the chain does not sign are ignored.
+/// key. Members the chain does not sign are ignored, except <c>randomness</c>, which must be the SHA-256 of the
+/// signature when present.
 /// </summary>
 internal sealed class DrandRound
 {
@@ -101,6 +102,13 @@ internal sealed class DrandRound
         return new DrandRound(round, signature, randomness, timestamp);
     }
 
+    /// <summary>
+    /// Reads the round number of a document and checks that it is a round of the chain.
+    /// </summary>
+    /// <param name="json">The round document.</param>
+    /// <param name="chain">The pinned chain.</param>
+    /// <returns>The round number.</returns>
+    /// <exception cref="DrandFormatException">The <c>round</c> member is missing or not a round of the chain.</exception>
     private static long ReadRound(JsonElement json, DrandChain chain)
     {
         if (!json.TryGetProperty("round", out var member))
@@ -121,6 +129,12 @@ internal sealed class DrandRound
         return round;
     }
 
+    /// <summary>
+    /// Reads the signature of a document as 48 bytes of hexadecimal.
+    /// </summary>
+    /// <param name="json">The round document.</param>
+    /// <returns>The 48-byte compressed signature.</returns>
+    /// <exception cref="DrandFormatException">The <c>signature</c> member is missing or not 48 bytes of hexadecimal.</exception>
     private static byte[] ReadSignature(JsonElement json)
     {
         if (!json.TryGetProperty("signature", out var member))
@@ -139,6 +153,16 @@ internal sealed class DrandRound
         return signature;
     }
 
+    /// <summary>
+    /// Decodes hexadecimal text of an exact length.
+    /// </summary>
+    /// <param name="text">The text to decode.</param>
+    /// <param name="length">The expected number of bytes.</param>
+    /// <param name="bytes">Receives the decoded bytes when the text is valid, and an empty array otherwise.</param>
+    /// <returns>
+    /// <see langword="true"/> and sets <paramref name="bytes"/> when <paramref name="text"/> is exactly
+    /// <paramref name="length"/> bytes of hexadecimal; otherwise <see langword="false"/>.
+    /// </returns>
     private static bool TryReadHex(string? text, int length, out byte[] bytes)
     {
         bytes = [];
@@ -158,6 +182,13 @@ internal sealed class DrandRound
         }
     }
 
+    /// <summary>
+    /// Initializes a round from verified parts; only <see cref="Verify"/> builds a round.
+    /// </summary>
+    /// <param name="round">The number of the round.</param>
+    /// <param name="signature">The verified 48-byte signature.</param>
+    /// <param name="randomness">The SHA-256 of the signature.</param>
+    /// <param name="timestamp">The time the round is due, in UTC.</param>
     private DrandRound(long round, byte[] signature, byte[] randomness, DateTimeOffset timestamp)
     {
         Round = round;

@@ -124,6 +124,13 @@ internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOpt
         return await ReadLimitedAsync(response.Content, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Reads a response body while it streams, refusing one larger than the configured limit.
+    /// </summary>
+    /// <param name="content">The response content.</param>
+    /// <param name="cancellationToken">The token that cancels the read.</param>
+    /// <returns>The whole body.</returns>
+    /// <exception cref="NistFormatException">The body is larger than <c>MaxResponseBytes</c>.</exception>
     private async ValueTask<byte[]> ReadLimitedAsync(
         HttpContent content,
         CancellationToken cancellationToken

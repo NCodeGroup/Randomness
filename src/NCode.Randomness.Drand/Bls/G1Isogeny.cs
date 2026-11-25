@@ -104,25 +104,57 @@ internal static class G1Isogeny
     /// <returns>The point on <c>E</c>.</returns>
     public static G1Affine Map(Fp x, Fp y)
     {
-        var xNumerator = Evaluate(XNumerator, x, monic: false);
-        var xDenominator = Evaluate(XDenominator, x, monic: true);
-        var yNumerator = Evaluate(YNumerator, x, monic: false);
-        var yDenominator = Evaluate(YDenominator, x, monic: true);
+        var xNumerator = Evaluate(XNumerator, x);
+        var xDenominator = EvaluateMonic(XDenominator, x);
+        var yNumerator = Evaluate(YNumerator, x);
+        var yDenominator = EvaluateMonic(YDenominator, x);
 
         var mappedX = xNumerator * xDenominator.Invert();
         var mappedY = y * yNumerator * yDenominator.Invert();
         return new G1Affine(mappedX, mappedY);
     }
 
-    private static ImmutableArray<Fp> Parse(params string[] hexValues)
-    {
-        return [.. Array.ConvertAll(hexValues, FieldElements.FromHex)];
-    }
+    /// <summary>
+    /// Decodes hexadecimal field elements, keeping their order.
+    /// </summary>
+    /// <param name="hexValues">The big-endian hexadecimal field elements.</param>
+    /// <returns>The field elements, in the order given.</returns>
+    private static ImmutableArray<Fp> Parse(params IEnumerable<string> hexValues) =>
+        [.. hexValues.Select(FieldElements.FromHex)];
 
-    private static Fp Evaluate(ImmutableArray<Fp> coefficients, Fp x, bool monic)
+    /// <summary>
+    /// Evaluates a polynomial whose coefficients are all listed.
+    /// </summary>
+    /// <param name="coefficients">The coefficients, where index <c>i</c> is the coefficient of <c>x^i</c>.</param>
+    /// <param name="x">The point at which to evaluate.</param>
+    /// <returns>The value of the polynomial at <paramref name="x"/>.</returns>
+    private static Fp Evaluate(ImmutableArray<Fp> coefficients, Fp x) =>
+        Horner(Fp.Zero, coefficients, x);
+
+    /// <summary>
+    /// Evaluates a monic polynomial whose top coefficient, one, is not listed.
+    /// </summary>
+    /// <param name="coefficients">
+    /// The coefficients below the top one, where index <c>i</c> is the coefficient of <c>x^i</c>.
+    /// </param>
+    /// <param name="x">The point at which to evaluate.</param>
+    /// <returns>The value of the polynomial at <paramref name="x"/>.</returns>
+    private static Fp EvaluateMonic(ImmutableArray<Fp> coefficients, Fp x) =>
+        Horner(Fp.One, coefficients, x);
+
+    /// <summary>
+    /// Evaluates a polynomial with Horner's method.
+    /// </summary>
+    /// <param name="leading">
+    /// The top coefficient to start from: zero when every coefficient is listed, one for a monic polynomial.
+    /// </param>
+    /// <param name="coefficients">The listed coefficients, where index <c>i</c> is the coefficient of <c>x^i</c>.</param>
+    /// <param name="x">The point at which to evaluate.</param>
+    /// <returns>The value of the polynomial at <paramref name="x"/>.</returns>
+    private static Fp Horner(Fp leading, ImmutableArray<Fp> coefficients, Fp x)
     {
         // Horner's method from the top coefficient, which a monic polynomial leaves unlisted as one.
-        var result = monic ? Fp.One : Fp.Zero;
+        var result = leading;
         for (var index = coefficients.Length - 1; index >= 0; index--)
         {
             result = result * x + coefficients[index];
