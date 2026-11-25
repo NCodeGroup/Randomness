@@ -183,6 +183,39 @@ public class TwineVerificationTests
 
     #endregion
 
+    #region ParseArray Tests
+
+    [Fact]
+    public void ParseArray_WithCurbyQRoundBytes_ReadsEachDocument()
+    {
+        var bytes = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.RoundJson);
+
+        var documents = TwineDocument.ParseArray(bytes);
+
+        Assert.Equal(3, documents.Length);
+        Assert.Equal(CurbyQuantumFixtures.RequestId, documents[0].Cid.ToString());
+        Assert.Equal(CurbyQuantumFixtures.PrecommitId, documents[1].Cid.ToString());
+        Assert.Equal(CurbyQuantumFixtures.ResultId, documents[2].Cid.ToString());
+    }
+
+    [Fact]
+    public void ParseArray_WithObjectBytes_Throws()
+    {
+        var exception = Assert.Throws<TwineFormatException>(() => TwineDocument.ParseArray("{}"u8));
+
+        Assert.Contains("not an array", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ParseArray_WithMalformedJsonBytes_Throws()
+    {
+        var exception = Assert.Throws<TwineFormatException>(() => TwineDocument.ParseArray("["u8));
+
+        Assert.Contains("not valid JSON", exception.Message, StringComparison.Ordinal);
+    }
+
+    #endregion
+
     #region Verify Tests
 
     [Fact]

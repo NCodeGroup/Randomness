@@ -100,22 +100,7 @@ internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconO
         }
 
         var json = ParseJson(body);
-        if (json.ValueKind != JsonValueKind.Array)
-        {
-            throw new TwineFormatException(
-                $"The Twine API answered with a JSON {json.ValueKind}, not an array."
-            );
-        }
-
-        var count = json.GetArrayLength();
-        var documents = ImmutableArray.CreateBuilder<TwineDocument>(count);
-        foreach (var element in json.EnumerateArray())
-        {
-            var document = TwineDocument.Parse(element);
-            documents.Add(document);
-        }
-
-        return documents.MoveToImmutable();
+        return TwineDocument.ParseArray(json);
     }
 
     /// <summary>
