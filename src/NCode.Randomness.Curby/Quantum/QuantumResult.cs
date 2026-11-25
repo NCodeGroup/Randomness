@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text.Json;
 using NCode.Randomness.Curby.Twine;
 
 namespace NCode.Randomness.Curby.Quantum;
@@ -84,5 +85,119 @@ internal sealed class QuantumResult(
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Returns whether <paramref name="pulse"/>, a pulse of the seed chain, mixes in the precommit.
+    /// </summary>
+    /// <param name="pulse">The seed pulse to examine.</param>
+    public bool MixesPrecommit(TwineSignedPulse pulse)
+    {
+        ArgumentNullException.ThrowIfNull(pulse);
+        return Precommit.Cid.Equals(pulse.MixinOf(Precommit.Chain));
+    }
+
+    /// <summary>
+    /// Selects the seed pulse: the pulse <see cref="SeedCount"/> after the first that mixes in the precommit.
+    /// </summary>
+    /// <param name="mixing">The seed pulses that mix in the precommit up to the result, newest first.</param>
+    public TwineSignedPulse SelectSeed(IReadOnlyList<TwineSignedPulse> mixing)
+    {
+        ArgumentNullException.ThrowIfNull(mixing);
+        if (mixing.Count <= SeedCount)
+        {
+            throw new TwineFormatException(
+                $"Only {mixing.Count} seed pulse(s) mix in the precommit up to the result; the seed is the pulse {SeedCount} after the first."
+            );
+        }
+
+        return mixing[mixing.Count - 1 - SeedCount];
+    }
+
+    /// <summary>
+    /// Checks that the extractor's parameters are the ones the randomness pulse commits to and that their seed
+    /// expands from <paramref name="seed"/>.
+    /// </summary>
+    /// <param name="seed">The seed pulse.</param>
+    /// <param name="parameters">The extractor's parameters, a JSON document.</param>
+    public void VerifySeed(TwineSignedPulse seed, ReadOnlySpan<byte> parameters)
+    {
+        ArgumentNullException.ThrowIfNull(seed);
+        var hash = Convert.ToHexStringLower(Sha3.HashData512(parameters));
+        if (!string.Equals(hash, ParamsHash, StringComparison.Ordinal))
+        {
+            throw new TwineFormatException("The round's parameters do not hash to its paramsHash.");
+        }
+
+        var encoded = ReadSeed(parameters);
+        byte[] expected;
+        try
+        {
+            expected = Convert.FromBase64String(encoded);
+        }
+        catch (FormatException)
+        {
+            throw new TwineFormatException("The round's seed is not canonical base64.");
+        }
+
+        if (!string.Equals(Convert.ToBase64String(expected), encoded, StringComparison.Ordinal))
+        {
+            throw new TwineFormatException("The round's seed is not canonical base64.");
+        }
+
+        var actual = new byte[SeedLength / 8];
+        Sha3.Shake256(seed.Cid.Digest, actual);
+        if (!actual.AsSpan().SequenceEqual(expected))
+        {
+            throw new TwineFormatException(
+                $"The round's seed does not expand from seed pulse {seed.Index} ({seed.Cid})."
+            );
+        }
+    }
+
+    private static string ReadSeed(ReadOnlySpan<byte> parameters)
+    {
+        JsonElement document;
+        try
+        {
+            document = JsonElement.Parse(parameters);
+        }
+        catch (JsonException exception)
+        {
+            throw new TwineFormatException(
+                $"The round's parameters are not JSON: {exception.Message}"
+            );
+        }
+
+        if (document.ValueKind != JsonValueKind.Object)
+        {
+            throw new TwineFormatException("The round's parameters are not a JSON object.");
+        }
+
+        JsonElement? seed = null;
+        foreach (var property in document.EnumerateObject())
+        {
+            if (property.NameEquals("seed"u8))
+            {
+                if (seed is not null)
+                {
+                    throw new TwineFormatException("The round's parameters have 'seed' twice.");
+                }
+
+                seed = property.Value;
+            }
+        }
+
+        if (seed is null)
+        {
+            throw new TwineFormatException("The round's parameters have no 'seed'.");
+        }
+
+        if (seed.Value.ValueKind != JsonValueKind.String)
+        {
+            throw new TwineFormatException("The round's 'seed' is not a string.");
+        }
+
+        return seed.Value.GetString() ?? string.Empty;
     }
 }

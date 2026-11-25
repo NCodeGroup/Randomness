@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text;
 using System.Text.Json;
 using NCode.Randomness.Curby.Quantum;
 using NCode.Randomness.Curby.Tests.Fixtures;
@@ -429,6 +430,201 @@ public class QuantumRoundTests
     }
 
     #endregion
+
+    #region MixesPrecommit Tests
+
+    [Fact]
+    public void MixesPrecommit_WithCurbyQSeedPulses_FindsTheMixingOnes()
+    {
+        var result = FixtureResult();
+        using var seedChain = FixtureSeedChain();
+
+        Assert.True(result.MixesPrecommit(FixtureSeedPulse(seedChain, 1914068)));
+        Assert.True(result.MixesPrecommit(FixtureSeedPulse(seedChain, 1914067)));
+        Assert.False(result.MixesPrecommit(FixtureSeedPulse(seedChain, 1914066)));
+    }
+
+    #endregion
+
+    #region SelectSeed Tests
+
+    [Fact]
+    public void SelectSeed_WithCurbyQSeedPulses_ReturnsThePulseAfterTheFirst()
+    {
+        var result = FixtureResult();
+        using var seedChain = FixtureSeedChain();
+        var newest = FixtureSeedPulse(seedChain, 1914068);
+        var first = FixtureSeedPulse(seedChain, 1914067);
+
+        var seed = result.SelectSeed([newest, first]);
+
+        Assert.Equal(1914068, seed.Index);
+        Assert.Equal(CurbyQuantumFixtures.SeedPulseId, seed.Cid.ToString());
+    }
+
+    [Fact]
+    public void SelectSeed_WithTooFewPulses_Throws()
+    {
+        var result = FixtureResult();
+        using var seedChain = FixtureSeedChain();
+        var first = FixtureSeedPulse(seedChain, 1914067);
+
+        var exception = Assert.Throws<TwineFormatException>(() => result.SelectSeed([first]));
+
+        Assert.Contains(
+            "Only 1 seed pulse(s) mix in the precommit",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    #endregion
+
+    #region VerifySeed Tests
+
+    [Fact]
+    public void VerifySeed_WithCurbyQParameters_Succeeds()
+    {
+        var result = FixtureResult();
+        using var seedChain = FixtureSeedChain();
+        var seed = FixtureSeedPulse(seedChain, 1914068);
+
+        result.VerifySeed(seed, Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters));
+    }
+
+    [Fact]
+    public void VerifySeed_FromTheFirstMixingPulse_Throws()
+    {
+        var result = FixtureResult();
+        using var seedChain = FixtureSeedChain();
+        var first = FixtureSeedPulse(seedChain, 1914067);
+        var parameters = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            result.VerifySeed(first, parameters)
+        );
+
+        Assert.Contains("does not expand", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void VerifySeed_WithTamperedParameters_Throws()
+    {
+        var result = FixtureResult();
+        using var seedChain = FixtureSeedChain();
+        var seed = FixtureSeedPulse(seedChain, 1914068);
+        var parameters = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters + " ");
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            result.VerifySeed(seed, parameters)
+        );
+
+        Assert.Contains(
+            "do not hash to its paramsHash",
+            exception.Message,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public void VerifySeed_WithBuiltRound_Succeeds()
+    {
+        using var builder = new QuantumRoundBuilder();
+        var built = builder.Build();
+        var result = BuiltResult(builder, built);
+        var seed = BuiltSeedPulse(builder, built, built.SeedPulses.Count - 1);
+
+        result.VerifySeed(seed, Encoding.UTF8.GetBytes(built.Parameters));
+    }
+
+    [Fact]
+    public void VerifySeed_WithDuplicateSeedProperty_Throws()
+    {
+        using var builder = new QuantumRoundBuilder
+        {
+            Parameters = static seed =>
+                $$"""{"seed":"{{Convert.ToBase64String(seed)}}","seed":"{{Convert.ToBase64String(seed)}}"}""",
+        };
+
+        AssertSeedRefused(builder, "have 'seed' twice");
+    }
+
+    [Fact]
+    public void VerifySeed_WithoutSeedProperty_Throws()
+    {
+        using var builder = new QuantumRoundBuilder
+        {
+            Parameters = static _ => """{"nBitsOut":512}""",
+        };
+
+        AssertSeedRefused(builder, "have no 'seed'");
+    }
+
+    [Fact]
+    public void VerifySeed_WithSeedThatIsNotAString_Throws()
+    {
+        using var builder = new QuantumRoundBuilder { Parameters = static _ => """{"seed":1}""" };
+
+        AssertSeedRefused(builder, "'seed' is not a string");
+    }
+
+    [Fact]
+    public void VerifySeed_WithUnpaddedBase64_Throws()
+    {
+        using var builder = new QuantumRoundBuilder
+        {
+            Parameters = static seed =>
+                $$"""{"seed":"{{Convert.ToBase64String(seed).TrimEnd('=')}}"}""",
+        };
+
+        AssertSeedRefused(builder, "not canonical base64");
+    }
+
+    #endregion
+
+    private static void AssertSeedRefused(QuantumRoundBuilder builder, string expected)
+    {
+        var built = builder.Build();
+        var result = BuiltResult(builder, built);
+        var seed = BuiltSeedPulse(builder, built, built.SeedPulses.Count - 1);
+        var parameters = Encoding.UTF8.GetBytes(built.Parameters);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            result.VerifySeed(seed, parameters)
+        );
+
+        Assert.Contains(expected, exception.Message, StringComparison.Ordinal);
+    }
+
+    private static TwineChain FixtureSeedChain() =>
+        TwineChain.Verify(
+            TwineVerificationTests.Document(CurbyQuantumFixtures.SeedChain),
+            Cid.Parse(CurbyQuantumFixtures.SeedChainId),
+            null
+        );
+
+    private static TwineSignedPulse FixtureSeedPulse(TwineChain seedChain, long index) =>
+        TwineSignedPulse.Verify(
+            TwineVerificationTests.Document(CurbyQuantumFixtures.SeedPulse(index)),
+            seedChain
+        );
+
+    private static TwineSignedPulse BuiltSeedPulse(
+        QuantumRoundBuilder builder,
+        BuiltQuantumRound built,
+        int index
+    )
+    {
+        using var chain = TwineChain.Verify(
+            TwineVerificationTests.Document(builder.Seed.ChainJson),
+            builder.Seed.ChainCid,
+            null
+        );
+        return TwineSignedPulse.Verify(
+            TwineVerificationTests.Document(built.SeedPulses[index].Json),
+            chain
+        );
+    }
 
     private static QuantumResult FixtureResult()
     {
