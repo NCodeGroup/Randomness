@@ -53,7 +53,8 @@ internal sealed class NistBeacon(
             return ValueTask.FromException<BeaconPulse>(exception);
         }
 
-        return FetchAsync(round.ToString(CultureInfo.InvariantCulture), round, cancellationToken);
+        var selector = round.ToString(CultureInfo.InvariantCulture);
+        return FetchAsync(selector, round, cancellationToken);
     }
 
     private async ValueTask<BeaconPulse> FetchAsync(
@@ -98,11 +99,13 @@ internal sealed class NistBeacon(
                 .ConfigureAwait(false);
             pulse.VerifyFollows(predecessor);
             Volatile.Write(ref _lastVerified, pulse);
+            var chainText = pulse.ChainIndex.ToString(CultureInfo.InvariantCulture);
+            var id = Convert.ToHexString(pulse.Output);
             return new BeaconPulse(
                 Name,
-                pulse.ChainIndex.ToString(CultureInfo.InvariantCulture),
+                chainText,
                 pulse.PulseIndex,
-                Convert.ToHexString(pulse.Output),
+                id,
                 pulse.Timestamp,
                 pulse.Output
             );
@@ -158,11 +161,8 @@ internal sealed class NistBeacon(
             return last;
         }
 
-        return await GetVerifiedAsync(
-                index.ToString(CultureInfo.InvariantCulture),
-                cancellationToken
-            )
-            .ConfigureAwait(false)
+        var selector = index.ToString(CultureInfo.InvariantCulture);
+        return await GetVerifiedAsync(selector, cancellationToken).ConfigureAwait(false)
             ?? throw new NistFormatException($"NIST does not serve pulse {index}.");
     }
 }

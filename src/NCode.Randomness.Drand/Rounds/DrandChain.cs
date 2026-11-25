@@ -43,13 +43,23 @@ internal sealed class DrandChain(string hash, G2Affine publicKey, long genesisTi
     /// <summary>
     /// The quicknet chain, pinned from <see cref="DrandDefaults"/>.
     /// </summary>
-    public static DrandChain Quicknet { get; } =
-        new(
+    public static DrandChain Quicknet { get; } = CreateQuicknet();
+
+    /// <summary>
+    /// Creates the quicknet chain from <see cref="DrandDefaults"/>.
+    /// </summary>
+    /// <returns>The quicknet chain.</returns>
+    private static DrandChain CreateQuicknet()
+    {
+        var publicKeyBytes = Convert.FromHexString(DrandDefaults.PublicKey);
+        var publicKey = G2Affine.FromCompressed(publicKeyBytes);
+        return new DrandChain(
             DrandDefaults.ChainHash,
-            G2Affine.FromCompressed(Convert.FromHexString(DrandDefaults.PublicKey)),
+            publicKey,
             DrandDefaults.GenesisTime,
             DrandDefaults.Period
         );
+    }
 
     /// <summary>
     /// Gets the time a round is due: the genesis time plus the periods before it.

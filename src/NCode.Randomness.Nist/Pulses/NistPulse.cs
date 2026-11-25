@@ -131,12 +131,14 @@ internal sealed class NistPulse
         var pulse = ReadObject(document, "pulse");
         var signed = new ArrayBufferWriter<byte>(1024);
 
-        WriteString(signed, ReadString(pulse, "uri"));
+        var uri = ReadString(pulse, "uri");
+        WriteString(signed, uri);
         var version = ReadString(pulse, "version");
         WriteString(signed, version);
         var cipherSuite = ReadUInt32(pulse, "cipherSuite");
         WriteUInt32(signed, cipherSuite);
-        WriteUInt32(signed, ReadUInt32(pulse, "period"));
+        var period = ReadUInt32(pulse, "period");
+        WriteUInt32(signed, period);
         var certificateId = ReadHash(pulse, "certificateId");
         WriteBytes(signed, certificateId);
         var chainIndex = ReadIndex(pulse, "chainIndex");
@@ -152,10 +154,12 @@ internal sealed class NistPulse
         var previous = WriteListValues(signed, pulse);
         var precommitment = ReadHash(pulse, "precommitmentValue");
         WriteBytes(signed, precommitment);
-        WriteUInt32(signed, ReadUInt32(pulse, "statusCode"));
+        var statusCode = ReadUInt32(pulse, "statusCode");
+        WriteUInt32(signed, statusCode);
 
         var signature = ReadHex(pulse, "signatureValue", minimumLength: 1, MaxSignatureLength);
         var output = ReadHash(pulse, "outputValue");
+        var signedBytes = signed.WrittenSpan.ToArray();
         return new NistPulse(
             version,
             cipherSuite,
@@ -168,7 +172,7 @@ internal sealed class NistPulse
             precommitment,
             signature,
             output,
-            signed.WrittenSpan.ToArray()
+            signedBytes
         );
     }
 
@@ -241,7 +245,8 @@ internal sealed class NistPulse
         var hashed = new byte[SignedBytes.Length + Signature.Length];
         SignedBytes.CopyTo(hashed, 0);
         Signature.CopyTo(hashed, SignedBytes.Length);
-        if (!CryptographicOperations.FixedTimeEquals(SHA512.HashData(hashed), Output))
+        var hash = SHA512.HashData(hashed);
+        if (!CryptographicOperations.FixedTimeEquals(hash, Output))
         {
             throw new NistFormatException(
                 $"The output value of pulse {PulseIndex} is not the hash of its signed bytes and signature."
@@ -281,12 +286,8 @@ internal sealed class NistPulse
             );
         }
 
-        if (
-            !CryptographicOperations.FixedTimeEquals(
-                SHA512.HashData(LocalRandomValue),
-                predecessor.Precommitment
-            )
-        )
+        var localRandomHash = SHA512.HashData(LocalRandomValue);
+        if (!CryptographicOperations.FixedTimeEquals(localRandomHash, predecessor.Precommitment))
         {
             throw new NistFormatException(
                 $"The local random value of pulse {PulseIndex} does not match the precommitment of pulse {predecessor.PulseIndex}."
@@ -309,9 +310,12 @@ internal sealed class NistPulse
             throw new NistFormatException("The NIST pulse member 'external' is not an object.");
         }
 
-        WriteBytes(signed, ReadHash(external, "sourceId", "external.sourceId"));
-        WriteUInt32(signed, ReadUInt32(external, "statusCode", "external.statusCode"));
-        WriteBytes(signed, ReadHash(external, "value", "external.value"));
+        var sourceId = ReadHash(external, "sourceId", "external.sourceId");
+        WriteBytes(signed, sourceId);
+        var statusCode = ReadUInt32(external, "statusCode", "external.statusCode");
+        WriteUInt32(signed, statusCode);
+        var value = ReadHash(external, "value", "external.value");
+        WriteBytes(signed, value);
     }
 
     private static byte[] WriteListValues(ArrayBufferWriter<byte> signed, JsonElement pulse)
@@ -474,13 +478,15 @@ internal sealed class NistPulse
 
     private static void WriteUInt32(ArrayBufferWriter<byte> signed, uint value)
     {
-        BinaryPrimitives.WriteUInt32BigEndian(signed.GetSpan(sizeof(uint)), value);
+        var span = signed.GetSpan(sizeof(uint));
+        BinaryPrimitives.WriteUInt32BigEndian(span, value);
         signed.Advance(sizeof(uint));
     }
 
     private static void WriteInt64(ArrayBufferWriter<byte> signed, long value)
     {
-        BinaryPrimitives.WriteInt64BigEndian(signed.GetSpan(sizeof(long)), value);
+        var span = signed.GetSpan(sizeof(long));
+        BinaryPrimitives.WriteInt64BigEndian(span, value);
         signed.Advance(sizeof(long));
     }
 

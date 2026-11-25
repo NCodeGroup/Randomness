@@ -36,7 +36,9 @@ internal static class FieldElements
     /// <returns>The field element.</returns>
     public static Fp FromHex(string hex)
     {
-        return Fp.FromBytes(Convert.FromHexString(hex.PadLeft(ElementBytes * 2, '0')));
+        var padded = hex.PadLeft(ElementBytes * 2, '0');
+        var bytes = Convert.FromHexString(padded);
+        return Fp.FromBytes(bytes);
     }
 
     /// <summary>
@@ -47,13 +49,9 @@ internal static class FieldElements
     public static Fp FromInteger(BigInteger value)
     {
         var bytes = new byte[ElementBytes];
-        var span = bytes.AsSpan();
-        value.TryWriteBytes(
-            span[(ElementBytes - value.GetByteCount(isUnsigned: true))..],
-            out _,
-            isUnsigned: true,
-            isBigEndian: true
-        );
+        var byteCount = value.GetByteCount(isUnsigned: true);
+        var destination = bytes.AsSpan(ElementBytes - byteCount);
+        value.TryWriteBytes(destination, out _, isUnsigned: true, isBigEndian: true);
         return Fp.FromBytes(bytes);
     }
 
@@ -64,7 +62,8 @@ internal static class FieldElements
     /// <returns>The integer, from zero up to but excluding the modulus.</returns>
     public static BigInteger ToInteger(Fp value)
     {
-        return new BigInteger(value.ToArray(), isUnsigned: true, isBigEndian: true);
+        var bytes = value.ToArray();
+        return new BigInteger(bytes, isUnsigned: true, isBigEndian: true);
     }
 
     /// <summary>
@@ -74,7 +73,9 @@ internal static class FieldElements
     /// <returns>The field element.</returns>
     public static Fp Reduce(ReadOnlySpan<byte> bytes)
     {
-        return FromInteger(new BigInteger(bytes, isUnsigned: true, isBigEndian: true) % Modulus);
+        var integer = new BigInteger(bytes, isUnsigned: true, isBigEndian: true);
+        var reduced = integer % Modulus;
+        return FromInteger(reduced);
     }
 
     /// <summary>

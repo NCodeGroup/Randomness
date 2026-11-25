@@ -40,11 +40,11 @@ internal static class G1HashToCurve
     public static Fp[] HashToField(ReadOnlySpan<byte> message, ReadOnlySpan<byte> domain)
     {
         var bytes = ExpandMessageXmd.Expand(message, domain, 128);
-        return
-        [
-            FieldElements.Reduce(bytes.AsSpan(0, 64)),
-            FieldElements.Reduce(bytes.AsSpan(64, 64)),
-        ];
+        var first = bytes.AsSpan(0, 64);
+        var second = bytes.AsSpan(64, 64);
+        var firstElement = FieldElements.Reduce(first);
+        var secondElement = FieldElements.Reduce(second);
+        return [firstElement, secondElement];
     }
 
     /// <summary>
@@ -56,8 +56,11 @@ internal static class G1HashToCurve
     public static G1Affine Hash(ReadOnlySpan<byte> message, ReadOnlySpan<byte> domain)
     {
         var u = HashToField(message, domain);
-        var sum = new G1Projective(MapToCurve(u[0])) + MapToCurve(u[1]);
-        return new G1Affine(sum.ClearCofactor());
+        var q0 = MapToCurve(u[0]);
+        var q1 = MapToCurve(u[1]);
+        var sum = new G1Projective(q0) + q1;
+        var cleared = sum.ClearCofactor();
+        return new G1Affine(cleared);
     }
 
     /// <summary>

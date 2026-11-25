@@ -37,7 +37,8 @@ internal sealed class DrandBeacon(DrandApi api, DrandChain chain) : IRandomnessB
             return ValueTask.FromException<BeaconPulse>(exception);
         }
 
-        return FetchAsync(round.ToString(CultureInfo.InvariantCulture), round, cancellationToken);
+        var selector = round.ToString(CultureInfo.InvariantCulture);
+        return FetchAsync(selector, round, cancellationToken);
     }
 
     private async ValueTask<BeaconPulse> FetchAsync(
@@ -73,11 +74,12 @@ internal sealed class DrandBeacon(DrandApi api, DrandChain chain) : IRandomnessB
                 );
             }
 
+            var id = Convert.ToHexStringLower(verified.Signature);
             return new BeaconPulse(
                 Name,
                 Chain.Hash,
                 verified.Round,
-                Convert.ToHexStringLower(verified.Signature),
+                id,
                 verified.Timestamp,
                 verified.Randomness
             );

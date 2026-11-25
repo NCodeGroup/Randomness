@@ -99,7 +99,8 @@ internal sealed class DrandRound
         }
 
         var key = chain.PublicKey;
-        var hashed = G1HashToCurve.Hash(MessageOf(round), Domain);
+        var message = MessageOf(round);
+        var hashed = G1HashToCurve.Hash(message, Domain);
         var generator = G2Affine.Generator;
         if (Bls12.Pairing(in point, in generator) != Bls12.Pairing(in hashed, in key))
         {
@@ -109,9 +110,11 @@ internal sealed class DrandRound
         var randomness = SHA256.HashData(signature);
         if (json.TryGetProperty("randomness", out var claimed))
         {
+            var claimedText =
+                claimed.ValueKind == JsonValueKind.String ? claimed.GetString() : null;
             if (
-                claimed.ValueKind != JsonValueKind.String
-                || !TryReadHex(claimed.GetString(), RandomnessLength, out var claimedBytes)
+                claimedText is null
+                || !TryReadHex(claimedText, RandomnessLength, out var claimedBytes)
                 || !CryptographicOperations.FixedTimeEquals(claimedBytes, randomness)
             )
             {
@@ -121,7 +124,8 @@ internal sealed class DrandRound
             }
         }
 
-        return new DrandRound(round, signature, randomness, chain.TimeOf(round));
+        var timestamp = chain.TimeOf(round);
+        return new DrandRound(round, signature, randomness, timestamp);
     }
 
     private static long ReadRound(JsonElement json, DrandChain chain)
@@ -151,10 +155,8 @@ internal sealed class DrandRound
             throw new DrandFormatException("The drand member 'signature' is missing.");
         }
 
-        if (
-            member.ValueKind != JsonValueKind.String
-            || !TryReadHex(member.GetString(), SignatureLength, out var signature)
-        )
+        var text = member.ValueKind == JsonValueKind.String ? member.GetString() : null;
+        if (text is null || !TryReadHex(text, SignatureLength, out var signature))
         {
             throw new DrandFormatException(
                 "The drand member 'signature' is not 48 bytes of hexadecimal."

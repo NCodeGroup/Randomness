@@ -82,10 +82,8 @@ internal sealed class NistCertificate : IDisposable
         }
 
         var der = new byte[fields.DecodedDataLength];
-        if (
-            !Convert.TryFromBase64Chars(text.AsSpan(fields.Base64Data), der, out var written)
-            || written != der.Length
-        )
+        var base64Data = text.AsSpan(fields.Base64Data);
+        if (!Convert.TryFromBase64Chars(base64Data, der, out var written) || written != der.Length)
         {
             throw new NistFormatException("The certificate is not PEM.");
         }
@@ -127,12 +125,9 @@ internal sealed class NistCertificate : IDisposable
                 );
             }
 
-            return new NistCertificate(
-                id,
-                key,
-                new DateTimeOffset(certificate.NotBefore.ToUniversalTime()),
-                new DateTimeOffset(certificate.NotAfter.ToUniversalTime())
-            );
+            var notBefore = new DateTimeOffset(certificate.NotBefore.ToUniversalTime());
+            var notAfter = new DateTimeOffset(certificate.NotAfter.ToUniversalTime());
+            return new NistCertificate(id, key, notBefore, notAfter);
         }
     }
 
