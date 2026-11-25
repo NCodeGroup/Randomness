@@ -33,6 +33,18 @@ public class CurbyRandomnessBuilderExtensionsTests
     }
 
     [Fact]
+    public async Task AddCurbyBeacon_OnARandomnessHostBuilder_ComposesTheBeaconWithoutAHost()
+    {
+        var builder = RandomnessHost.CreateBuilder(options => options.Mode = BeaconMode.Offline);
+        builder.AddCurbyBeacon();
+        await using var host = await builder.BuildAsync(CancellationToken.None);
+
+        var beacon = Assert.Single(host.BeaconStatus.Beacons);
+
+        Assert.Equal(CurbyDefaults.BeaconName, beacon.Name);
+    }
+
+    [Fact]
     public async Task AddCurbyBeacon_Always_RegistersTheNamedClientWithItsResilience()
     {
         var services = new ServiceCollection();
