@@ -40,20 +40,41 @@ internal sealed class NistCertificateCache(
         return ids.Select(static id => id.ToLowerInvariant()).ToFrozenSet(StringComparer.Ordinal);
     }
 
+    /// <summary>
+    /// Gets the client that fetches certificates from the NIST API.
+    /// </summary>
     private NistApi Api { get; } = api;
 
+    /// <summary>
+    /// Gets the clock that dates each failed fetch.
+    /// </summary>
     private TimeProvider Time { get; } = time;
 
+    /// <summary>
+    /// Gets how long a failed fetch is remembered before the same certificate is fetched again.
+    /// </summary>
     private TimeSpan RetryDelay { get; } = options.Value.CertificateRetryDelay;
 
+    /// <summary>
+    /// Gets the lowercase hexadecimal identifiers of the certificates that may be trusted.
+    /// </summary>
     private FrozenSet<string> PinnedIds { get; } = CreatePinnedIds(options.Value.CertificateIds);
 
+    /// <summary>
+    /// Gets the certificates already fetched and accepted, by lowercase hexadecimal identifier.
+    /// </summary>
     private ConcurrentDictionary<string, NistCertificate> Certificates { get; } =
         new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Gets the fetch every caller of a certificate shares, by key.
+    /// </summary>
     private ConcurrentDictionary<string, Lazy<Task<NistCertificate>>> Fetches { get; } =
         new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Gets when each key's last fetch failed, so a failure is remembered for the retry delay.
+    /// </summary>
     private ConcurrentDictionary<string, DateTimeOffset> Failures { get; } =
         new(StringComparer.Ordinal);
 

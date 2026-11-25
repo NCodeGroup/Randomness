@@ -16,7 +16,14 @@ namespace NCode.Randomness.Drand.Rounds;
 /// </summary>
 internal sealed class DrandRound
 {
+    /// <summary>
+    /// The number of bytes, 48, in a signature: a compressed point of G1.
+    /// </summary>
     private const int SignatureLength = 48;
+
+    /// <summary>
+    /// The number of bytes, 32, in a round's randomness: the SHA-256 hash of its signature.
+    /// </summary>
     private const int RandomnessLength = 32;
 
     /// <summary>

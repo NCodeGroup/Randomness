@@ -24,12 +24,22 @@ internal sealed class NistBeacon(
     IOptions<NistBeaconOptions> options
 ) : IRandomnessBeacon
 {
+    /// <inheritdoc/>
     public string Name => NistDefaults.BeaconName;
 
+    /// <summary>
+    /// Gets the client that fetches pulses from the NIST API.
+    /// </summary>
     private NistApi Api { get; } = api;
 
+    /// <summary>
+    /// Gets the cache of pinned certificates that verify each pulse's signature.
+    /// </summary>
     private NistCertificateCache Certificates { get; } = certificates;
 
+    /// <summary>
+    /// Gets the index of the chain whose pulses this beacon accepts.
+    /// </summary>
     private long ChainIndex { get; } = options.Value.ChainIndex;
 
     /// <summary>

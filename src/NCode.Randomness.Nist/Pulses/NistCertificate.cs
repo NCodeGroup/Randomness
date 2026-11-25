@@ -14,9 +14,20 @@ namespace NCode.Randomness.Nist.Pulses;
 /// </summary>
 internal sealed class NistCertificate : IDisposable
 {
+    /// <summary>
+    /// The label of the PEM block that holds a certificate.
+    /// </summary>
     private const string PemLabel = "CERTIFICATE";
+
+    /// <summary>
+    /// The fewest bits, 2048, that a certificate's RSA key may have.
+    /// </summary>
     private const int MinimumKeyBits = 2048;
 
+    /// <summary>
+    /// Gets a strict UTF-8 encoding, without a byte order mark, that throws on invalid bytes or characters instead of
+    /// replacing them.
+    /// </summary>
     private static UTF8Encoding Utf8 { get; } =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 

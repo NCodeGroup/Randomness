@@ -10,16 +10,34 @@ namespace NCode.Randomness.Nist;
 /// </summary>
 internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOptions>
 {
+    /// <summary>
+    /// The configuration section, followed by its key separator, that every failure message names.
+    /// </summary>
     private const string Prefix = NistBeaconOptions.SectionName + ":";
 
+    /// <summary>
+    /// The fewest bytes, 1024, that the response size limit may allow.
+    /// </summary>
     private const int MinResponseBytes = 1024;
 
+    /// <summary>
+    /// The lowest chain index that may be configured, 1.
+    /// </summary>
     private const long MinChainIndex = 1;
 
+    /// <summary>
+    /// The number of hexadecimal digits, 128, in a certificate identifier: the SHA-512 hash of a DER encoding.
+    /// </summary>
     private const int CertificateIdLength = 128;
 
+    /// <summary>
+    /// Gets the shortest time, one second, that a failed certificate fetch may be remembered.
+    /// </summary>
     private static TimeSpan MinRetryDelay { get; } = TimeSpan.FromSeconds(1);
 
+    /// <summary>
+    /// Gets the longest time, one day, that a failed certificate fetch may be remembered.
+    /// </summary>
     private static TimeSpan MaxRetryDelay { get; } = TimeSpan.FromDays(1);
 
     /// <summary>

@@ -13,6 +13,9 @@ namespace NCode.Randomness.Drand.Bls;
 /// </summary>
 internal static class FieldElements
 {
+    /// <summary>
+    /// The number of bytes, 48, in the big-endian encoding of a base field element.
+    /// </summary>
     private const int ElementBytes = 48;
 
     /// <summary>

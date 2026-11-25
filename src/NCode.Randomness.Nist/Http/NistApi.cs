@@ -17,10 +17,24 @@ namespace NCode.Randomness.Nist.Http;
 // versioned packages never share a type, so a fix to one copy belongs in the others.
 internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOptions> options)
 {
+    /// <summary>
+    /// The media type that a pulse response must have.
+    /// </summary>
     private const string JsonMediaType = "application/json";
+
+    /// <summary>
+    /// The number of bytes, 16 KiB, read from a response body at a time.
+    /// </summary>
     private const int ChunkBytes = 16 * 1024;
+
+    /// <summary>
+    /// The media type that a certificate response must have.
+    /// </summary>
     private const string TextMediaType = "text/plain";
 
+    /// <summary>
+    /// Gets the options that parse a response body: nesting up to 16 levels deep and no duplicate property names.
+    /// </summary>
     private static JsonDocumentOptions ParseOptions { get; } =
         new() { MaxDepth = 16, AllowDuplicateProperties = false };
 
@@ -45,8 +59,14 @@ internal sealed class NistApi(IHttpClientFactory clients, IOptions<NistBeaconOpt
         }
     }
 
+    /// <summary>
+    /// Gets the factory that creates the HTTP client for each request.
+    /// </summary>
     private IHttpClientFactory Clients { get; } = clients;
 
+    /// <summary>
+    /// Gets the options that name the base address and limit the size of a response.
+    /// </summary>
     private NistBeaconOptions Options { get; } = options.Value;
 
     /// <summary>

@@ -17,11 +17,34 @@ namespace NCode.Randomness.Nist.Pulses;
 /// </summary>
 internal sealed class NistPulse
 {
+    /// <summary>
+    /// The number of bytes, 64, in a SHA-512 hash and in each hash a pulse carries.
+    /// </summary>
     private const int HashLength = 64;
+
+    /// <summary>
+    /// The most bytes a pulse's signature may have.
+    /// </summary>
     private const int MaxSignatureLength = 1024;
+
+    /// <summary>
+    /// The format of a pulse's timestamp: UTC, to the millisecond.
+    /// </summary>
     private const string TimestampFormat = "yyyy-MM-dd'T'HH:mm:ss.fff'Z'";
+
+    /// <summary>
+    /// The type of the first member of a pulse's list of values: the output of the previous pulse.
+    /// </summary>
     private const string PreviousType = "previous";
+
+    /// <summary>
+    /// The only pulse version this beacon accepts.
+    /// </summary>
     private const string SupportedVersion = "2.0";
+
+    /// <summary>
+    /// The only cipher suite this beacon accepts: 0, RSA PKCS #1 v1.5 with SHA-512.
+    /// </summary>
     private const uint SupportedCipherSuite = 0;
 
     /// <summary>
@@ -29,6 +52,10 @@ internal sealed class NistPulse
     /// </summary>
     private const int SignedBytesCapacity = 1024;
 
+    /// <summary>
+    /// Gets a strict UTF-8 encoding, without a byte order mark, that throws on invalid bytes or characters instead of
+    /// replacing them.
+    /// </summary>
     private static UTF8Encoding Utf8 { get; } =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 

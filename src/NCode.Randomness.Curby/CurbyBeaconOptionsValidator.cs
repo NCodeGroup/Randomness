@@ -13,10 +13,19 @@ internal sealed class CurbyBeaconOptionsValidator : IValidateOptions<CurbyBeacon
 {
     private const string Prefix = CurbyBeaconOptions.SectionName + ":";
 
+    /// <summary>
+    /// The fewest bytes, 1024, that the response size limit may allow.
+    /// </summary>
     private const int MinResponseBytes = 1024;
 
+    /// <summary>
+    /// Gets the shortest time, one second, that a failed chain fetch may be remembered.
+    /// </summary>
     private static TimeSpan MinRetryDelay { get; } = TimeSpan.FromSeconds(1);
 
+    /// <summary>
+    /// Gets the longest time, one day, that a failed chain fetch may be remembered.
+    /// </summary>
     private static TimeSpan MaxRetryDelay { get; } = TimeSpan.FromDays(1);
 
     /// <summary>

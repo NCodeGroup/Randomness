@@ -17,12 +17,25 @@ namespace NCode.Randomness.Drand.Http;
 // versioned packages never share a type, so a fix to one copy belongs in the others.
 internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconOptions> options)
 {
+    /// <summary>
+    /// The media type that a round response must have.
+    /// </summary>
     private const string JsonMediaType = "application/json";
+
+    /// <summary>
+    /// The number of bytes, 16 KiB, read from a response body at a time.
+    /// </summary>
     private const int ChunkBytes = 16 * 1024;
 
-    // The API answers 425 Too Early for a round that is not yet due.
+    /// <summary>
+    /// The status drand answers for a round that is not yet due: 425 Too Early, which <see cref="HttpStatusCode"/> has
+    /// no member for.
+    /// </summary>
     private const HttpStatusCode TooEarly = (HttpStatusCode)425;
 
+    /// <summary>
+    /// Gets the options that parse a response body: nesting up to 16 levels deep and no duplicate property names.
+    /// </summary>
     private static JsonDocumentOptions ParseOptions { get; } =
         new() { MaxDepth = 16, AllowDuplicateProperties = false };
 
@@ -47,8 +60,14 @@ internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconO
         }
     }
 
+    /// <summary>
+    /// Gets the factory that creates the HTTP client for each request.
+    /// </summary>
     private IHttpClientFactory Clients { get; } = clients;
 
+    /// <summary>
+    /// Gets the options that name the base address and limit the size of a response.
+    /// </summary>
     private DrandBeaconOptions Options { get; } = options.Value;
 
     /// <summary>

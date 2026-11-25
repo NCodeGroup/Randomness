@@ -11,9 +11,24 @@ namespace NCode.Randomness.Drand.Bls;
 /// </summary>
 internal static class ExpandMessageXmd
 {
+    /// <summary>
+    /// The number of bytes, 64, in a block of SHA-256's input.
+    /// </summary>
     private const int BlockBytes = 64;
+
+    /// <summary>
+    /// The number of bytes, 32, that SHA-256 outputs.
+    /// </summary>
     private const int OutputBytes = 32;
+
+    /// <summary>
+    /// The most bytes, 255, that a domain separation tag may have.
+    /// </summary>
     private const int MaxDomainBytes = 255;
+
+    /// <summary>
+    /// The most bytes, 8160, that can be expanded: 255 blocks of SHA-256 output.
+    /// </summary>
     private const int MaxLength = 255 * OutputBytes;
 
     /// <summary>

@@ -10,8 +10,14 @@ namespace NCode.Randomness.Drand;
 /// </summary>
 internal sealed class DrandBeaconOptionsValidator : IValidateOptions<DrandBeaconOptions>
 {
+    /// <summary>
+    /// The configuration section, followed by its key separator, that every failure message names.
+    /// </summary>
     private const string Prefix = DrandBeaconOptions.SectionName + ":";
 
+    /// <summary>
+    /// The fewest bytes, 1024, that the response size limit may allow.
+    /// </summary>
     private const int MinResponseBytes = 1024;
 
     /// <inheritdoc/>

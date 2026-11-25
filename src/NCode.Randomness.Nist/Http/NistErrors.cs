@@ -14,6 +14,9 @@ namespace NCode.Randomness.Nist.Http;
 // independently versioned packages never share a type, so a fix to one copy belongs in the others.
 internal static class NistErrors
 {
+    /// <summary>
+    /// The name of the beacon that its failure messages cite.
+    /// </summary>
     private const string Source = "NIST";
 
     /// <summary>

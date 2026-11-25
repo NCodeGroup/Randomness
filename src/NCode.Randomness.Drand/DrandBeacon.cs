@@ -16,10 +16,17 @@ namespace NCode.Randomness.Drand;
 /// <param name="chain">The pinned chain whose group public key verifies every round.</param>
 internal sealed class DrandBeacon(DrandApi api, DrandChain chain) : IRandomnessBeacon
 {
+    /// <inheritdoc/>
     public string Name => DrandDefaults.BeaconName;
 
+    /// <summary>
+    /// Gets the client that fetches rounds from the drand API.
+    /// </summary>
     private DrandApi Api { get; } = api;
 
+    /// <summary>
+    /// Gets the pinned chain: its hash, period, genesis time and group public key.
+    /// </summary>
     private DrandChain Chain { get; } = chain;
 
     /// <inheritdoc/>

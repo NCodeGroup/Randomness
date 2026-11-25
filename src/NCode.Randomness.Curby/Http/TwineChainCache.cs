@@ -29,14 +29,26 @@ internal sealed class TwineChainCache(
 
     private TwineApi Api { get; } = api;
 
+    /// <summary>
+    /// Gets the clock that dates each failed fetch.
+    /// </summary>
     private TimeProvider Time { get; } = time;
 
+    /// <summary>
+    /// Gets how long a failed fetch is remembered before the same chain is fetched again.
+    /// </summary>
     private TimeSpan RetryDelay { get; } = options.Value.ChainRetryDelay;
 
     private ConcurrentDictionary<(Cid, string?), TwineChain> Chains { get; } = new();
 
+    /// <summary>
+    /// Gets the fetch every caller of a chain shares, by key.
+    /// </summary>
     private ConcurrentDictionary<(Cid, string?), Lazy<Task<TwineChain>>> Fetches { get; } = new();
 
+    /// <summary>
+    /// Gets when each key's last fetch failed, so a failure is remembered for the retry delay.
+    /// </summary>
     private ConcurrentDictionary<(Cid, string?), DateTimeOffset> Failures { get; } = new();
 
     /// <summary>

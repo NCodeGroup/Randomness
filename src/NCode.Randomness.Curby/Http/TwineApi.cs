@@ -19,7 +19,12 @@ namespace NCode.Randomness.Curby.Http;
 internal sealed class TwineApi(IHttpClientFactory clients, IOptions<CurbyBeaconOptions> options)
 {
     private const string JsonMediaType = "application/json";
+
+    /// <summary>
+    /// The number of bytes, 16 KiB, read from a response body at a time.
+    /// </summary>
     private const int ChunkBytes = 16 * 1024;
+
     private const string OctetStreamMediaType = "application/octet-stream";
 
     private static JsonDocumentOptions ParseOptions { get; } = new() { MaxDepth = 32 };
