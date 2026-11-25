@@ -23,6 +23,12 @@ public static class RandomSourceExtensions
         /// </summary>
         /// <param name="count">The number of bytes.</param>
         /// <returns>The bytes.</returns>
+        /// <remarks>
+        /// The array is neither pinned nor cleared, so the garbage collector can leave copies of it in memory. For a
+        /// key or other secret, call <see cref="IRandomSource.Fill(Span{byte})"/> with a <see langword="stackalloc"/>
+        /// or pinned span, and clear it with
+        /// <see cref="System.Security.Cryptography.CryptographicOperations.ZeroMemory(Span{byte})"/> after use.
+        /// </remarks>
         public byte[] GetBytes(int count)
         {
             ArgumentNullException.ThrowIfNull(source);
