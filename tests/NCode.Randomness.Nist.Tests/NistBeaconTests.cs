@@ -257,6 +257,55 @@ public sealed class NistBeaconTests : IDisposable
     }
 
     [Fact]
+    public async Task GetLatestPulseAsync_WhenTheServerThrowsUnexpectedly_IsInvalid()
+    {
+        var boom = new InvalidOperationException("boom");
+        Server.Fail(PulsePath + "last", boom);
+        var beacon = Create();
+
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            NistDefaults.BeaconName,
+            BeaconError.InvalidPulse,
+            CancellationToken.None
+        );
+
+        Assert.Contains("cannot be read", exception.Message, StringComparison.Ordinal);
+        Assert.Same(boom, exception.InnerException);
+    }
+
+    [Fact]
+    public async Task GetLatestPulseAsync_WhenTheBodyIsCorrupt_IsUnavailable()
+    {
+        var corrupt = new InvalidDataException("corrupt");
+        Server.Fail(PulsePath + "last", corrupt);
+        var beacon = Create();
+
+        var exception = await BeaconAssert.AssertBeaconErrorAsync(
+            beacon.GetLatestPulseAsync,
+            NistDefaults.BeaconName,
+            BeaconError.Unavailable,
+            CancellationToken.None
+        );
+
+        Assert.Same(corrupt, exception.InnerException);
+    }
+
+    [Fact]
+    public async Task GetLatestPulseAsync_WhenTheClientIsDisposed_PropagatesIt()
+    {
+        var disposed = new ObjectDisposedException("client");
+        Server.Fail(PulsePath + "last", disposed);
+        var beacon = Create();
+
+        var exception = await Assert.ThrowsAsync<ObjectDisposedException>(async () =>
+            await beacon.GetLatestPulseAsync(CancellationToken.None)
+        );
+
+        Assert.Same(disposed, exception);
+    }
+
+    [Fact]
     public async Task GetLatestPulseAsync_WhenThePulseIsOnAnotherChain_IsInvalid()
     {
         var signer = new NistTestSigner();
