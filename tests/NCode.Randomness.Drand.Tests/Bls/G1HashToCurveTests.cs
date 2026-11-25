@@ -3,6 +3,7 @@
 
 using System.Text;
 using NCode.Randomness.Drand.Bls;
+using Neo.Cryptography.BLS12_381;
 
 namespace NCode.Randomness.Drand.Tests.Bls;
 
@@ -88,6 +89,33 @@ public class G1HashToCurveTests
 
         Assert.Equal(x, actualX);
         Assert.Equal(y, actualY);
+    }
+
+    // u = 0 makes tv1 zero, the exceptional case of RFC 9380 section 6.6.2. The expected point, map_to_curve(0) with its
+    // cofactor cleared, comes from @noble/curves 2.4.0, whose hashToCurve gives RFC 9380 J.9.1's P for msg "": node
+    // --input-type=module -e "import { bls12_381 } from '@noble/curves/bls12-381.js'; const p =
+    // bls12_381.G1.mapToCurve(0n).toAffine(); console.log(p.x.toString(16).padStart(96, '0'),
+    // p.y.toString(16).padStart(96, '0'));"
+    [Fact]
+    public void MapToCurve_WithZero_ClearsToTheReferencePoint()
+    {
+        var point = G1HashToCurve.MapToCurve(Fp.Zero);
+        var projective = new G1Projective(point);
+        var cleared = projective.ClearCofactor();
+        var affine = new G1Affine(cleared);
+        var xBytes = affine.X.ToArray();
+        var yBytes = affine.Y.ToArray();
+        var x = Convert.ToHexStringLower(xBytes);
+        var y = Convert.ToHexStringLower(yBytes);
+
+        Assert.Equal(
+            "11a9a0372b8f332d5c30de9ad14e50372a73fa4c45d5f2fa5097f2d6fb93bcac592f2e1711ac43db0519870c7d0ea415",
+            x
+        );
+        Assert.Equal(
+            "092c0f994164a0719f51c24ba3788de240ff926b55f58c445116e8bc6a47cd63392fd4e8e22bdf9feaa96ee773222133",
+            y
+        );
     }
 
     #endregion

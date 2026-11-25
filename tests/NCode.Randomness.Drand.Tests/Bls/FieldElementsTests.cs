@@ -8,6 +8,45 @@ namespace NCode.Randomness.Drand.Tests.Bls;
 
 public class FieldElementsTests
 {
+    #region FromInteger Tests
+
+    [Fact]
+    public void FromInteger_WithModulus_Throws()
+    {
+        var value = FieldElements.Modulus;
+
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            FieldElements.FromInteger(value)
+        );
+
+        Assert.Equal("value", exception.ParamName);
+    }
+
+    [Fact]
+    public void FromInteger_WithNegativeValue_Throws()
+    {
+        var value = BigInteger.MinusOne;
+
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            FieldElements.FromInteger(value)
+        );
+
+        Assert.Equal("value", exception.ParamName);
+    }
+
+    [Fact]
+    public void FromInteger_WithLargestValue_RoundTrips()
+    {
+        var largest = FieldElements.Modulus - 1;
+
+        var element = FieldElements.FromInteger(largest);
+        var actual = FieldElements.ToInteger(element);
+
+        Assert.Equal(largest, actual);
+    }
+
+    #endregion
+
     #region Reduce Tests
 
     [Fact]

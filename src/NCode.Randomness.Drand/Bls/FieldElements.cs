@@ -46,11 +46,22 @@ internal static class FieldElements
     /// </summary>
     /// <param name="value">The value, from zero up to but excluding the modulus.</param>
     /// <returns>The field element.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is negative or not below the modulus.</exception>
     public static Fp FromInteger(BigInteger value)
     {
+        if (value.Sign < 0 || value >= Modulus)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(value),
+                value,
+                "The value must be from zero up to but excluding the field's modulus."
+            );
+        }
+
         var bytes = new byte[ElementBytes];
         var byteCount = value.GetByteCount(isUnsigned: true);
         var destination = bytes.AsSpan(ElementBytes - byteCount);
+        // Cannot fail: a value below the modulus fits in 48 bytes.
         value.TryWriteBytes(destination, out _, isUnsigned: true, isBigEndian: true);
         return Fp.FromBytes(bytes);
     }
