@@ -13,10 +13,6 @@ namespace NCode.Randomness.Curby.Tests.Quantum;
 
 public class QuantumRoundTests
 {
-    private const long OldestSeedPulseIndex = 1914066;
-    private const long FirstSeedPulseIndex = 1914067;
-    private const long NewestSeedPulseIndex = 1914068;
-
     private static void AssertSeedRefused(QuantumRoundBuilder builder, string expected)
     {
         var built = builder.Build();
@@ -664,9 +660,9 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var newest = FixtureSeedPulse(seedChain, NewestSeedPulseIndex);
-        var first = FixtureSeedPulse(seedChain, FirstSeedPulseIndex);
-        var oldest = FixtureSeedPulse(seedChain, OldestSeedPulseIndex);
+        var newest = FixtureSeedPulse(seedChain, CurbyQuantumFixtures.ThirdSeedPulseIndex);
+        var first = FixtureSeedPulse(seedChain, CurbyQuantumFixtures.SecondSeedPulseIndex);
+        var oldest = FixtureSeedPulse(seedChain, CurbyQuantumFixtures.FirstSeedPulseIndex);
 
         var mixesNewest = result.MixesPrecommit(newest);
         var mixesFirst = result.MixesPrecommit(first);
@@ -686,13 +682,13 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var newest = FixtureSeedPulse(seedChain, NewestSeedPulseIndex);
-        var first = FixtureSeedPulse(seedChain, FirstSeedPulseIndex);
+        var newest = FixtureSeedPulse(seedChain, CurbyQuantumFixtures.ThirdSeedPulseIndex);
+        var first = FixtureSeedPulse(seedChain, CurbyQuantumFixtures.SecondSeedPulseIndex);
 
         var seed = result.SelectSeed([newest, first]);
         var seedId = seed.Cid.ToString();
 
-        Assert.Equal(NewestSeedPulseIndex, seed.Index);
+        Assert.Equal(CurbyQuantumFixtures.ThirdSeedPulseIndex, seed.Index);
         Assert.Equal(CurbyQuantumFixtures.SeedPulseId, seedId);
     }
 
@@ -716,7 +712,7 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var first = FixtureSeedPulse(seedChain, FirstSeedPulseIndex);
+        var first = FixtureSeedPulse(seedChain, CurbyQuantumFixtures.SecondSeedPulseIndex);
 
         var exception = Assert.Throws<TwineFormatException>(() => result.SelectSeed([first]));
 
@@ -736,7 +732,7 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var seed = FixtureSeedPulse(seedChain, NewestSeedPulseIndex);
+        var seed = FixtureSeedPulse(seedChain, CurbyQuantumFixtures.ThirdSeedPulseIndex);
         var parameters = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters);
 
         result.VerifySeed(seed, parameters);
@@ -747,7 +743,7 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var first = FixtureSeedPulse(seedChain, FirstSeedPulseIndex);
+        var first = FixtureSeedPulse(seedChain, CurbyQuantumFixtures.SecondSeedPulseIndex);
         var parameters = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters);
 
         var exception = Assert.Throws<TwineFormatException>(() =>
@@ -762,7 +758,7 @@ public class QuantumRoundTests
     {
         var result = FixtureResult();
         using var seedChain = FixtureSeedChain();
-        var seed = FixtureSeedPulse(seedChain, NewestSeedPulseIndex);
+        var seed = FixtureSeedPulse(seedChain, CurbyQuantumFixtures.ThirdSeedPulseIndex);
         var parameters = Encoding.UTF8.GetBytes(CurbyQuantumFixtures.Parameters + " ");
 
         var exception = Assert.Throws<TwineFormatException>(() =>

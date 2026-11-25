@@ -15,6 +15,9 @@ internal static class CurbyQuantumFixtures
     public const string SeedChainId =
         "bafyriqa5k2d3t3r774geicueaed2wc2fosjwqeexfhwbptfgq7rcn5mwucnhfeuxu2nxbrch3rl6yqjlozhuswo5ln3xwjm35iftt3tpqlcgs";
     public const long Round = 28297;
+    public const long FirstSeedPulseIndex = 1914066;
+    public const long SecondSeedPulseIndex = 1914067;
+    public const long ThirdSeedPulseIndex = 1914068;
     public const string RequestId =
         "bafyriqdxut7znfobli3gwij6iu2yod5ye2bgmgfzvjzyue7sojfc2oquut67i3mazb7abhocg3kdbgm2sxxgnx4gt7wqqtduwy2vch25bsxbw";
     public const string PrecommitId =

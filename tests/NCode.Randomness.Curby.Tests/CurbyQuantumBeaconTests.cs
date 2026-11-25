@@ -65,9 +65,9 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
 
         var pulse = await beacon.GetPulseAsync(CurbyQuantumFixtures.Round, CancellationToken.None);
 
-        var firstSeedPulsePath = SeedPulsePath(1914068);
-        var secondSeedPulsePath = SeedPulsePath(1914067);
-        var thirdSeedPulsePath = SeedPulsePath(1914066);
+        var firstSeedPulsePath = SeedPulsePath(CurbyQuantumFixtures.ThirdSeedPulseIndex);
+        var secondSeedPulsePath = SeedPulsePath(CurbyQuantumFixtures.SecondSeedPulseIndex);
+        var thirdSeedPulsePath = SeedPulsePath(CurbyQuantumFixtures.FirstSeedPulseIndex);
         AssertRound(pulse);
         Assert.Equal(
             [
@@ -644,7 +644,14 @@ public sealed class CurbyQuantumBeaconTests : IDisposable
             .Serve(BellChainPath + "/pulses/" + CurbyQuantumFixtures.BellResponseId, bellResponse)
             .Serve(SeedChainPath, CurbyQuantumFixtures.SeedChain)
             .Serve(ParametersPath, CurbyQuantumFixtures.Parameters, "application/octet-stream");
-        foreach (var index in new long[] { 1914068, 1914067, 1914066 })
+        foreach (
+            var index in new[]
+            {
+                CurbyQuantumFixtures.ThirdSeedPulseIndex,
+                CurbyQuantumFixtures.SecondSeedPulseIndex,
+                CurbyQuantumFixtures.FirstSeedPulseIndex,
+            }
+        )
         {
             var seedPulsePath = SeedPulsePath(index);
             var seedPulse = CurbyQuantumFixtures.SeedPulse(index);

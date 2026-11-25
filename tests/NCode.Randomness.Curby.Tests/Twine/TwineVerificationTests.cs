@@ -11,9 +11,6 @@ namespace NCode.Randomness.Curby.Tests.Twine;
 public class TwineVerificationTests
 {
     private const string RngFamily = "rng";
-    private const long FirstSeedPulseIndex = 1914066;
-    private const long SecondSeedPulseIndex = 1914067;
-    private const long ThirdSeedPulseIndex = 1914068;
 
     private static Cid Pinned { get; } = Cid.Parse(CurbyFixtures.ChainId);
 
@@ -121,9 +118,15 @@ public class TwineVerificationTests
     public void Parse_WithCurbyQDocuments_RecomputesEveryCid()
     {
         var bellPulse = CurbyQuantumFixtures.BellPulse(59313);
-        var firstSeedPulse = CurbyQuantumFixtures.SeedPulse(FirstSeedPulseIndex);
-        var secondSeedPulse = CurbyQuantumFixtures.SeedPulse(SecondSeedPulseIndex);
-        var thirdSeedPulse = CurbyQuantumFixtures.SeedPulse(ThirdSeedPulseIndex);
+        var firstSeedPulse = CurbyQuantumFixtures.SeedPulse(
+            CurbyQuantumFixtures.FirstSeedPulseIndex
+        );
+        var secondSeedPulse = CurbyQuantumFixtures.SeedPulse(
+            CurbyQuantumFixtures.SecondSeedPulseIndex
+        );
+        var thirdSeedPulse = CurbyQuantumFixtures.SeedPulse(
+            CurbyQuantumFixtures.ThirdSeedPulseIndex
+        );
         List<string> documents =
         [
             CurbyQuantumFixtures.Chain,
@@ -175,7 +178,12 @@ public class TwineVerificationTests
         var responseJson = CurbyQuantumFixtures.BellPulse(59313);
         var responseDocument = Document(responseJson);
         var response = TwineSignedPulse.Verify(responseDocument, bell);
-        var seeds = new[] { FirstSeedPulseIndex, SecondSeedPulseIndex, ThirdSeedPulseIndex }
+        var seeds = new[]
+        {
+            CurbyQuantumFixtures.FirstSeedPulseIndex,
+            CurbyQuantumFixtures.SecondSeedPulseIndex,
+            CurbyQuantumFixtures.ThirdSeedPulseIndex,
+        }
             .Select(index =>
             {
                 var seedJson = CurbyQuantumFixtures.SeedPulse(index);
