@@ -37,9 +37,18 @@ public sealed class RandomnessOptions
 
     /// <summary>
     /// Gets or sets the oldest a pulse may be, by its own timestamp, to be mixed in; an older one means a beacon or a
-    /// mirror has stalled. The default is ten minutes.
+    /// mirror has stalled. It applies to every beacon <see cref="MaxPulseAgeByBeacon"/> doesn't name. The default is
+    /// ten minutes.
     /// </summary>
     public TimeSpan MaxPulseAge { get; set; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// Gets or sets the oldest a pulse may be, by beacon name, for the beacons it names, in place of
+    /// <see cref="MaxPulseAge"/>, such as <c>Randomness:MaxPulseAgeByBeacon:curby-q</c> for a beacon that publishes
+    /// less often. A name that no registered beacon has fails the host at start. Empty by default.
+    /// </summary>
+    public IDictionary<string, TimeSpan> MaxPulseAgeByBeacon { get; set; } =
+        new Dictionary<string, TimeSpan>(StringComparer.Ordinal);
 
     /// <summary>
     /// Gets or sets how far a pulse's timestamp may lie ahead of this machine's clock. The default is two minutes.

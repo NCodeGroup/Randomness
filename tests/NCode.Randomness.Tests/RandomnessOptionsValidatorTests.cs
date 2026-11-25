@@ -35,6 +35,33 @@ public class RandomnessOptionsValidatorTests
     }
 
     [Fact]
+    public void Validate_WithNegativeBeaconLimit_NamesTheKey()
+    {
+        var options = new RandomnessOptions();
+        options.MaxPulseAgeByBeacon["a"] = TimeSpan.FromSeconds(-1);
+
+        var result = new RandomnessOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Failed);
+        Assert.Contains(
+            "Randomness:MaxPulseAgeByBeacon:a",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public void Validate_WithEmptyBeaconName_Fails()
+    {
+        var options = new RandomnessOptions();
+        options.MaxPulseAgeByBeacon[" "] = TimeSpan.FromMinutes(1);
+
+        var result = new RandomnessOptionsValidator().Validate(null, options);
+
+        Assert.Contains("empty beacon name", result.FailureMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Validate_WithPeriodBeyondTimerRange_Fails()
     {
         var options = new RandomnessOptions { MaxRetryDelay = TimeSpan.FromDays(60) };

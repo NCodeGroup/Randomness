@@ -49,6 +49,7 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
             options.MaxPulseAge,
             TimeSpan.FromSeconds(1)
         );
+        CheckBeaconLimits(failures, options);
         CheckPeriod(failures, nameof(options.MaxClockSkew), options.MaxClockSkew, TimeSpan.Zero);
         CheckPeriod(
             failures,
@@ -77,6 +78,36 @@ internal sealed class RandomnessOptionsValidator : IValidateOptions<RandomnessOp
         return failures.Count == 0
             ? ValidateOptionsResult.Success
             : ValidateOptionsResult.Fail(failures);
+    }
+
+    private static void CheckBeaconLimits(List<string> failures, RandomnessOptions options)
+    {
+        if (options.MaxPulseAgeByBeacon is null)
+        {
+            failures.Add($"{Prefix}{nameof(options.MaxPulseAgeByBeacon)} must not be null.");
+            return;
+        }
+
+        var entries = options.MaxPulseAgeByBeacon.OrderBy(
+            entry => entry.Key,
+            StringComparer.Ordinal
+        );
+        foreach (var (key, value) in entries)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                failures.Add(
+                    $"{Prefix}{nameof(options.MaxPulseAgeByBeacon)} has an empty beacon name."
+                );
+            }
+
+            CheckPeriod(
+                failures,
+                $"{nameof(options.MaxPulseAgeByBeacon)}:{key}",
+                value,
+                TimeSpan.FromSeconds(1)
+            );
+        }
     }
 
     private static void CheckPeriod(
