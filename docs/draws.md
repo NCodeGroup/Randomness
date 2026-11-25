@@ -32,14 +32,29 @@ A draw's values are public to everyone who reads the pulse. Never derive a key, 
 If the beacon never publishes the committed round, the procedure you committed to in step 1 decides what happens, such
 as taking the first published round after it.
 
-## Checking a CURBy Draw Offline
+## Checking a Draw Offline
 
-A CURBy draw can be checked without the network from three documents saved as the Twine API serves them: the chain
-(`https://api.entwine.me/chains/<chain>`), the pulse (`.../chains/<chain>/pulses/<round>`) and its predecessor
-(`.../chains/<chain>/pulses/<round - 1>`). Publish or archive them with the result, so the draw stays checkable after
-CURBy stops serving the round. `CurbyPulseVerifier`, in `NCode.Randomness.Curby`, makes every check the CURBy beacon
-makes against the pinned chain and returns the pulse the beacon returns for that round
+A draw can be checked without the network from the documents its beacon served for the round, saved byte for byte as
+the vendor's API serves them. Publish or archive them with the result, so the draw stays checkable after the vendor
+stops serving the round. Each beacon adapter has a verifier that makes every check its beacon makes, with the
+beacon's code and against the same pinned anchor, and returns the pulse the beacon returns for that round
 ([ADR-1013](decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)):
+
+- `curby`: `CurbyPulseVerifier`, in `NCode.Randomness.Curby`, takes the chain
+  (`https://api.entwine.me/chains/<chain>`), the pulse (`.../chains/<chain>/pulses/<round>`) and its predecessor
+  (`.../chains/<chain>/pulses/<round - 1>`).
+- `curby-q`: `CurbyQuantumRoundVerifier`, in `NCode.Randomness.Curby`, takes the round
+  (`https://api.entwine.me/curbyq/round/<round>`), its parameters (`.../curbyq/round/<round>/params`), and the chain
+  and pulse documents the round links to, in any order: the CURBy-Q, Bell and seed chains (`.../chains/<chain>`),
+  the Bell pulses from the one the precommit mixes in back to the response, and the seed pulses from the one the
+  randomness pulse mixes in back to the first that does not mix in the precommit (`.../chains/<chain>/pulses/<cid>`).
+- `nist`: `NistPulseVerifier`, in `NCode.Randomness.Nist`, takes the pulse
+  (`https://beacon.nist.gov/beacon/2.0/chain/<chain>/pulse/<round>`), its predecessor
+  (`.../chain/<chain>/pulse/<round - 1>`) and the certificate the pulse names (`.../certificate/<id>`), and the
+  predecessor's certificate too when it names another one, as across a certificate rotation.
+- `drand`: `DrandRoundVerifier`, in `NCode.Randomness.Drand`, takes the round
+  (`https://api.drand.sh/<chain hash>/public/<round>`); the quicknet chain's key is a constant, so it needs no chain
+  document.
 
 ```csharp
 var pulse = new CurbyPulseVerifier().Verify(
@@ -49,8 +64,11 @@ var pulse = new CurbyPulseVerifier().Verify(
 using var draw = VerifiableRandom.Create(pulse, "example-raffle-2026-11-25");
 ```
 
-It throws a `BeaconException` with `InvalidPulse` when any check fails. `VerifiableRandom.Create` verifies nothing
-itself, so pass it only a pulse a beacon or a verifier returned.
+A verifier throws a `BeaconException` with `InvalidPulse` when any check fails. It proves the documents are
+authentic, not that they are the round the draw committed to, so compare the pulse's `Round` and `Id` with the
+published ones. No check depends on the clock: a NIST certificate must cover the pulse's timestamp, not today, so a
+draw stays checkable after its certificate expires. `VerifiableRandom.Create` verifies nothing itself, so pass it
+only a pulse a beacon or a verifier returned.
 
 ## The Algorithm
 

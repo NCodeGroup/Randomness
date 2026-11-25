@@ -35,6 +35,13 @@ An implementation:
    chain; `Randomness` is at least 32 bytes.
 6. **Is a thread-safe singleton.** Cache what never changes, such as a verified chain or key, and nothing per caller.
 
+Ship an offline verifier beside the beacon: a public sealed class whose constructor pins the anchor the beacon pins,
+and whose `Verify` takes the documents the beacon fetches for a round, as the vendor serves them, makes the beacon's
+checks with the beacon's code and without the network, and returns the pulse the beacon returns, built by one internal
+method both call, so a published draw stays checkable after the vendor stops serving its round
+([ADR-1013](decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)).
+`NistPulseVerifier` in `src/NCode.Randomness.Nist` is the smallest example.
+
 ## Registration
 
 Expose an extension member on `IRandomnessBuilder` that registers the adapter with `AddBeacon<TBeacon>()`, or with
