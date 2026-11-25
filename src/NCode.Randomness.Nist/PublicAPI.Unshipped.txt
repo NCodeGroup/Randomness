@@ -1,1 +1,18 @@
 #nullable enable
+const NCode.Randomness.Nist.NistBeaconOptions.SectionName = "RandomnessBeacons:Nist" -> string!
+const NCode.Randomness.Nist.NistDefaults.BaseAddress = "https://beacon.nist.gov/beacon/2.0/" -> string!
+const NCode.Randomness.Nist.NistDefaults.BeaconName = "nist" -> string!
+const NCode.Randomness.Nist.NistDefaults.ChainIndex = 2 -> long
+const NCode.Randomness.Nist.NistDefaults.HttpClientName = "NCode.Randomness.Nist" -> string!
+NCode.Randomness.Nist.NistBeaconOptions
+NCode.Randomness.Nist.NistBeaconOptions.BaseAddress.get -> System.Uri!
+NCode.Randomness.Nist.NistBeaconOptions.BaseAddress.set -> void
+NCode.Randomness.Nist.NistBeaconOptions.CertificateIds.get -> System.Collections.Generic.List<string!>!
+NCode.Randomness.Nist.NistBeaconOptions.CertificateIds.set -> void
+NCode.Randomness.Nist.NistBeaconOptions.ChainIndex.get -> long
+NCode.Randomness.Nist.NistBeaconOptions.ChainIndex.set -> void
+NCode.Randomness.Nist.NistBeaconOptions.MaxResponseBytes.get -> int
+NCode.Randomness.Nist.NistBeaconOptions.MaxResponseBytes.set -> void
+NCode.Randomness.Nist.NistBeaconOptions.NistBeaconOptions() -> void
+NCode.Randomness.Nist.NistDefaults
+static NCode.Randomness.Nist.NistDefaults.CertificateIds.get -> System.Collections.Immutable.ImmutableArray<string!>
