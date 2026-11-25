@@ -12,6 +12,9 @@ namespace NCode.Randomness.Curby.Twine;
 /// </summary>
 internal sealed class TwineDocument
 {
+    // The depth limit that TwineApi applies to a response.
+    private static JsonDocumentOptions JsonOptions { get; } = new() { MaxDepth = 32 };
+
     private TwineDocument(Cid cid, IpldMap content, string signature)
     {
         Cid = cid;
@@ -24,6 +27,32 @@ internal sealed class TwineDocument
     public IpldMap Content { get; }
 
     public string Signature { get; }
+
+    /// <summary>
+    /// Parses a document from its UTF-8 JSON, as the HTTP API serves it, and checks its CID.
+    /// </summary>
+    /// <param name="utf8Json">The document, as UTF-8 JSON.</param>
+    /// <returns>The document, whose declared CID matches its content.</returns>
+    /// <exception cref="TwineFormatException">
+    /// <paramref name="utf8Json"/> is not valid JSON, or is not a Twine document with the CID it declares.
+    /// </exception>
+    public static TwineDocument Parse(ReadOnlySpan<byte> utf8Json)
+    {
+        JsonElement json;
+        try
+        {
+            json = JsonElement.Parse(utf8Json, JsonOptions);
+        }
+        catch (JsonException exception)
+        {
+            throw new TwineFormatException(
+                $"The Twine document is not valid JSON: {exception.Message}",
+                exception
+            );
+        }
+
+        return Parse(json);
+    }
 
     public static TwineDocument Parse(JsonElement json)
     {

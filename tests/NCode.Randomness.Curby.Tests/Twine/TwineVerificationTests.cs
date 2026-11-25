@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text;
 using System.Text.Json;
 using NCode.Randomness.Curby.Tests.Fixtures;
 using NCode.Randomness.Curby.Tests.TestTwine;
@@ -125,6 +126,24 @@ public class TwineVerificationTests
     #endregion
 
     #region Parse Tests
+
+    [Fact]
+    public void Parse_WithCurbyPulseBytes_ReadsItsCid()
+    {
+        var bytes = Encoding.UTF8.GetBytes(CurbyFixtures.Pulse(CurbyFixtures.LatestRound));
+
+        var document = TwineDocument.Parse(bytes);
+
+        Assert.Equal(CurbyFixtures.LatestPulseId, document.Cid.ToString());
+    }
+
+    [Fact]
+    public void Parse_WithMalformedJsonBytes_Throws()
+    {
+        var exception = Assert.Throws<TwineFormatException>(() => TwineDocument.Parse("{"u8));
+
+        Assert.Contains("not valid JSON", exception.Message, StringComparison.Ordinal);
+    }
 
     [Fact]
     public void Parse_WithCurbyQDocuments_RecomputesEveryCid()
