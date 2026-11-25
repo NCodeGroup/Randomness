@@ -181,11 +181,9 @@ public class RandomnessHostBuilderTests
 
     private interface IUnregisteredDependency;
 
-    private sealed class UnresolvableService
+    private sealed class UnresolvableService(IUnregisteredDependency dependency)
     {
-        public UnresolvableService(IUnregisteredDependency dependency) => Dependency = dependency;
-
-        public IUnregisteredDependency Dependency { get; }
+        public IUnregisteredDependency Dependency { get; } = dependency;
     }
 
     private sealed class NamedBeacon : IRandomnessBeacon
