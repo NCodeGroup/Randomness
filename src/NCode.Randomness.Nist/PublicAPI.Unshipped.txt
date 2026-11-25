@@ -17,6 +17,11 @@ NCode.Randomness.Nist.NistBeaconOptions.MaxResponseBytes.get -> int
 NCode.Randomness.Nist.NistBeaconOptions.MaxResponseBytes.set -> void
 NCode.Randomness.Nist.NistBeaconOptions.NistBeaconOptions() -> void
 NCode.Randomness.Nist.NistDefaults
+NCode.Randomness.Nist.NistPulseVerifier
+NCode.Randomness.Nist.NistPulseVerifier.NistPulseVerifier() -> void
+NCode.Randomness.Nist.NistPulseVerifier.NistPulseVerifier(long chainIndex, System.Collections.Generic.IReadOnlyCollection<string!>! certificateIds) -> void
+NCode.Randomness.Nist.NistPulseVerifier.Verify(System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor, System.ReadOnlySpan<byte> certificate) -> NCode.Randomness.BeaconPulse!
+NCode.Randomness.Nist.NistPulseVerifier.Verify(System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor, System.ReadOnlySpan<byte> certificate, System.ReadOnlySpan<byte> predecessorCertificate) -> NCode.Randomness.BeaconPulse!
 NCode.Randomness.Nist.NistRandomnessBuilderExtensions
 NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)
 NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddNistBeacon() -> NCode.Randomness.IRandomnessBuilder!

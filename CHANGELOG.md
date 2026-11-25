@@ -34,6 +34,13 @@ product does.
   `RandomnessBeacons:Curby`
   ([#1](https://github.com/NCodeGroup/Randomness/issues/1),
   [ADR-1007](docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)).
+- Offline verifiers that check a published draw without the network: `CurbyPulseVerifier` and
+  `CurbyQuantumRoundVerifier` in `NCode.Randomness.Curby`, `NistPulseVerifier` in `NCode.Randomness.Nist` and
+  `DrandRoundVerifier` in `NCode.Randomness.Drand` verify the documents a caller supplies, as the vendor serves
+  them, by the beacon's own checks against its pinned anchor, and return the pulse `VerifiableRandom.Create`
+  derives the draw from
+  ([#3](https://github.com/NCodeGroup/Randomness/issues/3),
+  [ADR-1013](docs/decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)).
 - `NCode.Randomness.Nist`: the NIST Randomness Beacon 2.0 beacon, `AddNistBeacon()`, named `nist`, over chain 2 of
   `https://beacon.nist.gov/beacon/2.0/`, with settings in `RandomnessBeacons:Nist`
   ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
@@ -50,25 +57,36 @@ product does.
 
 - Beacon pulses are only additional input to the secure generator, so its output is at least as unpredictable as the
   operating system's generator, whatever a beacon publishes.
-- CURBy pulses are verified before use: the chain hashes to a pinned content identifier, every document hashes to its
-  content identifier and has only the members Twine defines, every signature is canonical RS256 by the chain's key,
-  and every salt matches its precommitment, so no server can change a pulse's randomness without breaking a check.
-- CURBy-Q rounds are verified before use: the chain hashes to a pinned content identifier, every pulse of the round is
-  signed by its key and follows the one before, a pulse of the pinned Bell chain answers the request with the
-  precommitted data hash before the precommit, and the seed expands by SHAKE256 from the seed-chain pulse after the
-  precommit to the parameters the round commits to. The Bell-test certificate and the Trevisan extraction are verified
-  only out of process, by CURBy's `curby_verify`
+- CURBy pulses, fetched or supplied to `CurbyPulseVerifier`, are verified before use: the chain hashes to a pinned
+  content identifier, every document hashes to its content identifier and has only the members Twine defines, every
+  signature is canonical RS256 by the chain's key, and every salt matches its precommitment, so no server can change
+  a pulse's randomness without breaking a check
+  ([#3](https://github.com/NCodeGroup/Randomness/issues/3),
+  [ADR-1013](docs/decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)).
+- CURBy-Q rounds, fetched or supplied to `CurbyQuantumRoundVerifier`, are verified before use: the chain hashes to a
+  pinned content identifier, every pulse of the round is signed by its key and follows the one before, a pulse of the
+  pinned Bell chain answers the request with the precommitted data hash before the precommit, and the seed expands by
+  SHAKE256 from the seed-chain pulse after the precommit to the parameters the round commits to. The Bell-test
+  certificate and the Trevisan extraction are verified only out of process, by CURBy's `curby_verify`
   ([#1](https://github.com/NCodeGroup/Randomness/issues/1),
-  [ADR-1007](docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)).
-- NIST pulses are verified before use: the certificate hashes to a pinned identifier and covers the pulse's timestamp,
-  the RSA signature verifies over the pulse's signed fields, the output value is the hash of those fields and the
-  signature, and the pulse chains to its predecessor's output and matches its precommitment
+  [#3](https://github.com/NCodeGroup/Randomness/issues/3),
+  [ADR-1007](docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md),
+  [ADR-1013](docs/decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)).
+- NIST pulses, fetched or supplied to `NistPulseVerifier`, are verified before use: the certificate hashes to a pinned
+  identifier and covers the pulse's timestamp, the RSA signature verifies over the pulse's signed fields, the output
+  value is the hash of those fields and the signature, and the pulse chains to its predecessor's output and matches its
+  precommitment
   ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
-  [ADR-1009](docs/decisions/1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md)).
-- drand rounds are verified before use: the BLS signature of the round number, hashed to the curve as RFC 9380
-  specifies, verifies against the pinned quicknet group key, and the randomness is the SHA-256 of that signature
+  [#3](https://github.com/NCodeGroup/Randomness/issues/3),
+  [ADR-1009](docs/decisions/1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md),
+  [ADR-1013](docs/decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)).
+- drand rounds, fetched or supplied to `DrandRoundVerifier`, are verified before use: the BLS signature of the round
+  number, hashed to the curve as RFC 9380 specifies, verifies against the pinned quicknet group key, and the randomness
+  is the SHA-256 of that signature
   ([#2](https://github.com/NCodeGroup/Randomness/issues/2),
-  [ADR-1010](docs/decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md)).
+  [#3](https://github.com/NCodeGroup/Randomness/issues/3),
+  [ADR-1010](docs/decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md),
+  [ADR-1013](docs/decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md)).
 - Each beacon adapter's `BaseAddress` must be an absolute `https` URL ending in `/`, with no user info, query or
   fragment, so no credential written into a configured address reaches a logged request.
 - Pulses that roll back, switch chains, reuse an accepted round with other content, or are out of date by their

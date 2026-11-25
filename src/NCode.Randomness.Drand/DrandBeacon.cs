@@ -93,15 +93,7 @@ internal sealed class DrandBeacon(DrandApi api, DrandChain chain) : IRandomnessB
                 );
             }
 
-            var id = Convert.ToHexStringLower(verified.Signature);
-            return new BeaconPulse(
-                Name,
-                Chain.Hash,
-                verified.Round,
-                id,
-                verified.Timestamp,
-                verified.Randomness
-            );
+            return DrandRoundVerifier.ToBeaconPulse(Chain, verified);
         }
         catch (Exception exception)
             when (DrandErrors.ToBeaconException(exception, Name, cancellationToken)

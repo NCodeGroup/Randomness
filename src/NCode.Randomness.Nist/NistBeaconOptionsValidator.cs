@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Options;
+using NCode.Randomness.Nist.Pulses;
 
 namespace NCode.Randomness.Nist;
 
@@ -26,11 +27,6 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
     private const long MinChainIndex = 1;
 
     /// <summary>
-    /// The number of hexadecimal digits, 128, in a certificate identifier: the SHA-512 hash of a DER encoding.
-    /// </summary>
-    private const int CertificateIdLength = 128;
-
-    /// <summary>
     /// Gets the shortest time, one second, that a failed certificate fetch may be remembered.
     /// </summary>
     private static TimeSpan MinRetryDelay { get; } = TimeSpan.FromSeconds(1);
@@ -39,29 +35,6 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
     /// Gets the longest time, one day, that a failed certificate fetch may be remembered.
     /// </summary>
     private static TimeSpan MaxRetryDelay { get; } = TimeSpan.FromDays(1);
-
-    /// <summary>
-    /// Gets whether a value is a certificate identifier: 128 hexadecimal digits, the SHA-512 hash of a DER encoding.
-    /// </summary>
-    /// <param name="value">The value to check.</param>
-    /// <returns><see langword="true"/> when the value is a certificate identifier.</returns>
-    private static bool IsCertificateId(string? value)
-    {
-        if (value is null || value.Length != CertificateIdLength)
-        {
-            return false;
-        }
-
-        foreach (var c in value)
-        {
-            if (!Uri.IsHexDigit(c))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
 
     /// <inheritdoc/>
     public ValidateOptionsResult Validate(string? name, NistBeaconOptions options)
@@ -105,10 +78,10 @@ internal sealed class NistBeaconOptionsValidator : IValidateOptions<NistBeaconOp
             for (var i = 0; i < ids.Count; ++i)
             {
                 var id = ids[i];
-                if (!IsCertificateId(id))
+                if (!NistCertificate.IsId(id))
                 {
                     failures.Add(
-                        $"{Prefix}{nameof(options.CertificateIds)}:{i} is not a certificate identifier: {CertificateIdLength} hexadecimal digits."
+                        $"{Prefix}{nameof(options.CertificateIds)}:{i} is not a certificate identifier: {NistCertificate.IdLength} hexadecimal digits."
                     );
                 }
                 else if (!seen.Add(id) && repeated.Add(id))

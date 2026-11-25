@@ -119,18 +119,9 @@ internal sealed class NistBeacon(
 
             var predecessor = await GetPredecessorAsync(pulse, cancellationToken)
                 .ConfigureAwait(false);
-            pulse.VerifyFollows(predecessor);
+            var verified = NistPulseVerifier.ToBeaconPulse(pulse, predecessor);
             Volatile.Write(ref _lastVerified, pulse);
-            var chainText = pulse.ChainIndex.ToString(CultureInfo.InvariantCulture);
-            var id = Convert.ToHexString(pulse.Output);
-            return new BeaconPulse(
-                Name,
-                chainText,
-                pulse.PulseIndex,
-                id,
-                pulse.Timestamp,
-                pulse.Output
-            );
+            return verified;
         }
         catch (Exception exception)
             when (NistErrors.ToBeaconException(exception, Name, cancellationToken) is { } translated
@@ -161,12 +152,7 @@ internal sealed class NistBeacon(
         }
 
         var pulse = NistPulse.Parse(document.Value);
-        if (pulse.ChainIndex != ChainIndex)
-        {
-            throw new NistFormatException(
-                $"NIST answered with chain {pulse.ChainIndex}, not chain {chain}."
-            );
-        }
+        NistPulseVerifier.VerifyChain(pulse, ChainIndex);
 
         var certificate = await Certificates
             .GetAsync(pulse.CertificateId, cancellationToken)

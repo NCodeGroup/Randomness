@@ -72,7 +72,9 @@ public sealed class VerifiableRandom : IRandomSource, IDisposable
     /// </summary>
     /// <remarks>
     /// The draw is as trustworthy as the pulse: this method verifies nothing. Pass a pulse a beacon adapter returned,
-    /// or use <see cref="IVerifiableRandomFactory.CreateAsync"/>, which fetches and verifies the round itself.
+    /// or use <see cref="IVerifiableRandomFactory.CreateAsync"/>, which fetches and verifies the round itself. To check
+    /// a published draw without the network, pass the pulse a beacon adapter's offline verifier returns for the
+    /// documents the draw published, such as the CURBy adapter's.
     /// </remarks>
     /// <param name="pulse">A verified pulse, such as one from <see cref="IRandomnessBeacon.GetPulseAsync"/>.</param>
     /// <param name="context">What the draw is for, published with the round before the draw, such as

@@ -19,6 +19,9 @@ NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomne
 NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddDrandBeacon() -> NCode.Randomness.IRandomnessBuilder!
 NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddDrandBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
 NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddDrandBeacon(System.Action<NCode.Randomness.Drand.DrandBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.Drand.DrandRoundVerifier
+NCode.Randomness.Drand.DrandRoundVerifier.DrandRoundVerifier() -> void
+NCode.Randomness.Drand.DrandRoundVerifier.Verify(System.ReadOnlySpan<byte> round) -> NCode.Randomness.BeaconPulse!
 static NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.AddDrandBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
 static NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.AddDrandBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Drand.DrandBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
 static NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.AddDrandBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!

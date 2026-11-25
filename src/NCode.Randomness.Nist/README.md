@@ -40,6 +40,22 @@ certificate for the name; they are trusted by identifier alone, as
 [ADR-1009](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md)
 records.
 
+## Verifying Saved Documents
+
+`NistPulseVerifier` makes the same checks without the network, on documents a caller supplies: a pulse and its
+predecessor, each the UTF-8 JSON the API serves at `chain/<chain>/pulse/<index>`, and the PEM certificate it serves
+at `certificate/<id>` for the identifier the pulse names, with the predecessor's too when it names another one, as
+across a certificate rotation. It pins chain 2 and `NistDefaults.CertificateIds`, or the chain index and
+certificate identifiers its constructor takes, and returns the pulse the beacon returns for that index, or throws a
+`BeaconException` with `InvalidPulse`. A certificate must cover the pulse's timestamp, not today, so a pulse stays
+checkable after its certificate expires. Pass the pulse to `VerifiableRandom.Create` to recompute a published draw,
+as [docs/draws.md](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md) describes:
+
+```csharp
+var pulse = new NistPulseVerifier().Verify(pulseJson, predecessorJson, certificatePem);
+using var draw = VerifiableRandom.Create(pulse, context);
+```
+
 ## Certificate rotation
 
 NIST replaces its signing certificate about once a year, and the current one expires on 2027-03-20. The beacon refuses

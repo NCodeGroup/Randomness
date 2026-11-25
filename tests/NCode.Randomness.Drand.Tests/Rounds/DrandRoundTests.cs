@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using NCode.Randomness.Drand.Rounds;
 using NCode.Randomness.Drand.Tests.Fixtures;
@@ -253,6 +254,39 @@ public class DrandRoundTests
         );
 
         Assert.Contains("JSON object", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithLatestFixtureRoundBytes_ReturnsRound()
+    {
+        var text = DrandFixtures.Round(DrandFixtures.LatestRound);
+        var bytes = Encoding.UTF8.GetBytes(text);
+
+        var round = DrandRound.Verify(bytes, DrandChain.Quicknet);
+        var randomness = Convert.ToHexStringLower(round.Randomness);
+
+        Assert.Equal(DrandFixtures.LatestRound, round.Round);
+        Assert.Equal(DrandFixtures.LatestRandomness, randomness);
+    }
+
+    [Fact]
+    public void Verify_WithMalformedJsonBytes_Throws()
+    {
+        var exception = Assert.Throws<DrandFormatException>(() =>
+            DrandRound.Verify("{"u8, DrandChain.Quicknet)
+        );
+
+        Assert.Contains("not valid JSON", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithDuplicateMemberBytes_Throws()
+    {
+        var exception = Assert.Throws<DrandFormatException>(() =>
+            DrandRound.Verify("""{"round":1000,"round":1000}"""u8, DrandChain.Quicknet)
+        );
+
+        Assert.Contains("not valid JSON", exception.Message, StringComparison.Ordinal);
     }
 
     #endregion

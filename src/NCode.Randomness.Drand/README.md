@@ -35,6 +35,19 @@ against the pinned group public key, a mirror can withhold rounds but never forg
 `HttpClient`, `DrandDefaults.HttpClientName`, with retries, attempt and total timeouts and a circuit breaker; add a
 proxy or other handlers to it with `services.AddHttpClient(DrandDefaults.HttpClientName)`.
 
+## Verifying Saved Documents
+
+`DrandRoundVerifier` makes the same checks without the network, on a round a caller supplies as the UTF-8 JSON the
+API serves at `<chain hash>/public/<round>`. It pins the quicknet chain, as the beacon does, so the round is the
+only document it needs, and returns the pulse the beacon returns for that round, or throws a `BeaconException` with
+`InvalidPulse`. Pass the pulse to `VerifiableRandom.Create` to recompute a published draw, as
+[docs/draws.md](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md) describes:
+
+```csharp
+var pulse = new DrandRoundVerifier().Verify(roundJson);
+using var draw = VerifiableRandom.Create(pulse, context);
+```
+
 ## BLS12-381
 
 The pairing arithmetic comes from the managed `Neo.Cryptography.BLS12_381` library, so the package has no native

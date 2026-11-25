@@ -12,8 +12,6 @@ maintainers say whether it fits.
 
 ## Next Twelve Months
 
-- **Draws offline.** Verify a pulse document a user supplies, so a published draw can be checked without the network
-  ([#3](https://github.com/NCodeGroup/Randomness/issues/3)).
 - **Supply chain.** Keep external inputs pinned and current
   ([ADR-0008](docs/decisions/project-template/0008-external-inputs-are-pinned-and-kept-current.md)),
   and raise the OpenSSF Scorecard score where the repository controls it

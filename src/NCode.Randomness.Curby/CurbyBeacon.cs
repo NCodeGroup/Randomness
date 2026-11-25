@@ -72,7 +72,7 @@ internal sealed class CurbyBeacon : IRandomnessBeacon
         try
         {
             var chain = await Chains
-                .GetAsync(PinnedChain, "rng", cancellationToken)
+                .GetAsync(PinnedChain, CurbyPulseVerifier.RngFamily, cancellationToken)
                 .ConfigureAwait(false);
             var pulse = await GetPulseAsync(chain, selector, cancellationToken)
                 .ConfigureAwait(false);
@@ -102,16 +102,9 @@ internal sealed class CurbyBeacon : IRandomnessBeacon
                 ?? throw new TwineFormatException($"Pulse {pulse.Index} has no predecessor.");
             var predecessor = await GetPredecessorAsync(chain, previous, cancellationToken)
                 .ConfigureAwait(false);
-            pulse.VerifyFollows(predecessor);
+            var verified = CurbyPulseVerifier.ToBeaconPulse(chain, pulse, predecessor);
             Volatile.Write(ref _lastVerified, pulse);
-            return new BeaconPulse(
-                Name,
-                chain.Cid.ToString(),
-                pulse.Index,
-                pulse.Cid.ToString(),
-                pulse.Timestamp,
-                pulse.Cid.Digest
-            );
+            return verified;
         }
         catch (Exception exception)
             when (TwineErrors.ToBeaconException(exception, Name, "CURBy", cancellationToken)

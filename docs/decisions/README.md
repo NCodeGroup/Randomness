@@ -78,3 +78,4 @@ records are indexed in [project-template/](project-template/README.md).
 | [1010](1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md) | drand rounds are verified against the pinned quicknet key with a managed BLS12-381 library | Accepted |
 | [1011](1011-the-generator-is-composed-without-a-host-by-a-builder-over-a-private-service-container.md) | The generator is composed without a host by a builder over a private service container | Accepted |
 | [1012](1012-secrets-live-only-in-stack-or-pinned-memory-and-the-packages-take-no-buffer-library-dependency.md) | Secrets live only in stack or pinned memory, and the packages take no buffer library dependency | Accepted |
+| [1013](1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md) | Supplied beacon documents are verified offline by each beacon's own checks | Accepted |

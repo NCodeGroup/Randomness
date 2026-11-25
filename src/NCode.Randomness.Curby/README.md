@@ -28,6 +28,19 @@ timeout, for every caller). Requests use a named `HttpClient`, `CurbyDefaults.Ht
 total timeouts and a circuit breaker; add a proxy or other handlers to it with
 `services.AddHttpClient(CurbyDefaults.HttpClientName)`.
 
+## Verifying Saved Documents
+
+`CurbyPulseVerifier` makes the same checks without the network, on documents a caller supplies: the chain, a pulse
+and its predecessor, each the UTF-8 JSON the Twine API serves. It pins `CurbyDefaults.RngChainId`, or the chain
+identifier its constructor takes, and returns the pulse the beacon returns for that round, or throws a
+`BeaconException` with `InvalidPulse`. Pass the pulse to `VerifiableRandom.Create` to recompute a published draw, as
+[docs/draws.md](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md) describes:
+
+```csharp
+var pulse = new CurbyPulseVerifier().Verify(chainJson, pulseJson, predecessorJson);
+using var draw = VerifiableRandom.Create(pulse, context);
+```
+
 ## CURBy-Q
 
 `AddCurbyQuantumBeacon()` registers a second beacon, `curby-q`, which reads the CURBy-Q (DIRNG) chain. It shares the
@@ -72,3 +85,21 @@ draws over published rounds are unaffected.
 
 SHAKE256 comes from the operating system where it has one and from a managed implementation elsewhere, as SHA3-512
 does.
+
+### Verifying Saved Rounds
+
+`CurbyQuantumRoundVerifier` makes the same checks without the network, on documents a caller supplies: the round
+and its parameters, as the API serves them at `curbyq/round/<round>` and `curbyq/round/<round>/params`, and the
+chain and pulse documents the round links to, as it serves them at `chains/<chain>` and
+`chains/<chain>/pulses/<cid>`, in any order: the CURBy-Q, Bell and seed chains, the Bell pulses from the one the
+precommitment mixes in back to the response, and the seed pulses from the one the randomness pulse mixes in back to
+the first that does not mix in the precommitment. It pins `CurbyDefaults.QuantumChainId` and
+`CurbyDefaults.BellChainId`, or the chain identifiers its constructor takes, looks up each document the beacon
+would fetch by its content identifier, and returns the pulse the beacon returns for that round, or throws a
+`BeaconException` with `InvalidPulse`. It leaves the Bell-test certificate and the extraction to `curby_verify`,
+as the beacon does:
+
+```csharp
+var pulse = new CurbyQuantumRoundVerifier().Verify(roundJson, parameters, documents);
+using var draw = VerifiableRandom.Create(pulse, context);
+```
