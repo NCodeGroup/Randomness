@@ -18,6 +18,7 @@ public class CurbyBeaconOptionsValidatorTests
     [Theory]
     [InlineData("http://api.entwine.me/")]
     [InlineData("https://api.entwine.me/v1")]
+    [InlineData("https://user:secret@api.entwine.me/")]
     [InlineData("https://api.entwine.me/?x=1")]
     [InlineData("https://api.entwine.me/#x")]
     public void Validate_WithUnsafeBaseAddress_Fails(string address)
@@ -92,6 +93,45 @@ public class CurbyBeaconOptionsValidatorTests
 
         Assert.Contains(
             "RandomnessBeacons:Curby:MaxResponseBytes",
+            result.FailureMessage,
+            StringComparison.Ordinal
+        );
+    }
+
+    [Fact]
+    public void Validate_WithShortestChainRetryDelay_Succeeds()
+    {
+        var options = new CurbyBeaconOptions { ChainRetryDelay = TimeSpan.FromSeconds(1) };
+
+        var result = new CurbyBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public void Validate_WithLongestChainRetryDelay_Succeeds()
+    {
+        var options = new CurbyBeaconOptions { ChainRetryDelay = TimeSpan.FromDays(1) };
+
+        var result = new CurbyBeaconOptionsValidator().Validate(null, options);
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Theory]
+    [InlineData(999, "00:00:00.9990000")]
+    [InlineData(86_400_001, "1.00:00:00.0010000")]
+    public void Validate_WithChainRetryDelayOutOfRange_Fails(long milliseconds, string shown)
+    {
+        var options = new CurbyBeaconOptions
+        {
+            ChainRetryDelay = TimeSpan.FromMilliseconds(milliseconds),
+        };
+
+        var result = new CurbyBeaconOptionsValidator().Validate(null, options);
+
+        Assert.Contains(
+            $"RandomnessBeacons:Curby:ChainRetryDelay must be between 00:00:01 and 1.00:00:00; it is {shown}.",
             result.FailureMessage,
             StringComparison.Ordinal
         );

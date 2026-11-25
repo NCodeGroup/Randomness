@@ -858,5 +858,21 @@ public class QuantumRoundTests
         AssertSeedRefused(builder, "not canonical base64");
     }
 
+    [Fact]
+    public void VerifySeed_WithParametersThatAreNotJson_KeepsTheJsonException()
+    {
+        using var builder = new QuantumRoundBuilder { Parameters = static _ => "{" };
+        var built = builder.Build();
+        var result = BuiltResult(builder, built);
+        var seed = BuiltSeedPulse(builder, built, built.SeedPulses.Count - 1);
+        var parameters = Encoding.UTF8.GetBytes(built.Parameters);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            result.VerifySeed(seed, parameters)
+        );
+
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
+    }
+
     #endregion
 }

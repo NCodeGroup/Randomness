@@ -98,7 +98,8 @@ internal static class JwsRs256
         {
             key.Dispose();
             throw new TwineFormatException(
-                $"The chain key is not a valid RSA key: {exception.Message}"
+                $"The chain key is not a valid RSA key: {exception.Message}",
+                exception
             );
         }
 
@@ -122,7 +123,10 @@ internal static class JwsRs256
         }
         catch (Exception exception) when (exception is JsonException or DecoderFallbackException)
         {
-            throw new TwineFormatException($"The JWS header is not JSON: {exception.Message}");
+            throw new TwineFormatException(
+                $"The JWS header is not JSON: {exception.Message}",
+                exception
+            );
         }
 
         if (json.ValueKind != JsonValueKind.Object)
@@ -168,9 +172,9 @@ internal static class JwsRs256
         {
             bytes = Base64Url.DecodeFromChars(text);
         }
-        catch (FormatException)
+        catch (FormatException exception)
         {
-            throw new TwineFormatException($"The JWS {part} is not base64url.");
+            throw new TwineFormatException($"The JWS {part} is not base64url.", exception);
         }
 
         // The decoder skips white space and ignores nonzero unused bits; re-encoding refuses both.

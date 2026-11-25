@@ -22,9 +22,11 @@ builder.Services
 ```
 
 Settings bind from `RandomnessBeacons:Curby`: `BaseAddress` (default `https://api.entwine.me/`; a mirror can withhold
-pulses but never forge one), `ChainId`, `QuantumChainId`, `BellChainId` and `MaxResponseBytes`. Requests use a named
-`HttpClient`, `CurbyDefaults.HttpClientName`, with retries, attempt and total timeouts and a circuit breaker; add a
-proxy or other handlers to it with `services.AddHttpClient(CurbyDefaults.HttpClientName)`.
+pulses but never forge one), `ChainId`, `QuantumChainId`, `BellChainId`, `MaxResponseBytes` and `ChainRetryDelay`
+(default 1 minute; how long a failed chain fetch is remembered; each chain is fetched once, under its own 30-second
+timeout, for every caller). Requests use a named `HttpClient`, `CurbyDefaults.HttpClientName`, with retries, attempt and
+total timeouts and a circuit breaker; add a proxy or other handlers to it with
+`services.AddHttpClient(CurbyDefaults.HttpClientName)`.
 
 ## CURBy-Q
 

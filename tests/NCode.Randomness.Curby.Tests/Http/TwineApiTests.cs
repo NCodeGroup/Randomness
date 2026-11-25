@@ -1,6 +1,7 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text.Json;
 using NCode.Randomness.Curby.Http;
 using NCode.Randomness.Curby.Tests.Fixtures;
 using NCode.Randomness.Curby.Tests.TestTwine;
@@ -71,6 +72,19 @@ public sealed class TwineApiTests : IDisposable
         );
 
         Assert.Contains("not an array", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetDocumentsAsync_WithTruncatedJson_KeepsTheParserException()
+    {
+        Server.Serve(Path, "[");
+        var api = Create();
+
+        var exception = await Assert.ThrowsAsync<TwineFormatException>(async () =>
+            await api.GetDocumentsAsync(Path, CancellationToken.None)
+        );
+
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
     }
 
     #endregion

@@ -1,9 +1,10 @@
 # Writing a Beacon Adapter
 
-How to add a randomness beacon other than CURBy, such as the NIST Randomness Beacon or drand. An adapter is a package
-of its own that implements one port, `IRandomnessBeacon`; the core never changes for a vendor
+How to add a randomness beacon. The project ships adapters for CURBy, the NIST Randomness Beacon 2.0 and drand. An
+adapter is a package of its own that implements one port, `IRandomnessBeacon`; the core never changes for a vendor
 ([ADR-1002](decisions/1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md)).
-The CURBy adapter in `src/NCode.Randomness.Curby` is the worked example.
+The CURBy adapter in `src/NCode.Randomness.Curby` is the worked example; the NIST adapter in
+`src/NCode.Randomness.Nist` and the drand adapter in `src/NCode.Randomness.Drand` are smaller.
 
 ## The Contract
 
@@ -40,7 +41,7 @@ Expose an extension member on `IRandomnessBuilder` that registers the adapter wi
 `TryAddEnumerable`, together with its options, their `IValidateOptions<T>` and its named `HttpClient`:
 
 ```csharp
-services.AddRandomness().AddCurbyBeacon().AddNistBeacon();
+services.AddRandomness().AddCurbyBeacon().AddNistBeacon().AddDrandBeacon();
 ```
 
 The collector fetches from every registered beacon on its own loop and mixes every accepted pulse into the secure

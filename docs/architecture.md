@@ -21,19 +21,29 @@ flowchart LR
     end
     subgraph Adapters
         Curby["NCode.Randomness.Curby<br/>CurbyBeacon + CurbyQuantumBeacon + Twine verification"]
+        Nist["NCode.Randomness.Nist<br/>NistBeacon + pulse verification"]
+        Drand["NCode.Randomness.Drand<br/>DrandBeacon + BLS12-381 verification"]
         Other["Other vendor adapters"]
     end
     CurbyApi[("api.entwine.me<br/>CURBy Twine chains")]
+    NistApi[("beacon.nist.gov<br/>NIST Randomness Beacon 2.0")]
+    DrandApi[("api.drand.sh<br/>drand quicknet")]
 
     App --> Ext --> Secure
     App --> Draws
     Secure -- "entropy, every reseed" --> OS
     Secure -- "reads, never blocks" --> Pool
     Collector -- "one loop per beacon" --> Curby
+    Collector -- "one loop per beacon" --> Nist
+    Collector -- "one loop per beacon" --> Drand
     Collector --> Other
     Collector -- "accept or refuse" --> Tracker --> Pool
     Draws -- "GetPulseAsync(round)" --> Curby
+    Draws -- "GetPulseAsync(round)" --> Nist
+    Draws -- "GetPulseAsync(round)" --> Drand
     Curby -- "HTTPS + resilience" --> CurbyApi
+    Nist -- "HTTPS + resilience" --> NistApi
+    Drand -- "HTTPS + resilience" --> DrandApi
 ```
 
 | Component | Role |
@@ -49,6 +59,8 @@ flowchart LR
 | `Draws/VerifiableRandom`, `IVerifiableRandomFactory` | Reproducible draws, `ncode-randomness-draw/1` ([draws.md](draws.md)). |
 | `HealthChecks/BeaconHealthCheck` | Reports a beacon outage as `Degraded`. |
 | `NCode.Randomness.Curby` | The CURBy adapter: the Twine HTTP client and the verification of chains and pulses, and the CURBy-Q rounds ([ADR-1007](decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md), [ADR-1003](decisions/1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md), [ADR-1005](decisions/1005-twine-verification-is-implemented-in-the-adapter-without-an-ipld-dependency.md)). |
+| `NCode.Randomness.Nist` | The NIST Randomness Beacon 2.0 adapter: the HTTP client, and the verification of pulses against pinned certificates and their hash chain ([ADR-1009](decisions/1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md)). |
+| `NCode.Randomness.Drand` | The drand adapter: the HTTP client, and the verification of quicknet rounds against the pinned BLS12-381 group key ([ADR-1010](decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md)). |
 
 ## Design Rules
 

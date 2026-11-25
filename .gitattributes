@@ -14,3 +14,7 @@
 *.pdf binary
 *.zip binary
 *.snk binary
+
+# Documents NIST served, kept byte for byte with their CRLF line endings.
+tests/NCode.Randomness.Nist.Tests/Fixtures/*.json -text
+tests/NCode.Randomness.Nist.Tests/Fixtures/*.pem -text

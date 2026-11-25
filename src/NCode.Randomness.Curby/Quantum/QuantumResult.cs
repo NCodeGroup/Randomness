@@ -32,7 +32,8 @@ internal sealed class QuantumResult
         catch (JsonException exception)
         {
             throw new TwineFormatException(
-                $"The round's parameters are not JSON: {exception.Message}"
+                $"The round's parameters are not JSON: {exception.Message}",
+                exception
             );
         }
 
