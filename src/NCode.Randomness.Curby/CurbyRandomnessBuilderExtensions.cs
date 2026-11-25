@@ -11,7 +11,7 @@ using NCode.Randomness.Curby.Http;
 namespace NCode.Randomness.Curby;
 
 /// <summary>
-/// Registers the CURBy beacon.
+/// Registers the CURBy beacons.
 /// </summary>
 public static class CurbyRandomnessBuilderExtensions
 {
@@ -62,7 +62,52 @@ public static class CurbyRandomnessBuilderExtensions
             return builder.AddCurbyBeaconCore();
         }
 
-        private IRandomnessBuilder AddCurbyBeaconCore()
+        /// <summary>
+        /// Registers the CURBy-Q beacon, named <c>curby-q</c>, with its default options: the CURBy-Q chain and the
+        /// Bell chain served by <see cref="CurbyDefaults.BaseAddress"/>.
+        /// </summary>
+        /// <returns>The builder, for chaining.</returns>
+        public IRandomnessBuilder AddCurbyQuantumBeacon()
+        {
+            ArgumentNullException.ThrowIfNull(builder);
+            builder.Services.AddOptions<CurbyBeaconOptions>().ValidateOnStart();
+            return builder.AddCurbyQuantumBeaconCore();
+        }
+
+        /// <summary>
+        /// Registers the CURBy-Q beacon with options set by <paramref name="configure"/>.
+        /// </summary>
+        /// <param name="configure">Sets the options.</param>
+        /// <returns>The builder, for chaining.</returns>
+        public IRandomnessBuilder AddCurbyQuantumBeacon(Action<CurbyBeaconOptions> configure)
+        {
+            ArgumentNullException.ThrowIfNull(builder);
+            ArgumentNullException.ThrowIfNull(configure);
+            builder
+                .Services.AddOptions<CurbyBeaconOptions>()
+                .Configure(configure)
+                .ValidateOnStart();
+            return builder.AddCurbyQuantumBeaconCore();
+        }
+
+        /// <summary>
+        /// Registers the CURBy-Q beacon with options bound from <paramref name="configuration"/>, such as
+        /// <c>configuration.GetSection("RandomnessBeacons:Curby")</c>. An unknown key fails the host at start.
+        /// </summary>
+        /// <param name="configuration">The configuration section to bind.</param>
+        /// <returns>The builder, for chaining.</returns>
+        public IRandomnessBuilder AddCurbyQuantumBeacon(IConfiguration configuration)
+        {
+            ArgumentNullException.ThrowIfNull(builder);
+            ArgumentNullException.ThrowIfNull(configuration);
+            builder
+                .Services.AddOptions<CurbyBeaconOptions>()
+                .Bind(configuration, binder => binder.ErrorOnUnknownConfiguration = true)
+                .ValidateOnStart();
+            return builder.AddCurbyQuantumBeaconCore();
+        }
+
+        private void AddCurbyServices()
         {
             var services = builder.Services;
             services.TryAddEnumerable(
@@ -71,22 +116,42 @@ public static class CurbyRandomnessBuilderExtensions
                     CurbyBeaconOptionsValidator
                 >()
             );
-            services.TryAddSingleton<TwineApi>();
-            if (!services.Any(descriptor => descriptor.ServiceType == typeof(CurbyBeacon)))
+            if (services.Any(descriptor => descriptor.ServiceType == typeof(TwineApi)))
             {
-                services
-                    .AddHttpClient(CurbyDefaults.HttpClientName)
-                    .ConfigurePrimaryHttpMessageHandler(static () =>
-                        new SocketsHttpHandler
-                        {
-                            AllowAutoRedirect = false,
-                            AutomaticDecompression = System.Net.DecompressionMethods.All,
-                            PooledConnectionLifetime = TimeSpan.FromMinutes(5),
-                        }
-                    )
-                    .AddStandardResilienceHandler(ConfigureResilience);
+                return;
             }
 
+            services.AddSingleton<TwineApi>();
+            services
+                .AddHttpClient(CurbyDefaults.HttpClientName)
+                .ConfigurePrimaryHttpMessageHandler(static () =>
+                    new SocketsHttpHandler
+                    {
+                        AllowAutoRedirect = false,
+                        AutomaticDecompression = System.Net.DecompressionMethods.All,
+                        PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+                    }
+                )
+                .AddStandardResilienceHandler(ConfigureResilience);
+        }
+
+        private IRandomnessBuilder AddCurbyQuantumBeaconCore()
+        {
+            builder.AddCurbyServices();
+            var services = builder.Services;
+            services.TryAddSingleton<CurbyQuantumBeacon>();
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IRandomnessBeacon, CurbyQuantumBeacon>(provider =>
+                    provider.GetRequiredService<CurbyQuantumBeacon>()
+                )
+            );
+            return builder;
+        }
+
+        private IRandomnessBuilder AddCurbyBeaconCore()
+        {
+            builder.AddCurbyServices();
+            var services = builder.Services;
             services.TryAddSingleton<CurbyBeacon>();
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<IRandomnessBeacon, CurbyBeacon>(provider =>

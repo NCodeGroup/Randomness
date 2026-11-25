@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using NCode.Randomness.Curby.Http;
 
 namespace NCode.Randomness.Curby.Tests;
 
@@ -115,6 +116,66 @@ public class CurbyRandomnessBuilderExtensionsTests
             exception.Message,
             StringComparison.Ordinal
         );
+    }
+
+    #endregion
+
+    #region AddCurbyQuantumBeacon Tests
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_Twice_RegistersOneBeaconNamedCurbyQ()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyQuantumBeacon().AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider(
+            new ServiceProviderOptions { ValidateOnBuild = true }
+        );
+
+        var beacon = Assert.Single(provider.GetServices<IRandomnessBeacon>());
+
+        Assert.Equal(CurbyDefaults.QuantumBeaconName, beacon.Name);
+        Assert.Same(beacon, provider.GetRequiredService<CurbyQuantumBeacon>());
+        Assert.Equal(
+            CurbyDefaults.QuantumBeaconName,
+            Assert.Single(provider.GetRequiredService<IBeaconStatus>().Beacons).Name
+        );
+    }
+
+    [Fact]
+    public async Task AddCurbyBeacon_WithTheQuantumBeacon_RegistersBothBeaconsOverOneClient()
+    {
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyBeacon().AddCurbyQuantumBeacon();
+        await using var provider = services.BuildServiceProvider(
+            new ServiceProviderOptions { ValidateOnBuild = true }
+        );
+
+        var names = provider.GetServices<IRandomnessBeacon>().Select(beacon => beacon.Name);
+
+        Assert.Equal(
+            [CurbyDefaults.BeaconName, CurbyDefaults.QuantumBeaconName],
+            names.Order(StringComparer.Ordinal)
+        );
+        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TwineApi));
+    }
+
+    [Fact]
+    public async Task AddCurbyQuantumBeacon_WithConfiguration_BindsTheSection()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection([
+                KeyValuePair.Create("QuantumChainId", (string?)CurbyDefaults.QuantumChainId),
+                KeyValuePair.Create("MaxResponseBytes", (string?)"8192"),
+            ])
+            .Build();
+        var services = new ServiceCollection();
+        services.AddRandomness().AddCurbyQuantumBeacon(configuration);
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<CurbyBeaconOptions>>().Value;
+
+        Assert.Equal(CurbyDefaults.QuantumChainId, options.QuantumChainId);
+        Assert.Equal(8192, options.MaxResponseBytes);
     }
 
     #endregion
