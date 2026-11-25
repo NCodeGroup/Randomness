@@ -12,8 +12,6 @@ maintainers say whether it fits.
 
 ## Next Twelve Months
 
-- **CURBy-Q.** Read the quantum DIRNG chain (CURBy-Q) as well, with the checks CURBy's client library makes, and
-  verify its Trevisan extraction where it can be done in process ([#1](https://github.com/NCodeGroup/Randomness/issues/1)).
 - **More beacons.** Adapters for the NIST Randomness Beacon 2.0 and for drand (League of Entropy), so no single beacon
   is a point of trust ([#2](https://github.com/NCodeGroup/Randomness/issues/2)).
 - **Draws offline.** Verify a pulse document a user supplies, so a published draw can be checked without the network
