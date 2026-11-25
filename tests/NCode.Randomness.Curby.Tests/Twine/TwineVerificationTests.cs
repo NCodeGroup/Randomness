@@ -135,7 +135,9 @@ public class TwineVerificationTests
 
         var document = TwineDocument.Parse(bytes);
 
-        Assert.Equal(CurbyFixtures.LatestPulseId, document.Cid.ToString());
+        var cid = document.Cid.ToString();
+
+        Assert.Equal(CurbyFixtures.LatestPulseId, cid);
     }
 
     [Fact]
@@ -194,9 +196,13 @@ public class TwineVerificationTests
         var documents = TwineDocument.ParseArray(bytes);
 
         Assert.Equal(3, documents.Length);
-        Assert.Equal(CurbyQuantumFixtures.RequestId, documents[0].Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.PrecommitId, documents[1].Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.ResultId, documents[2].Cid.ToString());
+        var requestId = documents[0].Cid.ToString();
+        var precommitId = documents[1].Cid.ToString();
+        var resultId = documents[2].Cid.ToString();
+
+        Assert.Equal(CurbyQuantumFixtures.RequestId, requestId);
+        Assert.Equal(CurbyQuantumFixtures.PrecommitId, precommitId);
+        Assert.Equal(CurbyQuantumFixtures.ResultId, resultId);
     }
 
     [Fact]
