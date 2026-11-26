@@ -68,14 +68,19 @@ function Invoke-Case {
         foreach ($path in $Deleted) { Remove-Item -LiteralPath (Join-Path $root $path) }
 
         # A child pwsh, as build/Test-AssertMarkdown.ps1 runs its check: the check's exit, a throw and its preferences
-        # stay out of this session, and its exit code is the process's.
-        $printed = @(pwsh -NoProfile -NonInteractive -File $script -Root $root 2>&1 | ForEach-Object { "$_" })
+        # stay out of this session, and its exit code is the process's. Only its output is compared: what it writes to
+        # stderr, such as a warning from git, is shown when a case fails.
+        $stderr = [Collections.Generic.List[string]]::new()
+        $printed = @(pwsh -NoProfile -NonInteractive -File $script -Root $root 2>&1 | ForEach-Object {
+                if ($_ -is [Management.Automation.ErrorRecord]) { $stderr.Add("$_") } else { "$_" }
+            })
 
         $code = $LASTEXITCODE
+        $shown = if ($stderr.Count) { "`nstderr:`n$($stderr -join "`n")" } else { '' }
         $expectedCode = if ($Problems) { 1 } else { 0 }
-        if ($code -ne $expectedCode) { throw "exited $code instead of $expectedCode" }
+        if ($code -ne $expectedCode) { throw "exited $code instead of $expectedCode$shown" }
         $expected = if ($Problems) { @('Sample keys: FAILED.') + $Problems } else { @() }
-        if (($printed -join "`n") -cne ($expected -join "`n")) { throw "printed:`n$($printed -join "`n")" }
+        if (($printed -join "`n") -cne ($expected -join "`n")) { throw "printed:`n$($printed -join "`n")$shown" }
     }
     catch { Write-Host "FAILED: $Name`n$_"; exit 1 }
     finally { Remove-Item -LiteralPath $root -Recurse -Force }
