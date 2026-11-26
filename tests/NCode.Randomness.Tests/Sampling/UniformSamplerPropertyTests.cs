@@ -11,13 +11,6 @@ public class UniformSamplerPropertyTests
 {
     private const string Replay = "20261125,1";
 
-    private sealed class SeededSource(int seed) : IRandomSource
-    {
-        private Random Random { get; } = new(seed);
-
-        public void Fill(Span<byte> destination) => Random.NextBytes(destination);
-    }
-
     #region NextInteger Tests
 
     [Property(Replay = Replay)]
@@ -31,7 +24,9 @@ public class UniformSamplerPropertyTests
         var (min, max) = a < b ? (a, b) : (b, a);
         var source = new SeededSource(seed);
 
-        Assert.InRange(UniformSampler.NextInteger(source, min, max), min, (byte)(max - 1));
+        var value = UniformSampler.NextInteger(source, min, max);
+
+        Assert.InRange(value, min, (byte)(max - 1));
     }
 
     [Property(Replay = Replay)]
@@ -45,7 +40,9 @@ public class UniformSamplerPropertyTests
         var (min, max) = a < b ? (a, b) : (b, a);
         var source = new SeededSource(seed);
 
-        Assert.InRange(UniformSampler.NextInteger(source, min, max), min, max - 1);
+        var value = UniformSampler.NextInteger(source, min, max);
+
+        Assert.InRange(value, min, max - 1);
     }
 
     [Property(Replay = Replay)]
@@ -58,8 +55,11 @@ public class UniformSamplerPropertyTests
 
         var (min, max) = a < b ? (a, b) : (b, a);
 
-        var first = UniformSampler.NextInteger(new SeededSource(seed), min, max);
-        var second = UniformSampler.NextInteger(new SeededSource(seed), min, max);
+        var firstSource = new SeededSource(seed);
+        var secondSource = new SeededSource(seed);
+
+        var first = UniformSampler.NextInteger(firstSource, min, max);
+        var second = UniformSampler.NextInteger(secondSource, min, max);
 
         Assert.Equal(first, second);
     }
@@ -75,7 +75,9 @@ public class UniformSamplerPropertyTests
 
         var value = UniformSampler.NextDouble(source);
 
-        Assert.InRange(value, 0.0, Math.BitDecrement(1.0));
+        var upper = Math.BitDecrement(1.0);
+
+        Assert.InRange(value, 0.0, upper);
     }
 
     #endregion
@@ -88,9 +90,14 @@ public class UniformSamplerPropertyTests
         var source = new SeededSource(seed);
         var shuffled = values.Get.ToArray();
 
-        UniformSampler.Shuffle(source, shuffled.AsSpan());
+        var span = shuffled.AsSpan();
 
-        Assert.Equal(values.Get.Order(), shuffled.Order());
+        UniformSampler.Shuffle(source, span);
+
+        var expected = values.Get.Order();
+        var actual = shuffled.Order();
+
+        Assert.Equal(expected, actual);
     }
 
     #endregion
@@ -111,4 +118,11 @@ public class UniformSamplerPropertyTests
     }
 
     #endregion
+
+    private sealed class SeededSource(int seed) : IRandomSource
+    {
+        private Random Random { get; } = new(seed);
+
+        public void Fill(Span<byte> destination) => Random.NextBytes(destination);
+    }
 }
