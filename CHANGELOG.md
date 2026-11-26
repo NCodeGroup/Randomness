@@ -6,6 +6,10 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [Unreleased]
 
+### Changed
+
+- Package validation compares each package with the published 1.0.0 package.
+
 ## [1.0.0] - 2026-11-25
 
 ### Added
