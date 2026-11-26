@@ -17,13 +17,20 @@ internal sealed class QuantumResult
 
     /// <summary>
     /// Reads the base64 text of the <c>seed</c> property of the extractor's parameters. It throws
-    /// <see cref="TwineFormatException"/> when they are not a JSON object, or <c>seed</c> is missing, repeated or not
-    /// a string.
+    /// <see cref="TwineFormatException"/> when they are not a JSON object, or their text is not well-formed Unicode,
+    /// or <c>seed</c> is missing, repeated or not a string.
     /// </summary>
     /// <param name="parameters">The extractor's parameters, a JSON document.</param>
     /// <returns>The seed as the parameters encode it.</returns>
     private static string ReadSeed(ReadOnlySpan<byte> parameters)
     {
+        if (!Utf8JsonText.IsText(parameters))
+        {
+            throw new TwineFormatException(
+                "The round's parameters are not JSON: their text is not well-formed Unicode."
+            );
+        }
+
         JsonElement root;
         try
         {

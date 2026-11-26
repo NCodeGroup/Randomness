@@ -47,6 +47,13 @@ internal sealed class TwineDocument
 
     private static JsonElement ParseJson(ReadOnlySpan<byte> utf8Json)
     {
+        if (!Utf8JsonText.IsText(utf8Json))
+        {
+            throw new TwineFormatException(
+                "The Twine document is not valid JSON: its text is not well-formed Unicode."
+            );
+        }
+
         try
         {
             return JsonElement.Parse(utf8Json, JsonOptions);
