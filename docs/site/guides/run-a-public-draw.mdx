@@ -1,0 +1,80 @@
+---
+title: Run a public draw
+description: Commit to a future beacon round, draw from it, and publish what anyone needs to recompute the result.
+---
+
+import { Pitfalls } from '@ncodegroup/docs/components';
+
+A raffle, an audit sample or a jury selection is only fair when nobody can pick the outcome, and the people who run it are no exception. A public beacon publishes a random value nobody controls, so a draw that commits to a future round before it exists, and derives its values from that round, is one anyone can recompute. This page shows how to commit first, how to draw, how to publish the result, how to draw from a pulse you already hold, and what to watch for.
+
+A draw's values are public to everyone who reads the pulse, so never derive a key, token or other secret from one: [make a secret](/guides/make-a-secret/) with `ISecureRandom` instead.
+
+## Commit first
+
+Before the round exists, publish the beacon, a future round number, the context label, the entrants in their final order and the algorithm's name, `ncode-randomness-draw/1`. Committing first is what stops anyone from choosing a pulse that favours them. CURBy publishes a round a minute, so the latest round plus 60 is about an hour ahead.
+
+Each beacon numbers its rounds and identifies a pulse its own way:
+
+| Beacon | Round | Pulse ID |
+| --- | --- | --- |
+| `curby` | a round a minute | the pulse's CID |
+| `curby-q` | the DIRNG round | the randomness pulse's CID |
+| `nist` | the pulse index, a pulse a minute | the pulse's output in uppercase hex |
+| `drand` | a round every 3 seconds | the round's signature in lowercase hex |
+
+## Draw
+
+Once the round is published, `IVerifiableRandomFactory` fetches it from the beacon, which verifies it, and derives the stream of values from the pulse and the context.
+
+```cs snippet=PublicDraw
+```
+
+## Publish the result
+
+Publish the result with the pulse's ID, so anyone can fetch the same pulse and recompute it, with this library or with the reference implementation in [Reproducible Draws](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md).
+
+```cs snippet=SiteRunAPublicDrawPublish
+```
+
+## Draw from a pulse you hold
+
+When you already have a verified pulse, `VerifiableRandom.Create` derives the same stream from it and a context, with no factory and no network.
+
+```cs snippet=SiteRunAPublicDrawFromPulse
+```
+
+## When the round never comes
+
+If the beacon never publishes the committed round, the procedure you committed to decides what happens, such as taking the first round published after it. Write that procedure into the commitment, because choosing it afterwards is choosing the outcome.
+
+## Pitfalls
+
+<Pitfalls>
+
+- **Choosing the round after seeing pulses.**
+  - *You write* a draw for whichever recent round gives the entrant you want.
+  - *What happens:* the draw is no longer a commitment, because the choice of round decides the winner and nobody can tell.
+  - *Write instead:* publish the beacon, a future round and the context first, and draw only from that round.
+- **Using a draw for a secret.**
+  - *You write* a key, token or password derived from `draw.GetBytes(32)`.
+  - *What happens:* everyone who reads the pulse can derive the same bytes, so the secret is public. [Reproducible draws are a versioned, specified algorithm and never a secure random](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1004-reproducible-draws-are-a-versioned-specified-algorithm-and-never-a-secure-random.md) records why.
+  - *Write instead:* `ISecureRandom` for every secret, and a draw only for values anyone may recompute.
+- **Reordering entrants after the commitment.**
+  - *You write* `entrants.Sort()` or a new list after publishing the round.
+  - *What happens:* the same index picks another person, so the published round and context no longer give the announced winner.
+  - *Write instead:* publish the entrants in their final order with the commitment, and index into exactly that list.
+- **A context that is too long.**
+  - *You write* `VerifiableRandom.Create(pulse, longContext)` with more than `VerifiableRandom.MaxContextLength`, 1024, characters.
+  - *What happens:* it throws `ArgumentOutOfRangeException`.
+  - *Write instead:* keep the context a short label, such as `example-raffle-2026-11-25`.
+- **Passing `VerifiableRandom.Create` a pulse nothing verified.**
+  - *You write* `VerifiableRandom.Create(pulse, context)` with a pulse you built or took from an unchecked source.
+  - *What happens:* it verifies nothing itself, so the draw is only as trustworthy as the pulse.
+  - *Write instead:* take the pulse from a beacon or a verifier, such as `IVerifiableRandomFactory` or `CurbyPulseVerifier`.
+
+</Pitfalls>
+
+## Next steps
+
+- [Check a draw offline](/guides/check-a-draw/) shows how to recompute a published draw from the documents its beacon served.
+- [Add beacons](/guides/add-beacons/) shows how to register the beacons a draw reads.
