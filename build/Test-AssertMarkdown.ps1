@@ -7,9 +7,10 @@
     Tests build/Assert-Markdown.ps1 against fixture repositories, offline.
 .DESCRIPTION
     Each case builds a git repository with a README and a site page, runs the check with a fake samples command in
-    place of dotnet mdsnippets, and checks its exit code and output: an unchanged tree passes; a changed README, a
-    changed README under a name git quotes, a rewritten site page and a failing samples command fail; and a folder that
-    is not a repository fails instead of reading as "nothing changed". Exits 1 on the first failed check.
+    place of dotnet mdsnippets, and checks its exit code and output. What it writes to stderr is kept apart and shown
+    when a case fails, so a warning on stderr neither fails nor passes a case. An unchanged tree passes; a changed
+    README, a changed README under a name git quotes, a rewritten site page and a failing samples command fail; and a
+    folder that is not a repository fails instead of reading as "nothing changed". Exits 1 on the first failed check.
     build/gate.ps1 runs it before the check.
 #>
 $ErrorActionPreference = 'Stop'
@@ -35,11 +36,17 @@ function Invoke-Case {
             [IO.File]::WriteAllText($file, "# $path`n", $utf8)
         }
         $command = "& '$script' -Root '$root' -Snippets { $Fake }"
-        $output = @(pwsh -NoProfile -NonInteractive -Command $command 2>&1 | ForEach-Object { "$_" })
+        # Only what the check prints on stdout is checked: what it writes to stderr, such as a warning from git, is
+        # shown when a case fails.
+        $stderr = [Collections.Generic.List[string]]::new()
+        $output = @(pwsh -NoProfile -NonInteractive -Command $command 2>&1 | ForEach-Object {
+                if ($_ -is [Management.Automation.ErrorRecord]) { $stderr.Add("$_") } else { "$_" }
+            })
         $code = $LASTEXITCODE
-        if ($code -ne $Expect) { "FAILED: $Case exited $code instead of $Expect. Output: $($output -join ' | ')"; exit 1 }
-        if ($Says -and -not (($output -join "`n").Contains($Says))) { "FAILED: $Case did not print '$Says'. Output: $($output -join ' | ')"; exit 1 }
-        if (-not $Says -and $output) { "FAILED: $Case printed output. Output: $($output -join ' | ')"; exit 1 }
+        $shown = if ($stderr.Count) { " Stderr: $($stderr -join ' | ')" } else { '' }
+        if ($code -ne $Expect) { "FAILED: $Case exited $code instead of $Expect. Output: $($output -join ' | ')$shown"; exit 1 }
+        if ($Says -and -not (($output -join "`n").Contains($Says))) { "FAILED: $Case did not print '$Says'. Output: $($output -join ' | ')$shown"; exit 1 }
+        if (-not $Says -and $output) { "FAILED: $Case printed output. Output: $($output -join ' | ')$shown"; exit 1 }
         "ok: $Case"
     }
     finally { Remove-Item -LiteralPath $root -Recurse -Force }
