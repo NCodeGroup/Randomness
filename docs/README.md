@@ -13,6 +13,19 @@ offers. Every document in `docs/` has a line here.
   with the answer to expect, its evidence and the prompt that registers the project; the template owns it.
 - [decisions/](decisions/README.md): architecture decision records, one short file per decision, with the project
   template's own decisions in [decisions/project-template/](decisions/project-template/README.md).
+- [site/](site/index.mdx): the content of the documentation site, its pages as `.mdx` files, its components and data in
+  `_components/`, and its settings in `site.config.json`. The shared toolchain in
+  [NCodeGroup/docs](https://github.com/NCodeGroup/docs) builds it
+  ([ADR-1015](decisions/1015-the-documentation-site-is-narrative-guides-built-by-a-shared-toolchain-outside-this-repository.md)),
+  and the samples its pages show are tests in `tests/NCode.Randomness.Site.Tests`
+  ([ADR-1016](decisions/1016-site-samples-are-compiled-tests-in-a-project-of-their-own-included-by-key-when-the-site-is-built.md)).
+  The samples in the READMEs are tests in `tests/NCode.Randomness.Readme.Tests`
+  ([ADR-1014](decisions/1014-readme-samples-are-compiled-tests-that-markdownsnippets-copies-into-the-readmes.md)).
+  `.github/workflows/docs.yml` builds the site on every pull request and publishes it from every push to the default
+  branch to https://randomness.ncode.io/
+  ([ADR-1018](decisions/1018-the-documentation-site-is-published-to-github-pages-from-the-default-branch.md),
+  [ADR-1019](decisions/1019-the-documentation-site-is-served-at-randomness-ncode-io.md)); `build/site.mjs` builds,
+  layout-checks and serves it locally.
 - [designs/](designs/_template.md): design documents for work bigger than one plan, started from
   [designs/_template.md](designs/_template.md). Each keeps its status current, and its decisions become records in
   `decisions/` as its phases land.

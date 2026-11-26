@@ -82,7 +82,8 @@ mirror, and the beacon operator's future behavior are not.
   randomness.
 - **Coverage:** `./build/dod.ps1` fails below 90% of lines or 80% of branches.
 
-- **Gate:** `./build/dod.ps1` builds in Release with warnings as errors
+- **Gate:** `./build/gate.ps1`, which CI runs, checks the sample keys, that the README samples match their tests and
+  that the API map covers the public API, then `./build/dod.ps1` builds in Release with warnings as errors
   ([ADR-0100](decisions/project-template/0100-warnings-are-errors-in-every-project.md)), runs the analyzers and the
   banned-API list in `build/BannedSymbols.txt`
   ([ADR-0102](decisions/project-template/0102-disallowed-apis-are-banned-at-build-time.md)), and runs the tests; CI runs
