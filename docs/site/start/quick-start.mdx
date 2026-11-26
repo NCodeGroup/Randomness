@@ -18,7 +18,7 @@ dotnet add package NCode.Randomness.Drand
 
 ## Register the generator
 
-`AddRandomness` registers `ISecureRandom`, and each `Add…Beacon` call adds a beacon that draws are made from. Building the host fetches nothing, because a beacon contacts its service only when a draw asks it to. To go further, see how to [add beacons](/guides/add-beacons/).
+`AddRandomness` registers `ISecureRandom`, and each `Add…Beacon` call adds a beacon. Building the host contacts no beacon. Once the host runs, a background collector asks every beacon for its latest pulse, at start and again every minute in the default mode, and the generator mixes in what they deliver; a draw fetches the round it names when you make it. The `Offline` mode keeps the collector from contacting any beacon, as [choose a mode](/guides/choose-a-mode/) shows. To go further, see how to [add beacons](/guides/add-beacons/).
 
 ```cs snippet=SiteQuickStartRegister
 ```
