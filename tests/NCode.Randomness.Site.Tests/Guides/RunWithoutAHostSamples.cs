@@ -1,43 +1,15 @@
 // Copyright © NCode Group
 // SPDX-License-Identifier: Apache-2.0
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NCode.Randomness;
-using NCode.Randomness.Curby;
-using NCode.Randomness.Drand;
-using NCode.Randomness.Nist;
 
 namespace SiteSamples.Guides;
 
 // `dotnet mdsnippets` and the site copy each sample between begin-snippet and end-snippet (ADR-1016).
 public sealed class RunWithoutAHostSamples
 {
-    [Fact]
-    public async Task WithoutDependencyInjectionSample_Runs()
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(
-                new Dictionary<string, string?> { ["Randomness:Mode"] = "Offline" }
-            )
-            .Build();
-        var cancellationToken = CancellationToken.None;
-
-        // begin-snippet: WithoutDependencyInjection
-        var builder = RandomnessHost.CreateBuilder(
-            configuration.GetSection(RandomnessOptions.SectionName)
-        );
-        builder.AddCurbyBeacon().AddNistBeacon().AddDrandBeacon();
-        await using var randomness = await builder.BuildAsync(cancellationToken);
-
-        Guid id = randomness.SecureRandom.NextGuid();
-        // end-snippet
-
-        Assert.Equal(4, id.Version);
-        Assert.Equal(BeaconMode.Offline, randomness.BeaconStatus.Mode);
-    }
-
     [Fact]
     public async Task SiteRunWithoutAHostOptionsSample_Runs()
     {
