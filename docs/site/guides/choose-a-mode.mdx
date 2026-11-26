@@ -1,0 +1,73 @@
+---
+title: Choose a mode
+description: Keep fetching pulses, fetch one from each beacon and go offline, or contact no beacon at all, and decide what the host requires at start.
+---
+
+import { Pitfalls } from '@ncodegroup/docs/components';
+
+A service that mixes public beacons into its generator can keep fetching them for as long as it runs, fetch each one once and then stop, or never contact one, and it can refuse to start unless a pulse arrives. The `Mode` option picks how the registered beacons are used, and `RequireInitialPulse` picks what the host requires at start. This page shows how to choose a mode, how to require a first pulse, how to allow an older pulse from one beacon, how to set these in configuration, and what to watch for.
+
+## Continuous
+
+`Continuous` is the default. The collector asks every registered beacon for its latest pulse at start and again every `RefreshInterval`, one minute by default, so the generator keeps mixing in fresh pulses for as long as the host runs. You need not set anything to get it.
+
+## Start online, then run offline
+
+`InitializeOnly` fetches until each beacon has given one pulse, then never contacts one again. The generator still starts from the operating system's entropy, and each beacon's pulse is mixed in once. `RequireInitialPulse` makes the host fail its start unless a pulse is mixed in within `InitialPulseTimeout`, 30 seconds by default.
+
+```cs snippet=SiteChooseAModeInitializeOnly
+```
+
+## Contact no beacon
+
+`Offline` is for air-gapped deployments: the registered beacons are never contacted, and the generator runs from the operating system's entropy alone. Beacons you register stay registered, and `BeaconStatus.Mode` reports `Offline`.
+
+```cs snippet=SiteChooseAModeOffline
+```
+
+## Allow an older pulse from one beacon
+
+A pulse older than `MaxPulseAge`, ten minutes by default, is not mixed in, because an older one means the beacon or a mirror has stalled. A beacon that publishes less often needs a longer limit, and `MaxPulseAgeByBeacon` sets one by beacon name. [Pulse staleness is judged per beacon](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1008-pulse-staleness-is-judged-per-beacon.md) records why the limit is per beacon.
+
+```cs snippet=SiteChooseAModeMaxPulseAge
+```
+
+## In configuration
+
+The same settings in `appsettings.json`, bound by `AddRandomness(configuration.GetSection("Randomness"))`:
+
+```json
+{
+  "Randomness": {
+    "Mode": "InitializeOnly",
+    "RequireInitialPulse": true,
+    "MaxPulseAgeByBeacon": {
+      "nist": "00:20:00"
+    }
+  }
+}
+```
+
+## Pitfalls
+
+<Pitfalls>
+
+- **Requiring a first pulse in `Offline` mode.**
+  - *You write* `options.Mode = BeaconMode.Offline; options.RequireInitialPulse = true;`.
+  - *What happens:* the host refuses to start, because the options validator rejects `RequireInitialPulse` with `Offline`, which contacts no beacon.
+  - *Write instead:* leave `RequireInitialPulse` off in `Offline`, or use `InitializeOnly` or `Continuous` to wait for a pulse.
+- **Naming a beacon that is not registered.**
+  - *You write* `options.MaxPulseAgeByBeacon["nsit"] = TimeSpan.FromMinutes(20);`.
+  - *What happens:* no registered beacon has that name, so the host fails at start.
+  - *Write instead:* a name a registered beacon has, such as `nist`, `curby`, `curby-q` or `drand`.
+- **Expecting `InitializeOnly` to refresh later.**
+  - *You write* `options.Mode = BeaconMode.InitializeOnly;` and expect fresh pulses an hour on.
+  - *What happens:* it stops after one pulse from each beacon, so the generator mixes in no later pulse.
+  - *Write instead:* `Continuous`, the default, which asks every `RefreshInterval`.
+
+</Pitfalls>
+
+## Next steps
+
+- [Add beacons](/guides/add-beacons/) shows how to register the beacons and bind their settings.
+- [Beacons](/reference/beacons/) compares what each beacon publishes and how often.
