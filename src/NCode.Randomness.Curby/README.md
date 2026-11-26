@@ -1,9 +1,12 @@
 # NCode.Randomness.Curby
 
+[![CI](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml?query=branch%3Amain) [![Target framework](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2FNCodeGroup%2FRandomness%2Fmain%2Fsrc%2FNCode.Randomness.Curby%2FNCode.Randomness.Curby.csproj&query=%2F%2FTargetFramework%20%7C%20%2F%2FTargetFrameworks&label=target&logo=dotnet&color=512BD4)](https://www.nuget.org/packages/NCode.Randomness.Curby#supportedframeworks-body-tab) [![Documentation](https://img.shields.io/badge/docs-randomness.ncode.io-512BD4)](https://randomness.ncode.io/) [![License](https://img.shields.io/github/license/NCodeGroup/Randomness)](https://github.com/NCodeGroup/Randomness/blob/main/LICENSE.txt)
+
 The [CURBy](https://random.colorado.edu/) adapter for NCode.Randomness. CURBy, the CU Randomness Beacon of the
 University of Colorado Boulder, publishes randomness certified by a loophole-free Bell test through the Twine protocol.
 This package fetches pulses of its CURBy-RNG chain, one a minute, and verifies each one before any byte is used:
 
+- every document's text is well-formed Unicode before any member is read;
 - the chain document hashes to the pinned content identifier `CurbyDefaults.RngChainId`, which fixes the chain's RSA
   key, so no server, mirror or certificate authority can substitute another;
 - the pulse and its predecessor each hash to their content identifiers (DAG-CBOR, SHA3-512), hold only the members
@@ -15,11 +18,33 @@ This package fetches pulses of its CURBy-RNG chain, one a minute, and verifies e
 The randomness is the pulse's 64-byte SHA3-512 digest, as CURBy's own client library defines it. SHA3-512 comes from
 the operating system where it has one and from a managed implementation elsewhere, such as Windows Server 2022.
 
-```csharp
-builder.Services
-    .AddRandomness(builder.Configuration.GetSection(RandomnessOptions.SectionName))
-    .AddCurbyBeacon(builder.Configuration.GetSection(CurbyBeaconOptions.SectionName));
+## Installation
+
+```shell
+dotnet add package NCode.Randomness.Curby
 ```
+
+The package depends on NCode.Randomness, so adding it brings the generator too. It targets `net10.0`.
+
+## Registration
+
+`AddCurbyBeacon()` registers the CURBy-RNG beacon, and `AddCurbyQuantumBeacon()`, described below, registers the
+CURBy-Q beacon; this sample registers both:
+
+<!-- snippet: CurbyRegistration -->
+```cs
+builder
+    .Services.AddRandomness(
+        builder.Configuration.GetSection(RandomnessOptions.SectionName)
+    )
+    .AddCurbyBeacon(
+        builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
+    )
+    .AddCurbyQuantumBeacon(
+        builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
+    );
+```
+<!-- endSnippet -->
 
 Settings bind from `RandomnessBeacons:Curby`: `BaseAddress` (default `https://api.entwine.me/`; a mirror can withhold
 pulses but never forge one), `ChainId`, `QuantumChainId`, `BellChainId`, `MaxResponseBytes` and `ChainRetryDelay`
@@ -28,18 +53,33 @@ timeout, for every caller). Requests use a named `HttpClient`, `CurbyDefaults.Ht
 total timeouts and a circuit breaker; add a proxy or other handlers to it with
 `services.AddHttpClient(CurbyDefaults.HttpClientName)`.
 
-## Verifying Saved Documents
+## Verifying saved documents
 
 `CurbyPulseVerifier` makes the same checks without the network, on documents a caller supplies: the chain, a pulse
 and its predecessor, each the UTF-8 JSON the Twine API serves. It pins `CurbyDefaults.RngChainId`, or the chain
 identifier its constructor takes, and returns the pulse the beacon returns for that round, or throws a
 `BeaconException` with `InvalidPulse`. Pass the pulse to `VerifiableRandom.Create` to recompute a published draw, as
-[docs/draws.md](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md) describes:
+[docs/draws.md](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md) describes. This sample recomputes the
+reference draw of that page, from recorded documents of round 1620423 and the context `example-raffle-2026-11-25`:
 
-```csharp
-var pulse = new CurbyPulseVerifier().Verify(chainJson, pulseJson, predecessorJson);
+<!-- snippet: CurbyVerify -->
+```cs
+var pulse = new CurbyPulseVerifier().Verify(
+    chainJson,
+    pulseJson,
+    predecessorJson
+);
 using var draw = VerifiableRandom.Create(pulse, context);
+var first = Convert.ToHexStringLower(draw.GetBytes(32));
+var rolls = Enumerable
+    .Range(0, 5)
+    .Select(_ => draw.NextInteger(1, 101))
+    .ToArray();
+// first is e43e360c9e2b9cd6a094e04a64e65922a3581ba6864da1cb1490244522f9986e and
+// rolls is 80, 38, 69, 95, 91, the values the reference implementation in
+// docs/draws.md prints for this pulse and context.
 ```
+<!-- endSnippet -->
 
 ## CURBy-Q
 
@@ -86,7 +126,7 @@ draws over published rounds are unaffected.
 SHAKE256 comes from the operating system where it has one and from a managed implementation elsewhere, as SHA3-512
 does.
 
-### Verifying Saved Rounds
+### Verifying saved rounds
 
 `CurbyQuantumRoundVerifier` makes the same checks without the network, on documents a caller supplies: the round
 and its parameters, as the API serves them at `curbyq/round/<round>` and `curbyq/round/<round>/params`, and the
@@ -99,7 +139,23 @@ would fetch by its content identifier, and returns the pulse the beacon returns 
 `BeaconException` with `InvalidPulse`. It leaves the Bell-test certificate and the extraction to `curby_verify`,
 as the beacon does:
 
-```csharp
-var pulse = new CurbyQuantumRoundVerifier().Verify(roundJson, parameters, documents);
-using var draw = VerifiableRandom.Create(pulse, context);
+<!-- snippet: CurbyQuantumVerify -->
+```cs
+var pulse = new CurbyQuantumRoundVerifier().Verify(
+    roundJson,
+    parameters,
+    documents
+);
+using var draw = VerifiableRandom.Create(pulse, "example-raffle-2026-11-25");
 ```
+<!-- endSnippet -->
+
+## Learn more
+
+- [Add beacons](https://randomness.ncode.io/guides/add-beacons/): register the CURBy beacons next to the others
+- [Check a draw](https://randomness.ncode.io/guides/check-a-draw/): recompute a published draw from saved documents
+- [Beacon reference](https://randomness.ncode.io/reference/beacons/): what each beacon publishes and how it is verified
+- [Configuration reference](https://randomness.ncode.io/reference/configuration/): every setting, including `RandomnessBeacons:Curby`
+- [Documentation site](https://randomness.ncode.io/)
+- [Reproducible draws](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md): the procedure and the exact algorithm
+- [Changelog](https://github.com/NCodeGroup/Randomness/blob/main/CHANGELOG.md)
