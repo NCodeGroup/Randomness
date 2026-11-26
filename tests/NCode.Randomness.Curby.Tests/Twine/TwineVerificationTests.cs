@@ -149,6 +149,26 @@ public class TwineVerificationTests
     }
 
     [Fact]
+    public void Parse_WithInvalidUtf8InAName_Throws()
+    {
+        byte[] json = [.. "{\"cid"u8, 0x80, .. "\":1}"u8];
+
+        var exception = Assert.Throws<TwineFormatException>(() => TwineDocument.Parse(json));
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Parse_WithLoneSurrogateEscapeInAName_Throws()
+    {
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwineDocument.Parse("""{"\uD800":1}"""u8)
+        );
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Parse_WithCurbyQDocuments_RecomputesEveryCid()
     {
         var bellPulse = CurbyQuantumFixtures.BellPulse(CurbyQuantumFixtures.BellResponseIndex);
@@ -382,6 +402,21 @@ public class TwineVerificationTests
         );
 
         Assert.IsAssignableFrom<JsonException>(exception.InnerException);
+    }
+
+    [Theory]
+    [InlineData("""{"alg":"\uD800"}""")]
+    [InlineData("""{"alg":"RS256","\uDC00":1}""")]
+    public void Verify_WithHeaderThatIsNotUnicode_Throws(string header)
+    {
+        using var builder = new TwineBuilder(header: header);
+        var chainDocument = Document(builder.ChainJson);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily)
+        );
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

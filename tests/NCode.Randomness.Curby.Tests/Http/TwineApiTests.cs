@@ -87,6 +87,19 @@ public sealed class TwineApiTests : IDisposable
         Assert.IsAssignableFrom<JsonException>(exception.InnerException);
     }
 
+    [Fact]
+    public async Task GetDocumentsAsync_WithLoneSurrogateEscape_Throws()
+    {
+        Server.Serve(Path, """[{"\uD800":1}]""");
+        var api = Create();
+
+        var exception = await Assert.ThrowsAsync<TwineFormatException>(async () =>
+            await api.GetDocumentsAsync(Path, CancellationToken.None)
+        );
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
     #endregion
 
     #region GetBytesAsync Tests
