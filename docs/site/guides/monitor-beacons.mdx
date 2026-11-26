@@ -56,7 +56,7 @@ An outage is logged once when it starts and once when it ends, so a log search f
   - *Write instead:* tag the check `ready`, as `AddRandomnessBeacons("ready")` does, and run only that tag in the readiness probe, because a beacon is an external dependency.
 - **Failing readiness on `Degraded`.**
   - *You write* a readiness policy that treats `Degraded` as not ready.
-  - *What happens:* every instance leaves service when a university beacon is down, although the generator keeps working.
+  - *What happens:* every instance leaves service when a beacon is down, although the generator keeps working.
   - *Write instead:* keep ASP.NET Core's default, which maps `Degraded` to 200, and alert on the metrics instead.
 - **Calling `WaitForPulseAsync` with no timeout.**
   - *You write* `await status.WaitForPulseAsync(CancellationToken.None)`.

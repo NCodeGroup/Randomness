@@ -257,7 +257,7 @@ var rolls = Enumerable
 - Each beacon is fetched on its own loop, with a per-fetch timeout, HTTP retries and a circuit breaker, and back-off
   with jitter while it fails.
 - An outage is logged once when it starts and once when it ends, and the health check reports `Degraded`, never
-  `Unhealthy`: no instance should leave service because a university beacon is down.
+  `Unhealthy`: no instance should leave service because a beacon is down.
 - `IBeaconStatus` shows each beacon's health and last pulse; `docs/metrics.md` lists the metrics.
 - More beacons mean no single point of trust: [docs/beacon-adapters.md](docs/beacon-adapters.md) is the contract for
   an adapter to another vendor.
