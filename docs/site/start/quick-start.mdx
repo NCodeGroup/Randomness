@@ -1,0 +1,52 @@
+---
+title: Quick start
+description: Install the packages, register the generator and three beacons, make a secret, draw values and run a draw anyone can check.
+---
+
+This page takes you from an empty project to a registered generator and three beacons, a secret, drawn values and a draw that anyone can check.
+
+## Install
+
+```sh
+dotnet add package NCode.Randomness
+dotnet add package NCode.Randomness.Curby
+dotnet add package NCode.Randomness.Nist
+dotnet add package NCode.Randomness.Drand
+```
+
+`NCode.Randomness` is the generator and the draw API. Each other package adds one beacon, and you need one only for a draw that others check.
+
+## Register the generator
+
+`AddRandomness` registers `ISecureRandom`, and each `Add…Beacon` call adds a beacon that draws are made from. Building the host fetches nothing, because a beacon contacts its service only when a draw asks it to. To go further, see how to [add beacons](/guides/add-beacons/).
+
+```cs snippet=SiteQuickStartRegister
+```
+
+## Make a secret
+
+Anything that must stay unguessable comes from `ISecureRandom`, which draws from the operating system and never from a beacon. To go further, see how to [make a secret](/guides/make-a-secret/).
+
+```cs snippet=TokenService
+```
+
+## Draw values
+
+`ISecureRandom` also gives unbiased integers in a range, a uniform `double`, a `Guid`, a shuffle and a pick from a list.
+
+```cs snippet=TypedValues
+```
+
+## Run a draw anyone can check
+
+A draw takes its randomness from one beacon round and a context you choose, so anyone who has the round and the context gets the same values. To go further, see how to [run a public draw](/guides/run-a-public-draw/).
+
+```cs snippet=PublicDraw
+```
+
+## Next steps
+
+- [Which API?](/start/which-api/) helps you pick the API that fits the value you need.
+- [Make a secret](/guides/make-a-secret/) shows how to make a key, a token or a code.
+- [Add beacons](/guides/add-beacons/) shows how to register a beacon and configure it.
+- [Run a public draw](/guides/run-a-public-draw/) shows how to commit to a round and publish a result that others can recompute.
