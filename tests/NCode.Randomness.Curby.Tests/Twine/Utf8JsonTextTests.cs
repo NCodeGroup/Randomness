@@ -15,7 +15,7 @@ public class Utf8JsonTextTests
     [InlineData("""["\uD83D\uDE00"]""")]
     [InlineData("""["\\uD800"]""")]
     [InlineData("""["\u0041\n\"\/"]""")]
-    [InlineData("""["é"]""")]
+    [InlineData("[\"\u00e9\"]")]
     public void IsText_WithWellFormedText_ReturnsTrue(string json)
     {
         var utf8Json = Encoding.UTF8.GetBytes(json);
