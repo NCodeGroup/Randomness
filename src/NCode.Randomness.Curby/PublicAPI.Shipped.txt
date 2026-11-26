@@ -1,1 +1,46 @@
 #nullable enable
+const NCode.Randomness.Curby.CurbyBeaconOptions.SectionName = "RandomnessBeacons:Curby" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.BaseAddress = "https://api.entwine.me/" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.BeaconName = "curby" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.BellChainId = "bafyriqe3zxf5g4ifgqhea5zozxpdcfi5qcpkfpogtxzbizmmuxdjuzuq44a2cifbr7xplo4kcfsdz2c5pxfxektavrqxxb3nvbmclxz7qiz6e" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.HttpClientName = "NCode.Randomness.Curby" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.QuantumBeaconName = "curby-q" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.QuantumChainId = "bafyriqhijw5soalbtppuwwjbskfiriqy6swa5qd5trgbzx4nypnu7mp7iyhx7m2iin2nxnglmngvjgirzb7bvlisxq3uygoik7ozbybxnftiw" -> string!
+const NCode.Randomness.Curby.CurbyDefaults.RngChainId = "bafyriqci6f3st2mg7gq733ho4zvvth32zpy2mtiylixwmhoz6d627eo3jfpmbxepe54u2zdvymonq5sp3armtm4rodxsynsirr5g3xsbd3q4s" -> string!
+NCode.Randomness.Curby.CurbyBeaconOptions
+NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.get -> System.Uri!
+NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.set -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.BellChainId.get -> string!
+NCode.Randomness.Curby.CurbyBeaconOptions.BellChainId.set -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.get -> string!
+NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.set -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.ChainRetryDelay.get -> System.TimeSpan
+NCode.Randomness.Curby.CurbyBeaconOptions.ChainRetryDelay.set -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.CurbyBeaconOptions() -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.get -> int
+NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.set -> void
+NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.get -> string!
+NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.set -> void
+NCode.Randomness.Curby.CurbyDefaults
+NCode.Randomness.Curby.CurbyPulseVerifier
+NCode.Randomness.Curby.CurbyPulseVerifier.CurbyPulseVerifier() -> void
+NCode.Randomness.Curby.CurbyPulseVerifier.CurbyPulseVerifier(string! chainId) -> void
+NCode.Randomness.Curby.CurbyPulseVerifier.Verify(System.ReadOnlySpan<byte> chain, System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor) -> NCode.Randomness.BeaconPulse!
+NCode.Randomness.Curby.CurbyQuantumRoundVerifier
+NCode.Randomness.Curby.CurbyQuantumRoundVerifier.CurbyQuantumRoundVerifier() -> void
+NCode.Randomness.Curby.CurbyQuantumRoundVerifier.CurbyQuantumRoundVerifier(string! quantumChainId, string! bellChainId) -> void
+NCode.Randomness.Curby.CurbyQuantumRoundVerifier.Verify(System.ReadOnlySpan<byte> round, System.ReadOnlySpan<byte> parameters, System.Collections.Generic.IReadOnlyCollection<System.ReadOnlyMemory<byte>>! documents) -> NCode.Randomness.BeaconPulse!
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon() -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon(System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyQuantumBeacon() -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyQuantumBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyQuantumBeacon(System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyQuantumBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyQuantumBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyQuantumBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!

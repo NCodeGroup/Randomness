@@ -4,6 +4,8 @@
 
   <!-- This project's own settings. Anything set here overrides the template's. -->
   <PropertyGroup>
+    <!-- Package validation compares each package with this version on nuget.org; .github/workflows/raise-baseline.yml raises it after each release. -->
+    <PackageValidationBaselineVersion>0.5.3</PackageValidationBaselineVersion>
     <!-- coverage.runsettings keeps FsCheck, FsCheck.Xunit and FSharp.Core out of the coverage count; remove the property once no test project references FsCheck. -->
     <RunSettingsFilePath>$(MSBuildThisFileDirectory)coverage.runsettings</RunSettingsFilePath>
   </PropertyGroup>

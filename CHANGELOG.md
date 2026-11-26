@@ -2,10 +2,11 @@
 
 All notable changes to this project are documented in this file. The format follows
 [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and the project adheres to
-[Semantic Versioning](https://semver.org/). Until its first stable release, `## [Unreleased]` describes what the
-product does.
+[Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-11-25
 
 ### Added
 
@@ -110,3 +111,6 @@ product does.
 - Generator state, seeds and every buffer that holds them live on the stack or in pinned memory, never in a shared
   array pool, and are zeroed after use; served bytes are erased from the buffers, and state is zeroed on disposal
   ([ADR-1012](docs/decisions/1012-secrets-live-only-in-stack-or-pinned-memory-and-the-packages-take-no-buffer-library-dependency.md)).
+
+[unreleased]: https://github.com/NCodeGroup/Randomness/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/NCodeGroup/Randomness/releases/tag/v1.0.0
