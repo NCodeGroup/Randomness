@@ -137,6 +137,19 @@ public sealed class NistApiTests : IDisposable
     }
 
     [Fact]
+    public async Task GetPulseAsync_WithLoneSurrogateEscape_Throws()
+    {
+        Server.Serve(PulseRoute, """{"\uD800":1}""");
+        var api = Create();
+
+        var exception = await Assert.ThrowsAsync<NistFormatException>(async () =>
+            await api.GetPulseAsync(PulsePath, CancellationToken.None)
+        );
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task GetPulseAsync_WithServiceUnavailable_Throws()
     {
         Server.Answer(PulseRoute, HttpStatusCode.ServiceUnavailable);

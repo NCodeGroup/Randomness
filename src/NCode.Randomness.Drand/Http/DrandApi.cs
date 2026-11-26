@@ -38,9 +38,18 @@ internal sealed class DrandApi(IHttpClientFactory clients, IOptions<DrandBeaconO
     /// </summary>
     /// <param name="body">The response body, as UTF-8 JSON.</param>
     /// <returns>The root element of the parsed document.</returns>
-    /// <exception cref="DrandFormatException"><paramref name="body"/> is not valid JSON.</exception>
+    /// <exception cref="DrandFormatException">
+    /// <paramref name="body"/> is not valid JSON, or its text is not well-formed Unicode.
+    /// </exception>
     private static JsonElement ParseJson(byte[] body)
     {
+        if (!Utf8JsonText.IsText(body))
+        {
+            throw new DrandFormatException(
+                "drand answered with malformed JSON: its text is not well-formed Unicode."
+            );
+        }
+
         try
         {
             return JsonElement.Parse(body, DrandRound.JsonOptions);

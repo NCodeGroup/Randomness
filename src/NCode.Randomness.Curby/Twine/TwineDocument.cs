@@ -37,7 +37,8 @@ internal sealed class TwineDocument
     /// <param name="utf8Json">The document, as UTF-8 JSON.</param>
     /// <returns>The document, whose declared CID matches its content.</returns>
     /// <exception cref="TwineFormatException">
-    /// <paramref name="utf8Json"/> is not valid JSON, or is not a Twine document with the CID it declares.
+    /// <paramref name="utf8Json"/> is not valid JSON, its text is not well-formed Unicode, or it is not a Twine
+    /// document with the CID it declares.
     /// </exception>
     public static TwineDocument Parse(ReadOnlySpan<byte> utf8Json)
     {
@@ -45,8 +46,24 @@ internal sealed class TwineDocument
         return Parse(json);
     }
 
+    /// <summary>
+    /// Parses UTF-8 JSON into its root element, refusing text that is not well-formed Unicode before System.Text.Json
+    /// reads it.
+    /// </summary>
+    /// <param name="utf8Json">The UTF-8 JSON.</param>
+    /// <returns>The root element of the JSON.</returns>
+    /// <exception cref="TwineFormatException">
+    /// <paramref name="utf8Json"/> is not valid JSON, or its text is not well-formed Unicode.
+    /// </exception>
     private static JsonElement ParseJson(ReadOnlySpan<byte> utf8Json)
     {
+        if (!Utf8JsonText.IsText(utf8Json))
+        {
+            throw new TwineFormatException(
+                "The Twine document is not valid JSON: its text is not well-formed Unicode."
+            );
+        }
+
         try
         {
             return JsonElement.Parse(utf8Json, JsonOptions);
@@ -94,8 +111,8 @@ internal sealed class TwineDocument
     /// <param name="utf8Json">The array, as UTF-8 JSON.</param>
     /// <returns>The documents of the array, each with a declared CID that matches its content.</returns>
     /// <exception cref="TwineFormatException">
-    /// <paramref name="utf8Json"/> is not valid JSON, is not an array, or holds an element that is not a Twine
-    /// document with the CID it declares.
+    /// <paramref name="utf8Json"/> is not valid JSON, its text is not well-formed Unicode, it is not an array, or it
+    /// holds an element that is not a Twine document with the CID it declares.
     /// </exception>
     public static ImmutableArray<TwineDocument> ParseArray(ReadOnlySpan<byte> utf8Json)
     {

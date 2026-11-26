@@ -18,9 +18,6 @@ internal static class JwsRs256
 {
     private const string Algorithm = "RS256";
 
-    private static UTF8Encoding Utf8 { get; } =
-        new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
-
     public static void Verify(string compact, RSA key, ReadOnlySpan<byte> expectedPayload)
     {
         ArgumentNullException.ThrowIfNull(compact);
@@ -114,14 +111,30 @@ internal static class JwsRs256
         return key;
     }
 
+    /// <summary>
+    /// Checks that the JWS header is a JSON object of well-formed Unicode text that names the RS256 algorithm once,
+    /// and refuses any member other than a string <c>typ</c> or <c>kid</c>.
+    /// </summary>
+    /// <param name="header">The decoded JWS header.</param>
+    /// <exception cref="TwineFormatException">
+    /// The header is not JSON, its text is not well-formed Unicode, it is not a JSON object, it holds a member that
+    /// is not allowed, or it does not name the RS256 algorithm.
+    /// </exception>
     private static void ValidateHeader(byte[] header)
     {
+        if (!Utf8JsonText.IsText(header))
+        {
+            throw new TwineFormatException(
+                "The JWS header is not JSON: its text is not well-formed Unicode."
+            );
+        }
+
         JsonElement json;
         try
         {
-            json = JsonElement.Parse(Utf8.GetString(header));
+            json = JsonElement.Parse(header);
         }
-        catch (Exception exception) when (exception is JsonException or DecoderFallbackException)
+        catch (JsonException exception)
         {
             throw new TwineFormatException(
                 $"The JWS header is not JSON: {exception.Message}",

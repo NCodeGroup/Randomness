@@ -267,6 +267,26 @@ public class NistPulseTests
         Assert.Contains("not valid JSON", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Parse_WithInvalidUtf8InAString_Throws()
+    {
+        byte[] json = [.. "{\"pulse\":{\"uri\":\""u8, 0x80, .. "\"}}"u8];
+
+        var exception = Assert.Throws<NistFormatException>(() => NistPulse.Parse(json));
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Parse_WithLoneSurrogateEscapeInAName_Throws()
+    {
+        var exception = Assert.Throws<NistFormatException>(() =>
+            NistPulse.Parse("""{"\uD800":1}"""u8)
+        );
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
     #endregion
 
     #region Verify Tests

@@ -36,7 +36,7 @@ mirror, and the beacon operator's future behavior are not.
 | The CURBy-Q operator publishes randomness its Bell data and seed don't produce | Partly | Pinned CURBy-Q and Bell chains, signatures, the Bell response and seed in causal order, and the seed's expansion are checked; the hypothesis test and Trevisan extraction are checked only out of process by `curby_verify` ([ADR-1007](decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)) |
 | A draw organizer picks a favorable pulse | Yes | The commit-first procedure in [draws.md](draws.md) |
 | Beacon outage or slowness | Yes | R4: background collection, timeouts, back-off, circuit breaker, `Degraded` health ([ADR-1002](decisions/1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md)) |
-| Oversized or malformed responses | Yes | Byte limit while streaming, strict DAG-JSON, no redirects, JSON content type only, except `application/octet-stream` for CURBy-Q's round parameters and `text/plain` for NIST's certificates, duplicate JSON members refused, every response read under the `MaxResponseBytes` streaming limit |
+| Oversized or malformed responses | Yes | Byte limit while streaming, strict DAG-JSON, no redirects, JSON content type only, except `application/octet-stream` for CURBy-Q's round parameters and `text/plain` for NIST's certificates, duplicate JSON members refused, JSON whose text is not well-formed Unicode refused before any member is read, every response read under the `MaxResponseBytes` streaming limit |
 | Modulo bias in ranges | Yes | Rejection sampling in every bounded value |
 | Disclosure of process memory | No | Out of scope; R6 limits what remains after disposal |
 | A weak operating-system CSPRNG | Partly | Fresh beacon pulses diversify every reseed, for example after a virtual machine snapshot is restored |
@@ -77,7 +77,9 @@ mirror, and the beacon operator's future behavior are not.
   its alphabet; base32 round-trips and decodes only its one canonical form; and each offline verifier,
   `CurbyPulseVerifier`, `CurbyQuantumRoundVerifier`, `NistPulseVerifier` and `DrandRoundVerifier`, given any bytes or
   a served document with any one byte changed, either refuses it with `BeaconException` and `InvalidPulse` or returns
-  the pulse's own randomness.
+  the pulse's own randomness; and the parsers under them, given any bytes or a served document with any one byte
+  changed, either refuse it with their adapter's format exception or return its own content identifier, output or
+  randomness.
 - **Coverage:** `./build/dod.ps1` fails below 90% of lines or 80% of branches.
 
 - **Gate:** `./build/dod.ps1` builds in Release with warnings as errors

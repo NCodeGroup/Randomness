@@ -859,6 +859,17 @@ public class QuantumRoundTests
     }
 
     [Fact]
+    public void VerifySeed_WithLoneSurrogateEscape_Throws()
+    {
+        using var builder = new QuantumRoundBuilder
+        {
+            Parameters = static _ => """{"seed":"\uD800"}""",
+        };
+
+        AssertSeedRefused(builder, "not well-formed Unicode");
+    }
+
+    [Fact]
     public void VerifySeed_WithParametersThatAreNotJson_KeepsTheJsonException()
     {
         using var builder = new QuantumRoundBuilder { Parameters = static _ => "{" };

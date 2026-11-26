@@ -140,6 +140,19 @@ public sealed class DrandApiTests : IDisposable
     }
 
     [Fact]
+    public async Task GetAsync_WithLoneSurrogateEscape_Throws()
+    {
+        Server.Serve(Route, """{"\uD800":1}""");
+        var api = Create();
+
+        var exception = await Assert.ThrowsAsync<DrandFormatException>(async () =>
+            await api.GetAsync(Path, CancellationToken.None)
+        );
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task GetAsync_WithServiceUnavailable_Throws()
     {
         Server.Answer(Route, HttpStatusCode.ServiceUnavailable);

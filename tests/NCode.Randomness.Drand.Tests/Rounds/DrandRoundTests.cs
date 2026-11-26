@@ -289,6 +289,28 @@ public class DrandRoundTests
         Assert.Contains("not valid JSON", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Verify_WithInvalidUtf8InAString_Throws()
+    {
+        byte[] json = [.. "{\"round\":1000,\"signature\":\""u8, 0x80, .. "\"}"u8];
+
+        var exception = Assert.Throws<DrandFormatException>(() =>
+            DrandRound.Verify(json, DrandChain.Quicknet)
+        );
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Verify_WithLoneSurrogateEscapeInAName_Throws()
+    {
+        var exception = Assert.Throws<DrandFormatException>(() =>
+            DrandRound.Verify("""{"\uD800":1}"""u8, DrandChain.Quicknet)
+        );
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
     #endregion
 
     #region MessageOf Tests
