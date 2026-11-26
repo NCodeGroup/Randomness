@@ -1,0 +1,62 @@
+---
+title: Which API?
+description: Answer at most two questions about the value you need, and get the API to use, its call and what to watch for.
+---
+
+import UseCard from '@site/components/UseCard.astro';
+
+Pick the API for the value you need. Answer the questions, then read the card for your API below, with its call, what to watch for and the guide that goes further.
+
+## Answer at most two questions
+
+1. Is the value a secret, or must others recompute it?
+   - A secret that an attacker must not predict: go to step 2.
+   - A value that others recompute from a public beacon round: go to step 3.
+2. Does your code use dependency injection?
+   - Yes: [inject `ISecureRandom`](#inject-isecurerandom).
+   - No, and you want beacon input: [build a `RandomnessHost`](#build-a-randomnesshost).
+   - No, and the operating system's generator is enough: [use the system generator](#use-the-system-generator).
+3. Are you running the draw or checking one?
+   - Running it: [run a public draw](#run-a-public-draw).
+   - Checking one that was published: [check a draw offline](#check-a-draw-offline).
+
+## For secrets
+
+<UseCard id="inject-isecurerandom" use="secure-random">
+
+```cs snippet=TokenService title="The call"
+```
+
+</UseCard>
+
+<UseCard id="build-a-randomnesshost" use="randomness-host">
+
+```cs snippet=WithoutDependencyInjection title="The call"
+```
+
+</UseCard>
+
+<UseCard id="use-the-system-generator" use="system">
+
+```cs snippet=SiteAnswerSystem title="The call"
+```
+
+</UseCard>
+
+## For draws others check
+
+<UseCard id="run-a-public-draw" use="draw">
+
+```cs snippet=PublicDraw title="The call"
+```
+
+</UseCard>
+
+<UseCard id="check-a-draw-offline" use="verify">
+
+```cs snippet=CurbyVerify title="The call"
+```
+
+</UseCard>
+
+Every beacon, side by side: [the beacons](/reference/beacons/).
