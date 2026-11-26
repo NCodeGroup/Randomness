@@ -39,13 +39,9 @@ The package depends on NCode.Randomness, so adding it brings the generator too. 
 
 <!-- snippet: DrandRegistration -->
 ```cs
-builder
-    .Services.AddRandomness(
-        builder.Configuration.GetSection(RandomnessOptions.SectionName)
-    )
-    .AddDrandBeacon(
-        builder.Configuration.GetSection(DrandBeaconOptions.SectionName)
-    );
+var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
+var drand = builder.Configuration.GetSection(DrandBeaconOptions.SectionName);
+builder.Services.AddRandomness(randomness).AddDrandBeacon(drand);
 ```
 <!-- endSnippet -->
 

@@ -33,16 +33,12 @@ CURBy-Q beacon; this sample registers both:
 
 <!-- snippet: CurbyRegistration -->
 ```cs
+var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
+var curby = builder.Configuration.GetSection(CurbyBeaconOptions.SectionName);
 builder
-    .Services.AddRandomness(
-        builder.Configuration.GetSection(RandomnessOptions.SectionName)
-    )
-    .AddCurbyBeacon(
-        builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
-    )
-    .AddCurbyQuantumBeacon(
-        builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
-    );
+    .Services.AddRandomness(randomness)
+    .AddCurbyBeacon(curby)
+    .AddCurbyQuantumBeacon(curby);
 ```
 <!-- endSnippet -->
 
@@ -70,7 +66,8 @@ var pulse = new CurbyPulseVerifier().Verify(
     predecessorJson
 );
 using var draw = VerifiableRandom.Create(pulse, context);
-var first = Convert.ToHexStringLower(draw.GetBytes(32));
+var bytes = draw.GetBytes(32);
+var first = Convert.ToHexStringLower(bytes);
 var rolls = Enumerable
     .Range(0, 5)
     .Select(_ => draw.NextInteger(1, 101))

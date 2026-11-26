@@ -40,19 +40,15 @@ Register the generator and the beacons you use. The adapters come from their own
 <!-- snippet: QuickStart -->
 ```cs
 var builder = Host.CreateApplicationBuilder(args);
+var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
+var curby = builder.Configuration.GetSection(CurbyBeaconOptions.SectionName);
+var nist = builder.Configuration.GetSection(NistBeaconOptions.SectionName);
+var drand = builder.Configuration.GetSection(DrandBeaconOptions.SectionName);
 builder
-    .Services.AddRandomness(
-        builder.Configuration.GetSection(RandomnessOptions.SectionName)
-    )
-    .AddCurbyBeacon(
-        builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
-    )
-    .AddNistBeacon(
-        builder.Configuration.GetSection(NistBeaconOptions.SectionName)
-    )
-    .AddDrandBeacon(
-        builder.Configuration.GetSection(DrandBeaconOptions.SectionName)
-    );
+    .Services.AddRandomness(randomness)
+    .AddCurbyBeacon(curby)
+    .AddNistBeacon(nist)
+    .AddDrandBeacon(drand);
 builder.Services.AddHealthChecks().AddRandomnessBeacons("ready");
 ```
 <!-- endSnippet -->

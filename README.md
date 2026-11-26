@@ -50,19 +50,15 @@ Register the generator, the CURBy, NIST and drand beacons, and a health check th
 <!-- snippet: QuickStart -->
 ```cs
 var builder = Host.CreateApplicationBuilder(args);
+var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
+var curby = builder.Configuration.GetSection(CurbyBeaconOptions.SectionName);
+var nist = builder.Configuration.GetSection(NistBeaconOptions.SectionName);
+var drand = builder.Configuration.GetSection(DrandBeaconOptions.SectionName);
 builder
-    .Services.AddRandomness(
-        builder.Configuration.GetSection(RandomnessOptions.SectionName)
-    )
-    .AddCurbyBeacon(
-        builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
-    )
-    .AddNistBeacon(
-        builder.Configuration.GetSection(NistBeaconOptions.SectionName)
-    )
-    .AddDrandBeacon(
-        builder.Configuration.GetSection(DrandBeaconOptions.SectionName)
-    );
+    .Services.AddRandomness(randomness)
+    .AddCurbyBeacon(curby)
+    .AddNistBeacon(nist)
+    .AddDrandBeacon(drand);
 builder.Services.AddHealthChecks().AddRandomnessBeacons("ready");
 ```
 <!-- endSnippet -->
@@ -145,9 +141,8 @@ Console tools and libraries that run without a host build the same generator and
 
 <!-- snippet: WithoutDependencyInjection -->
 ```cs
-var builder = RandomnessHost.CreateBuilder(
-    configuration.GetSection(RandomnessOptions.SectionName)
-);
+var section = configuration.GetSection(RandomnessOptions.SectionName);
+var builder = RandomnessHost.CreateBuilder(section);
 builder.AddCurbyBeacon().AddNistBeacon().AddDrandBeacon();
 await using var randomness = await builder.BuildAsync(cancellationToken);
 
@@ -215,7 +210,8 @@ var pulse = new CurbyPulseVerifier().Verify(
     predecessorJson
 );
 using var draw = VerifiableRandom.Create(pulse, context);
-var first = Convert.ToHexStringLower(draw.GetBytes(32));
+var bytes = draw.GetBytes(32);
+var first = Convert.ToHexStringLower(bytes);
 var rolls = Enumerable
     .Range(0, 5)
     .Select(_ => draw.NextInteger(1, 101))

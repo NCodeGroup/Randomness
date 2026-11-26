@@ -23,19 +23,15 @@ public sealed class ReadmeSamplesTests
 
         // begin-snippet: QuickStart
         var builder = Host.CreateApplicationBuilder(args);
+        var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
+        var curby = builder.Configuration.GetSection(CurbyBeaconOptions.SectionName);
+        var nist = builder.Configuration.GetSection(NistBeaconOptions.SectionName);
+        var drand = builder.Configuration.GetSection(DrandBeaconOptions.SectionName);
         builder
-            .Services.AddRandomness(
-                builder.Configuration.GetSection(RandomnessOptions.SectionName)
-            )
-            .AddCurbyBeacon(
-                builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
-            )
-            .AddNistBeacon(
-                builder.Configuration.GetSection(NistBeaconOptions.SectionName)
-            )
-            .AddDrandBeacon(
-                builder.Configuration.GetSection(DrandBeaconOptions.SectionName)
-            );
+            .Services.AddRandomness(randomness)
+            .AddCurbyBeacon(curby)
+            .AddNistBeacon(nist)
+            .AddDrandBeacon(drand);
         builder.Services.AddHealthChecks().AddRandomnessBeacons("ready");
         // end-snippet
 
@@ -80,8 +76,10 @@ public sealed class ReadmeSamplesTests
         // The key is all zeros again, and mac holds the code.
         // end-snippet
 
-        Assert.Equal(-1, key.IndexOfAnyExcept((byte)0));
-        Assert.NotEqual(-1, mac.AsSpan().IndexOfAnyExcept((byte)0));
+        var firstNonZeroKeyByte = key.IndexOfAnyExcept((byte)0);
+        var firstNonZeroMacByte = mac.AsSpan().IndexOfAnyExcept((byte)0);
+        Assert.Equal(-1, firstNonZeroKeyByte);
+        Assert.NotEqual(-1, firstNonZeroMacByte);
     }
 
     [Fact]
@@ -106,9 +104,12 @@ public sealed class ReadmeSamplesTests
         Assert.InRange(ratio, 0d, 1d);
         Assert.NotEqual(1d, ratio);
         Assert.Equal(4, token.Version);
-        Assert.Equal(Enumerable.Range(1, 52), deck.Order());
+        var expectedDeck = Enumerable.Range(1, 52);
+        var sortedDeck = deck.Order();
+        Assert.Equal(expectedDeck, sortedDeck);
         Assert.Contains(color, new[] { "red", "green", "blue" });
-        Assert.InRange(legacy.Next(10), 0, 9);
+        var legacyRoll = legacy.Next(10);
+        Assert.InRange(legacyRoll, 0, 9);
         Assert.IsType<UInt128>(id);
     }
 
@@ -123,9 +124,8 @@ public sealed class ReadmeSamplesTests
         var cancellationToken = CancellationToken.None;
 
         // begin-snippet: WithoutDependencyInjection
-        var builder = RandomnessHost.CreateBuilder(
-            configuration.GetSection(RandomnessOptions.SectionName)
-        );
+        var section = configuration.GetSection(RandomnessOptions.SectionName);
+        var builder = RandomnessHost.CreateBuilder(section);
         builder.AddCurbyBeacon().AddNistBeacon().AddDrandBeacon();
         await using var randomness = await builder.BuildAsync(cancellationToken);
 
@@ -162,11 +162,13 @@ public sealed class ReadmeSamplesTests
             draw.Pulse.Id
         );
         Assert.Equal("example-raffle-2026-11-25", draw.Context);
+        var pulse = RecordedDocuments.CurbyPulse(1620423);
         using var recomputed = VerifiableRandom.Create(
-            RecordedDocuments.CurbyPulse(1620423),
+            pulse,
             "example-raffle-2026-11-25"
         );
-        Assert.Equal(entrants[recomputed.NextInteger(0, entrants.Length)], winner);
+        var winnerIndex = recomputed.NextInteger(0, entrants.Length);
+        Assert.Equal(entrants[winnerIndex], winner);
     }
 
     [Fact]
@@ -175,16 +177,12 @@ public sealed class ReadmeSamplesTests
         var builder = Host.CreateApplicationBuilder();
 
         // begin-snippet: CurbyRegistration
+        var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
+        var curby = builder.Configuration.GetSection(CurbyBeaconOptions.SectionName);
         builder
-            .Services.AddRandomness(
-                builder.Configuration.GetSection(RandomnessOptions.SectionName)
-            )
-            .AddCurbyBeacon(
-                builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
-            )
-            .AddCurbyQuantumBeacon(
-                builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
-            );
+            .Services.AddRandomness(randomness)
+            .AddCurbyBeacon(curby)
+            .AddCurbyQuantumBeacon(curby);
         // end-snippet
 
         using var host = builder.Build();
@@ -209,7 +207,8 @@ public sealed class ReadmeSamplesTests
             predecessorJson
         );
         using var draw = VerifiableRandom.Create(pulse, context);
-        var first = Convert.ToHexStringLower(draw.GetBytes(32));
+        var bytes = draw.GetBytes(32);
+        var first = Convert.ToHexStringLower(bytes);
         var rolls = Enumerable
             .Range(0, 5)
             .Select(_ => draw.NextInteger(1, 101))
@@ -262,13 +261,9 @@ public sealed class ReadmeSamplesTests
         var builder = Host.CreateApplicationBuilder();
 
         // begin-snippet: NistRegistration
-        builder
-            .Services.AddRandomness(
-                builder.Configuration.GetSection(RandomnessOptions.SectionName)
-            )
-            .AddNistBeacon(
-                builder.Configuration.GetSection(NistBeaconOptions.SectionName)
-            );
+        var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
+        var nist = builder.Configuration.GetSection(NistBeaconOptions.SectionName);
+        builder.Services.AddRandomness(randomness).AddNistBeacon(nist);
         // end-snippet
 
         using var host = builder.Build();
@@ -284,13 +279,9 @@ public sealed class ReadmeSamplesTests
         var builder = Host.CreateApplicationBuilder();
 
         // begin-snippet: DrandRegistration
-        builder
-            .Services.AddRandomness(
-                builder.Configuration.GetSection(RandomnessOptions.SectionName)
-            )
-            .AddDrandBeacon(
-                builder.Configuration.GetSection(DrandBeaconOptions.SectionName)
-            );
+        var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
+        var drand = builder.Configuration.GetSection(DrandBeaconOptions.SectionName);
+        builder.Services.AddRandomness(randomness).AddDrandBeacon(drand);
         // end-snippet
 
         using var host = builder.Build();
