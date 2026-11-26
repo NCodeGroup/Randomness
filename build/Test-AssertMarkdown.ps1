@@ -8,10 +8,11 @@
 .DESCRIPTION
     Each case builds a git repository with a README and a site page, runs the check with a fake samples command in
     place of dotnet mdsnippets, and checks its exit code and output. What it writes to stderr is kept apart and shown
-    when a case fails, so a warning on stderr neither fails nor passes a case. An unchanged tree passes; a changed
-    README, a changed README under a name git quotes, a rewritten site page and a failing samples command fail; and a
-    folder that is not a repository fails instead of reading as "nothing changed". Exits 1 on the first failed check.
-    build/gate.ps1 runs it before the check.
+    when a case fails, so a warning on stderr neither fails nor passes a case. A case whose expected text the check
+    writes only to stderr pins that: the text counts as missing. An unchanged tree passes; a changed README, a changed
+    README under a name git quotes, a rewritten site page and a failing samples command fail; and a folder that is not
+    a repository fails instead of reading as "nothing changed". Exits 1 on the first failed check. build/gate.ps1 runs
+    it before the check.
 #>
 $ErrorActionPreference = 'Stop'
 $script = Join-Path $PSScriptRoot 'Assert-Markdown.ps1'
@@ -21,7 +22,8 @@ $quoted = 'docs/Straße.md'
 
 # $Fake is the body of the samples command, run in the fixture's root; $Expect is the exit code; $Says is text the
 # output must hold. With no $Says, the check prints nothing. With -NoRepository the fixture is a plain folder.
-function Invoke-Case {
+# Returns the case's FAILED: line, or nothing when it passes.
+function Get-CaseFailure {
     param([string]$Case, [string]$Fake, [int]$Expect, [string]$Says = '', [switch]$NoRepository)
     $root = Join-Path ([IO.Path]::GetTempPath()) "markdown-test-$([guid]::NewGuid().ToString('N'))"
     New-Item -ItemType Directory -Path $root | Out-Null
@@ -44,16 +46,28 @@ function Invoke-Case {
             })
         $code = $LASTEXITCODE
         $shown = if ($stderr.Count) { " Stderr: $($stderr -join ' | ')" } else { '' }
-        if ($code -ne $Expect) { "FAILED: $Case exited $code instead of $Expect. Output: $($output -join ' | ')$shown"; exit 1 }
-        if ($Says -and -not (($output -join "`n").Contains($Says))) { "FAILED: $Case did not print '$Says'. Output: $($output -join ' | ')$shown"; exit 1 }
-        if (-not $Says -and $output) { "FAILED: $Case printed output. Output: $($output -join ' | ')$shown"; exit 1 }
-        "ok: $Case"
+        if ($code -ne $Expect) { return "FAILED: $Case exited $code instead of $Expect. Output: $($output -join ' | ')$shown" }
+        if ($Says -and -not (($output -join "`n").Contains($Says))) { return "FAILED: $Case did not print '$Says'. Output: $($output -join ' | ')$shown" }
+        if (-not $Says -and $output) { return "FAILED: $Case printed output. Output: $($output -join ' | ')$shown" }
     }
     finally { Remove-Item -LiteralPath $root -Recurse -Force }
 }
 
+# Runs a case: prints ok, or prints its FAILED: line and stops the script.
+function Invoke-Case {
+    param([string]$Case, [string]$Fake, [int]$Expect, [string]$Says = '', [switch]$NoRepository)
+    $failure = Get-CaseFailure @PSBoundParameters
+    if ($failure) { $failure; exit 1 }
+    "ok: $Case"
+}
+
 Invoke-Case 'an unchanged tree' -Fake '$global:LASTEXITCODE = 0' -Expect 0
 Invoke-Case 'a warning on stderr' -Fake "[Console]::Error.WriteLine('warning: LF will be replaced by CRLF in README.md.'); `$global:LASTEXITCODE = 0" -Expect 0
+# -Says holds only for text the check prints on stdout: the same text written only to stderr is missing.
+$says = 'README samples: FAILED. dotnet mdsnippets updated README.md'
+$failure = Get-CaseFailure 'text only on stderr' -Fake "[Console]::Error.WriteLine('$says'); `$global:LASTEXITCODE = 0" -Expect 0 -Says $says
+if ($failure -cne "FAILED: text only on stderr did not print '$says'. Output:  Stderr: $says") { "FAILED: text only on stderr was not reported missing. Got: $failure"; exit 1 }
+'ok: text only on stderr'
 Invoke-Case 'a changed README' -Fake "Add-Content -LiteralPath README.md -Value 'sample'; `$global:LASTEXITCODE = 0" -Expect 1 -Says 'README samples: FAILED. dotnet mdsnippets updated README.md'
 Invoke-Case 'a changed README under a name git quotes' -Fake "Add-Content -LiteralPath '$quoted' -Value 'sample'; `$global:LASTEXITCODE = 0" -Expect 1 -Says "updated $quoted"
 Invoke-Case 'a rewritten site page' -Fake "Add-Content -LiteralPath docs/site/index.mdx -Value '<!-- snippet -->'; `$global:LASTEXITCODE = 0" -Expect 1 -Says 'Site pages: FAILED. dotnet mdsnippets rewrote docs/site/index.mdx'
