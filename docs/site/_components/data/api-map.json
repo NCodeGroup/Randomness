@@ -789,6 +789,699 @@
         "NCode.Randomness.BeaconMode.InitializeOnly = 1 -> NCode.Randomness.BeaconMode",
         "NCode.Randomness.BeaconMode.Offline = 2 -> NCode.Randomness.BeaconMode"
       ]
+    },
+    {
+      "id": "irandomnessbeacon",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBeacon",
+      "member": null,
+      "signatures": [
+        "public interface IRandomnessBeacon"
+      ],
+      "summary": "A public randomness beacon, such as CURBy: the port each vendor's adapter implements. An implementation verifies every pulse as its vendor's protocol specifies before it returns it, and throws `BeaconException` rather than return a pulse it could not verify.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBeacon"
+      ]
+    },
+    {
+      "id": "irandomnessbeacon-name",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBeacon",
+      "member": "Name",
+      "signatures": [
+        "string Name { get; }"
+      ],
+      "summary": "Gets the name the beacon is registered under, unique among the registered beacons, such as `curby`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBeacon.Name.get -> string!"
+      ]
+    },
+    {
+      "id": "irandomnessbeacon-getlatestpulseasync",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBeacon",
+      "member": "GetLatestPulseAsync",
+      "signatures": [
+        "ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken)"
+      ],
+      "summary": "Fetches and verifies the beacon's latest pulse. It throws `BeaconException` when the beacon gave no verifiable pulse.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBeacon.GetLatestPulseAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.BeaconPulse!>"
+      ]
+    },
+    {
+      "id": "irandomnessbeacon-getpulseasync",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBeacon",
+      "member": "GetPulseAsync",
+      "signatures": [
+        "ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken)"
+      ],
+      "summary": "Fetches and verifies the pulse of `round`. It throws `BeaconException`, with `BeaconError.PulseNotFound` when the round has not been published.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBeacon.GetPulseAsync(long round, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.BeaconPulse!>"
+      ]
+    },
+    {
+      "id": "beaconpulse",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": null,
+      "signatures": [
+        "public sealed class BeaconPulse",
+        "public BeaconPulse(string beacon, string chain, long round, string id, DateTimeOffset timestamp, ReadOnlySpan<byte> randomness)"
+      ],
+      "summary": "One verified output of a randomness beacon. A beacon adapter returns a pulse only after it has verified it as its vendor's protocol specifies, so every pulse that reaches the library is authentic. Its randomness is public: everyone who reads the beacon sees the same bytes.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse",
+        "NCode.Randomness.BeaconPulse.BeaconPulse(string! beacon, string! chain, long round, string! id, System.DateTimeOffset timestamp, System.ReadOnlySpan<byte> randomness) -> void"
+      ]
+    },
+    {
+      "id": "beaconpulse-minrandomnesslength",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "MinRandomnessLength",
+      "signatures": [
+        "public const int MinRandomnessLength = 32"
+      ],
+      "summary": "The fewest random bytes a pulse may carry: enough to seed a generator at a security strength of 256 bits.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.BeaconPulse.MinRandomnessLength = 32 -> int"
+      ]
+    },
+    {
+      "id": "beaconpulse-beacon",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Beacon",
+      "signatures": [
+        "public string Beacon { get; }"
+      ],
+      "summary": "Gets the name the beacon is registered under.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Beacon.get -> string!"
+      ]
+    },
+    {
+      "id": "beaconpulse-chain",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Chain",
+      "signatures": [
+        "public string Chain { get; }"
+      ],
+      "summary": "Gets the vendor's identifier of the sequence the pulse belongs to.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Chain.get -> string!"
+      ]
+    },
+    {
+      "id": "beaconpulse-round",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Round",
+      "signatures": [
+        "public long Round { get; }"
+      ],
+      "summary": "Gets the pulse's position in its chain.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Round.get -> long"
+      ]
+    },
+    {
+      "id": "beaconpulse-id",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Id",
+      "signatures": [
+        "public string Id { get; }"
+      ],
+      "summary": "Gets the vendor's identifier of this pulse.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Id.get -> string!"
+      ]
+    },
+    {
+      "id": "beaconpulse-timestamp",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Timestamp",
+      "signatures": [
+        "public DateTimeOffset Timestamp { get; }"
+      ],
+      "summary": "Gets when the beacon published the pulse.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Timestamp.get -> System.DateTimeOffset"
+      ]
+    },
+    {
+      "id": "beaconpulse-randomness",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Randomness",
+      "signatures": [
+        "public ReadOnlySpan<byte> Randomness { get; }"
+      ],
+      "summary": "Gets the pulse's public random bytes.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Randomness.get -> System.ReadOnlySpan<byte>"
+      ]
+    },
+    {
+      "id": "beaconpulse-tostring",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "ToString",
+      "signatures": [
+        "public override string ToString()"
+      ],
+      "summary": "Describes the pulse by its beacon, round and ID, as `curby round 1620423 (bafyri...)`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "override NCode.Randomness.BeaconPulse.ToString() -> string!"
+      ]
+    },
+    {
+      "id": "beaconerror",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconError",
+      "member": null,
+      "signatures": [
+        "public enum BeaconError",
+        "Unavailable = 0",
+        "PulseNotFound = 1",
+        "InvalidPulse = 2",
+        "StalePulse = 3",
+        "RolledBack = 4"
+      ],
+      "summary": "Why a beacon gave no usable pulse. `Unavailable` is a beacon that could not be reached, `PulseNotFound` a round it has not published, `InvalidPulse` an answer that failed verification, `StalePulse` a pulse too old or too far ahead, and `RolledBack` a round earlier than one already mixed in.",
+      "page": "/concepts/outages/",
+      "api": [
+        "NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.InvalidPulse = 2 -> NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.PulseNotFound = 1 -> NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.RolledBack = 4 -> NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.StalePulse = 3 -> NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.Unavailable = 0 -> NCode.Randomness.BeaconError"
+      ]
+    },
+    {
+      "id": "beaconexception",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconException",
+      "member": null,
+      "signatures": [
+        "public sealed class BeaconException : Exception",
+        "public BeaconException(BeaconError error, string beacon, string message)",
+        "public BeaconException(BeaconError error, string beacon, string message, Exception innerException)"
+      ],
+      "summary": "A beacon gave no usable pulse. `Error` says why, for code to act on.",
+      "page": "/concepts/outages/",
+      "api": [
+        "NCode.Randomness.BeaconException",
+        "NCode.Randomness.BeaconException.BeaconException(NCode.Randomness.BeaconError error, string! beacon, string! message, System.Exception! innerException) -> void",
+        "NCode.Randomness.BeaconException.BeaconException(NCode.Randomness.BeaconError error, string! beacon, string! message) -> void"
+      ]
+    },
+    {
+      "id": "beaconexception-error",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconException",
+      "member": "Error",
+      "signatures": [
+        "public BeaconError Error { get; }"
+      ],
+      "summary": "Gets why the beacon gave no usable pulse.",
+      "page": "/concepts/outages/",
+      "api": [
+        "NCode.Randomness.BeaconException.Error.get -> NCode.Randomness.BeaconError"
+      ]
+    },
+    {
+      "id": "beaconexception-beacon",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconException",
+      "member": "Beacon",
+      "signatures": [
+        "public string Beacon { get; }"
+      ],
+      "summary": "Gets the name of the beacon.",
+      "page": "/concepts/outages/",
+      "api": [
+        "NCode.Randomness.BeaconException.Beacon.get -> string!"
+      ]
+    },
+    {
+      "id": "ibeaconstatus",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IBeaconStatus",
+      "member": null,
+      "signatures": [
+        "public interface IBeaconStatus"
+      ],
+      "summary": "What the beacon collector has done: for status pages, health checks, and code that waits for beacon entropy.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.IBeaconStatus"
+      ]
+    },
+    {
+      "id": "ibeaconstatus-mode",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IBeaconStatus",
+      "member": "Mode",
+      "signatures": [
+        "BeaconMode Mode { get; }"
+      ],
+      "summary": "Gets the mode the collector runs in.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.IBeaconStatus.Mode.get -> NCode.Randomness.BeaconMode"
+      ]
+    },
+    {
+      "id": "ibeaconstatus-beacons",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IBeaconStatus",
+      "member": "Beacons",
+      "signatures": [
+        "IReadOnlyList<BeaconState> Beacons { get; }"
+      ],
+      "summary": "Gets a snapshot of each registered beacon, in registration order.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.IBeaconStatus.Beacons.get -> System.Collections.Generic.IReadOnlyList<NCode.Randomness.BeaconState!>!"
+      ]
+    },
+    {
+      "id": "ibeaconstatus-waitforpulseasync",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IBeaconStatus",
+      "member": "WaitForPulseAsync",
+      "signatures": [
+        "ValueTask WaitForPulseAsync(CancellationToken cancellationToken)"
+      ],
+      "summary": "Waits until at least one beacon pulse has been mixed into the generator. Generation never needs this; use it where a policy demands beacon entropy before some operation.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.IBeaconStatus.WaitForPulseAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask"
+      ]
+    },
+    {
+      "id": "beaconstate",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": null,
+      "signatures": [
+        "public sealed class BeaconState",
+        "public BeaconState()"
+      ],
+      "summary": "A snapshot of one beacon's state.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState",
+        "NCode.Randomness.BeaconState.BeaconState() -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-name",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "Name",
+      "signatures": [
+        "public required string Name { get; init; }"
+      ],
+      "summary": "Gets the name the beacon is registered under.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.Name.get -> string!",
+        "NCode.Randomness.BeaconState.Name.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-health",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "Health",
+      "signatures": [
+        "public BeaconHealth Health { get; init; }"
+      ],
+      "summary": "Gets how the beacon is doing.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.Health.get -> NCode.Randomness.BeaconHealth",
+        "NCode.Randomness.BeaconState.Health.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-lastpulse",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "LastPulse",
+      "signatures": [
+        "public BeaconPulse? LastPulse { get; init; }"
+      ],
+      "summary": "Gets the last pulse mixed in from the beacon, or `null` when there is none.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.LastPulse.get -> NCode.Randomness.BeaconPulse?",
+        "NCode.Randomness.BeaconState.LastPulse.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-lastattempt",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "LastAttempt",
+      "signatures": [
+        "public DateTimeOffset? LastAttempt { get; init; }"
+      ],
+      "summary": "Gets when the last fetch finished, or `null` when none has.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.LastAttempt.get -> System.DateTimeOffset?",
+        "NCode.Randomness.BeaconState.LastAttempt.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-lasterror",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "LastError",
+      "signatures": [
+        "public BeaconError? LastError { get; init; }"
+      ],
+      "summary": "Gets why the last fetch gave no usable pulse, or `null` when it gave one.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.LastError.get -> NCode.Randomness.BeaconError?",
+        "NCode.Randomness.BeaconState.LastError.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-consecutivefailures",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "ConsecutiveFailures",
+      "signatures": [
+        "public int ConsecutiveFailures { get; init; }"
+      ],
+      "summary": "Gets how many fetches in a row have given no usable pulse.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.ConsecutiveFailures.get -> int",
+        "NCode.Randomness.BeaconState.ConsecutiveFailures.init -> void"
+      ]
+    },
+    {
+      "id": "beaconhealth",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconHealth",
+      "member": null,
+      "signatures": [
+        "public enum BeaconHealth",
+        "Pending = 0",
+        "Healthy = 1",
+        "Unavailable = 2"
+      ],
+      "summary": "How a beacon is doing, as the collector last saw it. `Pending` is a beacon whose first fetch has not finished, `Healthy` one whose last fetch gave a verified, fresh pulse, and `Unavailable` one whose last fetch failed or whose pulse was refused. Random values stay secure while a beacon is unavailable.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconHealth",
+        "NCode.Randomness.BeaconHealth.Healthy = 1 -> NCode.Randomness.BeaconHealth",
+        "NCode.Randomness.BeaconHealth.Pending = 0 -> NCode.Randomness.BeaconHealth",
+        "NCode.Randomness.BeaconHealth.Unavailable = 2 -> NCode.Randomness.BeaconHealth"
+      ]
+    },
+    {
+      "id": "randomnesshealthchecksbuilderextensions",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHealthChecksBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class RandomnessHealthChecksBuilderExtensions",
+        "extension(IHealthChecksBuilder builder)"
+      ],
+      "summary": "Registers the randomness beacons' health check.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessHealthChecksBuilderExtensions",
+        "NCode.Randomness.RandomnessHealthChecksBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!)"
+      ]
+    },
+    {
+      "id": "randomnesshealthchecksbuilderextensions-beaconscheckname",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHealthChecksBuilderExtensions",
+      "member": "BeaconsCheckName",
+      "signatures": [
+        "public const string BeaconsCheckName = \"randomness-beacons\""
+      ],
+      "summary": "The name the health check is registered under.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "const NCode.Randomness.RandomnessHealthChecksBuilderExtensions.BeaconsCheckName = \"randomness-beacons\" -> string!"
+      ]
+    },
+    {
+      "id": "randomnesshealthchecksbuilderextensions-addrandomnessbeacons",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHealthChecksBuilderExtensions",
+      "member": "AddRandomnessBeacons",
+      "signatures": [
+        "public static IHealthChecksBuilder AddRandomnessBeacons(this IHealthChecksBuilder builder, params IEnumerable<string> tags)"
+      ],
+      "summary": "Adds a check that reports `Degraded` while any beacon is unavailable. Tag it to keep it out of a liveness probe: a beacon is an external dependency.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessHealthChecksBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!).AddRandomnessBeacons(params System.Collections.Generic.IEnumerable<string!>! tags) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!",
+        "static NCode.Randomness.RandomnessHealthChecksBuilderExtensions.AddRandomnessBeacons(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, params System.Collections.Generic.IEnumerable<string!>! tags) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!"
+      ]
+    },
+    {
+      "id": "randomnessdiagnostics",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessDiagnostics",
+      "member": null,
+      "signatures": [
+        "public static class RandomnessDiagnostics"
+      ],
+      "summary": "The names under which the library reports its telemetry.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessDiagnostics"
+      ]
+    },
+    {
+      "id": "randomnessdiagnostics-metername",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessDiagnostics",
+      "member": "MeterName",
+      "signatures": [
+        "public const string MeterName = \"NCode.Randomness\""
+      ],
+      "summary": "The name of the library's `Meter`.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "const NCode.Randomness.RandomnessDiagnostics.MeterName = \"NCode.Randomness\" -> string!"
+      ]
+    },
+    {
+      "id": "iverifiablerandomfactory",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "IVerifiableRandomFactory",
+      "member": null,
+      "signatures": [
+        "public interface IVerifiableRandomFactory"
+      ],
+      "summary": "Creates reproducible draws from the registered beacons' pulses.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.IVerifiableRandomFactory"
+      ]
+    },
+    {
+      "id": "iverifiablerandomfactory-createasync",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "IVerifiableRandomFactory",
+      "member": "CreateAsync",
+      "signatures": [
+        "ValueTask<VerifiableRandom> CreateAsync(string beacon, long round, string context, CancellationToken cancellationToken)"
+      ],
+      "summary": "Fetches and verifies the pulse of `round` from `beacon`, and derives its stream for `context`. Dispose the stream when the draw is done.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.IVerifiableRandomFactory.CreateAsync(string! beacon, long round, string! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.VerifiableRandom!>"
+      ]
+    },
+    {
+      "id": "verifiablerandom",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": null,
+      "signatures": [
+        "public sealed class VerifiableRandom : IRandomSource, IDisposable"
+      ],
+      "summary": "A reproducible random stream derived from one verified beacon pulse and a context label: a draw that anyone can check. Its bytes are public to everyone who reads the pulse, so it is deliberately not an `ISecureRandom`.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom"
+      ]
+    },
+    {
+      "id": "verifiablerandom-maxcontextlength",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "MaxContextLength",
+      "signatures": [
+        "public const int MaxContextLength = 1024"
+      ],
+      "summary": "The longest context, in characters.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "const NCode.Randomness.VerifiableRandom.MaxContextLength = 1024 -> int"
+      ]
+    },
+    {
+      "id": "verifiablerandom-algorithm",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Algorithm",
+      "signatures": [
+        "public static string Algorithm { get; }"
+      ],
+      "summary": "Gets the name and version of the derivation and sampling algorithms: `ncode-randomness-draw/1`.",
+      "page": "/reference/draw-algorithm/",
+      "api": [
+        "static NCode.Randomness.VerifiableRandom.Algorithm.get -> string!"
+      ]
+    },
+    {
+      "id": "verifiablerandom-pulse",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Pulse",
+      "signatures": [
+        "public BeaconPulse Pulse { get; }"
+      ],
+      "summary": "Gets the pulse the stream is derived from.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom.Pulse.get -> NCode.Randomness.BeaconPulse!"
+      ]
+    },
+    {
+      "id": "verifiablerandom-context",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Context",
+      "signatures": [
+        "public string Context { get; }"
+      ],
+      "summary": "Gets the context label the stream is derived with.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom.Context.get -> string!"
+      ]
+    },
+    {
+      "id": "verifiablerandom-create",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Create",
+      "signatures": [
+        "public static VerifiableRandom Create(BeaconPulse pulse, string context)"
+      ],
+      "summary": "Derives the stream of `pulse` for `context`. The draw is as trustworthy as the pulse: this method verifies nothing, so pass a pulse a beacon adapter returned, or use `IVerifiableRandomFactory.CreateAsync`.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "static NCode.Randomness.VerifiableRandom.Create(NCode.Randomness.BeaconPulse! pulse, string! context) -> NCode.Randomness.VerifiableRandom!"
+      ]
+    },
+    {
+      "id": "verifiablerandom-fill",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Fill",
+      "signatures": [
+        "public void Fill(Span<byte> destination)"
+      ],
+      "summary": "Fills `destination` with the next bytes of the stream, read as consecutive 64-byte blocks. Consume the stream from one thread, in a fixed order: values depend on the order in which they are drawn.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom.Fill(System.Span<byte> destination) -> void"
+      ]
+    },
+    {
+      "id": "verifiablerandom-dispose",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Dispose",
+      "signatures": [
+        "public void Dispose()"
+      ],
+      "summary": "Zeroes the stream's buffered bytes and releases its generator. The stream cannot be read afterwards.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom.Dispose() -> void"
+      ]
     }
   ]
 }
