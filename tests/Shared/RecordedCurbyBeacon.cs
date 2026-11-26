@@ -13,6 +13,7 @@ namespace Recorded;
 public sealed class RecordedCurbyBeacon : IRandomnessBeacon
 {
     private const long LatestRound = 1620423;
+    private const long PreviousRound = LatestRound - 1;
 
     /// <inheritdoc/>
     public string Name => CurbyDefaults.BeaconName;
@@ -24,7 +25,7 @@ public sealed class RecordedCurbyBeacon : IRandomnessBeacon
     /// <inheritdoc/>
     public ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken)
     {
-        if (round is 1620422 or LatestRound)
+        if (round is PreviousRound or LatestRound)
         {
             var pulse = RecordedDocuments.CurbyPulse(round);
             return ValueTask.FromResult(pulse);
