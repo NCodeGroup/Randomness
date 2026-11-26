@@ -31,12 +31,14 @@
 [CmdletBinding()]
 param(
     [string]$Root = (Split-Path -Parent $PSScriptRoot),
-    [string[]]$Package = @('NCode.Randomness', 'NCode.Randomness.Curby', 'NCode.Randomness.Nist', 'NCode.Randomness.Drand')
+    [string[]]$Package
 )
 $ErrorActionPreference = 'Stop'
+# The four packages of the repository, which -Package defaults to.
+$allPackages = @('NCode.Randomness', 'NCode.Randomness.Curby', 'NCode.Randomness.Nist', 'NCode.Randomness.Drand')
+if (-not $PSBoundParameters.ContainsKey('Package')) { $Package = $allPackages }
 Push-Location -LiteralPath $Root
 try {
-    $allPackages = @('NCode.Randomness', 'NCode.Randomness.Curby', 'NCode.Randomness.Nist', 'NCode.Randomness.Drand')
     $mapPath = 'docs/site/_components/data/api-map.json'
     if (-not (Test-Path -LiteralPath $mapPath -PathType Leaf)) {
         'API map: FAILED.'
