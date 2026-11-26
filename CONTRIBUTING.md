@@ -39,6 +39,44 @@ CI fails when the tests cover less than 90% of the statements or 80% of the bran
 5. Before you push, pass the gate: `./build/gate.ps1 -Fast`.
 6. Open a pull request into the default branch whose description ends with a `Closes #<issue>` line. The default branch takes changes only through pull requests: a maintainer merges yours once CI passes, NCode Review has approved it and every conversation is resolved. Open it as a draft and mark it ready once you have reviewed it yourself: NCode Review reviews a draft too, and the maintainer who merges reads its approval. Where NCode Review's approver is set up, the NCode Review Approver submits that approval, and it meets the ruleset's required approval, with one writer too; elsewhere GitHub counts none from NCode Review, so where the ruleset requires an approval, someone with write access other than you gives it ([the decision](docs/decisions/project-template/0022-ncode-reviews-approval-gates-the-merge.md), [with one writer](docs/decisions/project-template/0034-with-one-writer-the-baseline-requires-no-approval.md), [the approver](docs/decisions/project-template/0036-a-required-approval-is-met-by-ncode-reviews-approver-app.md)). A push dismisses the approval and starts no review, so someone with write access comments `/review` after one. NCode Review skips a pull request from a fork or one a bot opened, such as Dependabot's: a maintainer approves it.
 
+## Documentation Site
+
+The site's content is in `docs/site/`. The shared toolchain in [NCodeGroup/docs](https://github.com/NCodeGroup/docs) builds it, and this repository holds no `package.json`, no lockfile and no Node.js code ([ADR-1015](docs/decisions/1015-the-documentation-site-is-narrative-guides-built-by-a-shared-toolchain-outside-this-repository.md)). The toolchain's `CONTRACT.md` is the reference for pages, links, components and images. `.github/workflows/docs.yml` builds the site on every pull request, with the toolchain pinned by commit, and keeps the build for a week as the run's `github-pages` artifact. Each push to `main` also publishes it to GitHub Pages, at <https://randomness.ncode.io/> ([ADR-1018](docs/decisions/1018-the-documentation-site-is-published-to-github-pages-from-the-default-branch.md), [ADR-1019](docs/decisions/1019-the-documentation-site-is-served-at-randomness-ncode-io.md)); a pull request only builds it.
+
+To write a page:
+
+1. Add an `.mdx` file under `docs/site/`, never `.md`, with a `title` and a `description` in its frontmatter. Its path is its URL: `docs/site/guides/run-a-public-draw.mdx` is `/guides/run-a-public-draw/`.
+2. List it in the `sidebar` of `docs/site/site.config.json`, which names only pages that exist.
+3. Write a link to another page from the site's root, with a trailing slash and without `/Randomness`: `[run a public draw](/guides/run-a-public-draw/)`.
+4. Never type C# that must compile into a page. Include a sample by its key, with an empty code block:
+
+   ````md
+   ```cs snippet=SiteRunAPublicDrawFromPulse
+   ```
+   ````
+
+5. Never copy a file of this repository into a page. Show it, or the lines between two texts of it, with an empty code block that names it; the site's build fills the block and links it to those lines at the commit it was built from:
+
+   ````md
+   ```xml file=Directory.Build.props from="<PropertyGroup>" to="</PropertyGroup>"
+   ```
+   ````
+
+6. Give a guide a `## Pitfalls` section, which the `requiredHeadings` rule of `docs/site/site.config.json` requires.
+
+To write a sample ([ADR-1016](docs/decisions/1016-site-samples-are-compiled-tests-in-a-project-of-their-own-included-by-key-when-the-site-is-built.md)):
+
+1. Add a fact to the page's class in `tests/NCode.Randomness.Site.Tests`, a test project that cannot see the packages' internal members, so a sample is code a user of the packages can write. The class is named for the page's file, in a folder named for the page's folder: `docs/site/guides/run-a-public-draw.mdx` has `Guides/RunAPublicDrawSamples.cs`, class `RunAPublicDrawSamples` in namespace `SiteSamples.Guides`. That file shows the form.
+2. Put the sample between `// begin-snippet: <Key>` and `// end-snippet`, each alone on its line, name the fact `<Key>Sample_Runs`, and assert after the region what the sample's comments claim.
+3. Start the key with `Site`, in PascalCase letters and digits: `SiteRunAPublicDrawFromPulse`. A key is defined once in the repository, whatever its letter case, and only a site sample's key starts with `Site`; the README samples, in `tests/NCode.Randomness.Readme.Tests`, never do. The gate checks all three rules, and the form of every marker. A page may also include a README sample by its key, and a change to that sample changes the README too.
+4. Run `dotnet csharpier format .`, then `./build/gate.ps1 -Fast`.
+
+The site's own components are in `docs/site/_components/`, each with its usage in a comment at its top. `ApiMap.astro` draws `data/api-map.json`, which the gate checks against the `PublicAPI.Shipped.txt` and `PublicAPI.Unshipped.txt` of the four packages; `BeaconMatrix.astro` draws `data/beacons.json`, `UseCard.astro` draws `data/uses.json`, and `LandingHero.astro` and `LandingSituations.astro` draw the landing page. A component styles itself with the brand's public tokens, prefixed `--nc-`, and Starlight's `--sl-text-*` sizes, never a step of a colour ramp or of the type scale, such as `--nc-blue-600` or `--nc-text-sm`; the site's build fails a component that reads one, or a `--nc-` token the brand does not define.
+
+A component is laid out for a content column of about 36rem, its width in a 1280-pixel window beside the sidebar and the "On this page" panel, and never sets a `min-width` wider than that. Data with more than three or four fields, or with long identifiers, is one card per entry with each field labelled, not a table that scrolls sideways: `ApiMap.astro` draws its data that way. A Markdown table must fit the column too.
+
+To see the result, clone NCodeGroup/docs into a folder named `docs` beside the main checkout and set it up as its README says, with Node.js on `PATH`. `node build/site.mjs dev` serves the site at `http://localhost:4321/`, and `node build/site.mjs build --out <folder>` builds it into a folder outside this repository and stops on a sample key no test defines, a file a page includes that is not there, a component that reads a token the brand does not offer, or a guide without its headings. `node build/site.mjs check --out <folder>` then loads each page of that build at 1440, 1280, 1024 and 390 px, as the documentation site workflow does, and names every element that leaves its content column or hides content sideways; `--browser <path>` names a Chromium-based browser, such as Google Chrome or Microsoft Edge, unless `DOCS_BROWSER` names one or `npm run browser` has run in the toolchain. `build/site.mjs` is a copy of the toolchain's `fixture/build/site.mjs`: it finds the toolchain from the main checkout and from a plan's worktree under `.claude/worktrees/` alike, and `--toolchain <folder>` or `DOCS_TOOLCHAIN` names a clone elsewhere. None of these commands writes into this repository. The gate does not build the site; the documentation site workflow does, on every pull request.
+
 ## Review Requirements
 
 Every change is reviewed in its pull request before it merges. A reviewer checks that:
@@ -70,6 +108,20 @@ A reformat or a large move brings back the CodeQL alerts dismissed on the code i
 ## AI-Assisted Work
 
 Most changes here are planned and executed with coding agents: a frontier model plans each change into `PLAN.md`, and a cheaper one executes it one verified step at a time. [AGENTS.md](AGENTS.md) is the index of the instructions every agent follows, and [.github/instructions/project-template.instructions.md](.github/instructions/project-template.instructions.md) describes the workflow and its commands. The agents follow the rules above, and so does a change written by hand.
+
+Work in Claude Code or GitHub Copilot, and switch whenever you like: both have the same commands, and `PLAN.md` is the only state they share, so one can plan and the other execute. Each bills its own subscription.
+
+| Tool | Plan | Execute | Re-plan one step | Review | Land, then finish |
+|---|---|---|---|---|---|
+| Claude Code | `/plan-feature <what to build>` (or `/plan-bugfix`, `/plan-refactor`, `/plan-tests`, …), or `/plan-issue #42` for an issue, then review `PLAN.md` | `/orchestrate-plan` | `/replan-step N` | `/review-plan-diff` | `/ship-plan`, then `/finish-plan` |
+| Copilot Chat in VS Code | The Copilot Planner agent on Opus, or `/plan-feature` or `/plan-issue #42` | Run all steps with subagents, or Execute next step | Re-plan with the planner | Review the work | `/ship-plan`, then `/finish-plan` |
+| Copilot CLI | `copilot --model claude-opus-5.5`, then `/plan-feature` or `/plan-issue #42` | `/orchestrate-plan` | `/replan-step N` | `/review-plan-diff` | `/ship-plan`, then `/finish-plan` |
+
+In Claude Code, plan in Accept edits mode and execute in Auto.
+
+Each plan gets its own git worktree under `.claude/worktrees/`, in every tool, so several sessions can work on different plans at once.
+
+The workflow files come from a Copier template, which owns them: never edit `.template/`, `.template-version`, `.githooks/pre-push`, `.github/instructions/project-template.instructions.md`, `.copier-answers.yml`, `CLAUDE.md` or the commands, agents and skills the template generates. To change how agents work here, edit `AGENTS.md` or a file it lists. To pull in template improvements, run `.\.template\Update-Project.ps1`: it updates itself, replaces the template's files, merges template changes into the shared settings files, and never touches `AGENTS.md` or `README.md`. To plan the update first, with a trial run, the project files that need changing and the checks, run `/plan-template-update`. The weekly `template-update` workflow opens an issue, labeled `template-update`, when a newer template version is out, and closes it once the project has updated; `/plan-issue` plans it.
 
 ## Maintainers and Scope
 
