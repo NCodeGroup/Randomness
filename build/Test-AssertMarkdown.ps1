@@ -21,7 +21,8 @@ $quoted = 'docs/Straße.md'
 
 # $Fake is the body of the samples command, run in the fixture's root; $Expect is the exit code; $Says is text the
 # output must hold. With no $Says, the check prints nothing. With -NoRepository the fixture is a plain folder.
-function Invoke-Case {
+# Returns the case's FAILED: line, or nothing when it passes.
+function Get-CaseFailure {
     param([string]$Case, [string]$Fake, [int]$Expect, [string]$Says = '', [switch]$NoRepository)
     $root = Join-Path ([IO.Path]::GetTempPath()) "markdown-test-$([guid]::NewGuid().ToString('N'))"
     New-Item -ItemType Directory -Path $root | Out-Null
@@ -44,12 +45,19 @@ function Invoke-Case {
             })
         $code = $LASTEXITCODE
         $shown = if ($stderr.Count) { " Stderr: $($stderr -join ' | ')" } else { '' }
-        if ($code -ne $Expect) { "FAILED: $Case exited $code instead of $Expect. Output: $($output -join ' | ')$shown"; exit 1 }
-        if ($Says -and -not (($output -join "`n").Contains($Says))) { "FAILED: $Case did not print '$Says'. Output: $($output -join ' | ')$shown"; exit 1 }
-        if (-not $Says -and $output) { "FAILED: $Case printed output. Output: $($output -join ' | ')$shown"; exit 1 }
-        "ok: $Case"
+        if ($code -ne $Expect) { return "FAILED: $Case exited $code instead of $Expect. Output: $($output -join ' | ')$shown" }
+        if ($Says -and -not (($output -join "`n").Contains($Says))) { return "FAILED: $Case did not print '$Says'. Output: $($output -join ' | ')$shown" }
+        if (-not $Says -and $output) { return "FAILED: $Case printed output. Output: $($output -join ' | ')$shown" }
     }
     finally { Remove-Item -LiteralPath $root -Recurse -Force }
+}
+
+# Runs a case: prints ok, or prints its FAILED: line and stops the script.
+function Invoke-Case {
+    param([string]$Case, [string]$Fake, [int]$Expect, [string]$Says = '', [switch]$NoRepository)
+    $failure = Get-CaseFailure @PSBoundParameters
+    if ($failure) { $failure; exit 1 }
+    "ok: $Case"
 }
 
 Invoke-Case 'an unchanged tree' -Fake '$global:LASTEXITCODE = 0' -Expect 0
