@@ -80,4 +80,6 @@ records are indexed in [project-template/](project-template/README.md).
 | [1012](1012-secrets-live-only-in-stack-or-pinned-memory-and-the-packages-take-no-buffer-library-dependency.md) | Secrets live only in stack or pinned memory, and the packages take no buffer library dependency | Accepted |
 | [1013](1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md) | Supplied beacon documents are verified offline by each beacon's own checks | Accepted |
 | [1014](1014-readme-samples-are-compiled-tests-that-markdownsnippets-copies-into-the-readmes.md) | README samples are compiled tests that MarkdownSnippets copies into the READMEs | Accepted |
+| [1015](1015-the-documentation-site-is-narrative-guides-built-by-a-shared-toolchain-outside-this-repository.md) | The documentation site is narrative guides, built by a shared toolchain outside this repository | Accepted |
 | [1016](1016-site-samples-are-compiled-tests-in-a-project-of-their-own-included-by-key-when-the-site-is-built.md) | Site samples are compiled tests in a project of their own, included by key when the site is built | Accepted |
+| [1017](1017-ncodegroup-docs-releases-are-taken-without-a-cooldown-during-the-build-out.md) | NCodeGroup/docs releases are taken without a cooldown during the build-out | Accepted |
