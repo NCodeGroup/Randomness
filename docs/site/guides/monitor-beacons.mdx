@@ -4,6 +4,8 @@ description: Report beacon health to a readiness probe, read each beacon's state
 ---
 
 import { Pitfalls } from '@ncodegroup/docs/components';
+import EntryCard from '@site/components/EntryCard.astro';
+import EntryField from '@site/components/EntryField.astro';
 
 A beacon is an external service, so it can be down while your application is fine: the generator keeps drawing from the operating system's source, and mixes beacon pulses in when they arrive. You still want to know when a beacon stops answering. This page shows how to report beacon health to a readiness probe, how to read each beacon's state, how to chart the pulses and reseeds, and what to watch for.
 
@@ -29,10 +31,14 @@ The check is Healthy while every beacon works, and Degraded while a beacon is un
 
 The generator publishes two counters from the meter `NCode.Randomness` (`RandomnessDiagnostics.MeterName`), created through `IMeterFactory`, so subscribe to it with OpenTelemetry or `MeterListener`.
 
-| Instrument | Attributes | Counts |
-| --- | --- | --- |
-| `ncode.randomness.beacon.pulses` | `ncode.randomness.beacon`, `ncode.randomness.outcome` (`accepted`, `unchanged`, `unavailable`, `not_found`, `invalid`, `stale`, `rolled_back`) | one per fetch |
-| `ncode.randomness.generator.reseeds` | `ncode.randomness.reseed.reason` (`beacon`, `interval`, `volume`) | one per shard reseed |
+<EntryCard title="`ncode.randomness.beacon.pulses`">
+<EntryField label="Attributes">`ncode.randomness.beacon`, `ncode.randomness.outcome` (`accepted`, `unchanged`, `unavailable`, `not_found`, `invalid`, `stale`, `rolled_back`)</EntryField>
+<EntryField label="Counts">one per fetch</EntryField>
+</EntryCard>
+<EntryCard title="`ncode.randomness.generator.reseeds`">
+<EntryField label="Attributes">`ncode.randomness.reseed.reason` (`beacon`, `interval`, `volume`)</EntryField>
+<EntryField label="Counts">one per shard reseed</EntryField>
+</EntryCard>
 
 Outbound calls to a beacon are measured by `System.Net.Http`'s own instruments on each adapter's named client. [Metrics and Traces](https://github.com/NCodeGroup/Randomness/blob/main/docs/metrics.md) is the full catalog.
 

@@ -4,6 +4,8 @@ description: Recompute a published draw from the documents its beacon served, wi
 ---
 
 import { Pitfalls } from '@ncodegroup/docs/components';
+import EntryCard from '@site/components/EntryCard.astro';
+import EntryField from '@site/components/EntryField.astro';
 
 A published draw is only worth trusting when anyone can check it, and the vendor that served the round may stop serving it long before someone wants to. The documents a beacon served for the round are enough: each beacon adapter has a verifier that makes every check its beacon makes, with no network, and returns the pulse the beacon returns for that round. This page shows how to save the documents, how to verify them for each beacon, how to compare the result with the commitment, and what to watch for.
 
@@ -11,12 +13,22 @@ A published draw is only worth trusting when anyone can check it, and the vendor
 
 Save every document byte for byte, exactly as the vendor's API served it, and publish or archive them with the result.
 
-| Beacon | Verifier | Documents |
-| --- | --- | --- |
-| `curby` | `CurbyPulseVerifier` | the chain, the pulse and its predecessor |
-| `curby-q` | `CurbyQuantumRoundVerifier` | the round, its parameters and the documents it links to |
-| `nist` | `NistPulseVerifier` | the pulse, its predecessor and its certificate |
-| `drand` | `DrandRoundVerifier` | the round |
+<EntryCard title="`curby`">
+<EntryField label="Verifier">`CurbyPulseVerifier`</EntryField>
+<EntryField label="Documents">the chain, the pulse and its predecessor</EntryField>
+</EntryCard>
+<EntryCard title="`curby-q`">
+<EntryField label="Verifier">`CurbyQuantumRoundVerifier`</EntryField>
+<EntryField label="Documents">the round, its parameters and the documents it links to</EntryField>
+</EntryCard>
+<EntryCard title="`nist`">
+<EntryField label="Verifier">`NistPulseVerifier`</EntryField>
+<EntryField label="Documents">the pulse, its predecessor and its certificate</EntryField>
+</EntryCard>
+<EntryCard title="`drand`">
+<EntryField label="Verifier">`DrandRoundVerifier`</EntryField>
+<EntryField label="Documents">the round</EntryField>
+</EntryCard>
 
 The CURBy chain is at `https://api.entwine.me/chains/<chain>`, its pulse at `.../chains/<chain>/pulses/<round>` and the predecessor at `.../chains/<chain>/pulses/<round - 1>`. A drand round is at `https://api.drand.sh/<chain hash>/public/<round>`. [Reproducible Draws](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md) lists every URL, including the CURBy-Q and NIST documents.
 

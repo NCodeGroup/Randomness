@@ -3,6 +3,9 @@ title: When a beacon is down
 description: "An outage degrades, never fails: how the collector retries, what it reports, and the one setting that makes the host wait."
 ---
 
+import EntryCard from '@site/components/EntryCard.astro';
+import EntryField from '@site/components/EntryField.astro';
+
 A beacon can be slow, down for maintenance, or answer with data that fails verification. This page explains what the library does then, how it retries, and what it reports.
 
 ## Degrade, never fail
@@ -26,13 +29,13 @@ An outage is logged once when it starts and once when it ends, not on every fail
 
 A failure carries one of five `BeaconError` values, and `BeaconException` carries the `Error` and the `Beacon` that failed:
 
-| Error | Meaning |
-| --- | --- |
-| `Unavailable` | The beacon could not be reached or did not answer in time. |
-| `PulseNotFound` | The beacon has no pulse for the requested round. |
-| `InvalidPulse` | The beacon's answer was malformed or failed verification, such as a bad signature or hash: it is never used. |
-| `StalePulse` | The pulse is older than `MaxPulseAge` or the beacon's `MaxPulseAgeByBeacon` entry, or dated further ahead than `MaxClockSkew`. |
-| `RolledBack` | The pulse's round is earlier than one already mixed in, as a replayed or rolled-back answer would be. |
+<EntryCard>
+<EntryField label="`Unavailable`">The beacon could not be reached or did not answer in time.</EntryField>
+<EntryField label="`PulseNotFound`">The beacon has no pulse for the requested round.</EntryField>
+<EntryField label="`InvalidPulse`">The beacon's answer was malformed or failed verification, such as a bad signature or hash: it is never used.</EntryField>
+<EntryField label="`StalePulse`">The pulse is older than `MaxPulseAge` or the beacon's `MaxPulseAgeByBeacon` entry, or dated further ahead than `MaxClockSkew`.</EntryField>
+<EntryField label="`RolledBack`">The pulse's round is earlier than one already mixed in, as a replayed or rolled-back answer would be.</EntryField>
+</EntryCard>
 
 ## Waiting for a first pulse
 
