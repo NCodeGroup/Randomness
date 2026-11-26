@@ -111,6 +111,15 @@ internal static class JwsRs256
         return key;
     }
 
+    /// <summary>
+    /// Checks that the JWS header is a JSON object of well-formed Unicode text that names the RS256 algorithm once,
+    /// and refuses any member other than a string <c>typ</c> or <c>kid</c>.
+    /// </summary>
+    /// <param name="header">The decoded JWS header.</param>
+    /// <exception cref="TwineFormatException">
+    /// The header is not JSON, its text is not well-formed Unicode, it is not a JSON object, it holds a member that
+    /// is not allowed, or it does not name the RS256 algorithm.
+    /// </exception>
     private static void ValidateHeader(byte[] header)
     {
         if (!Utf8JsonText.IsText(header))

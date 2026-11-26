@@ -76,9 +76,12 @@ public class TwineDocumentPropertyTests
         }
 
         Assert.Equal(3, documents.Length);
-        Assert.Equal(CurbyQuantumFixtures.RequestId, documents[0].Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.PrecommitId, documents[1].Cid.ToString());
-        Assert.Equal(CurbyQuantumFixtures.ResultId, documents[2].Cid.ToString());
+        var request = documents[0].Cid.ToString();
+        var precommit = documents[1].Cid.ToString();
+        var result = documents[2].Cid.ToString();
+        Assert.Equal(CurbyQuantumFixtures.RequestId, request);
+        Assert.Equal(CurbyQuantumFixtures.PrecommitId, precommit);
+        Assert.Equal(CurbyQuantumFixtures.ResultId, result);
     }
 
     #endregion

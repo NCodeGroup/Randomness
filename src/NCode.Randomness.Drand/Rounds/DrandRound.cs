@@ -58,7 +58,8 @@ internal sealed class DrandRound
     /// <param name="chain">The pinned chain.</param>
     /// <returns>The verified round.</returns>
     /// <exception cref="DrandFormatException">
-    /// The document is not valid JSON, is malformed, or its signature does not verify.
+    /// The document is not valid JSON, its text is not well-formed Unicode, it is malformed, or its signature does not
+    /// verify.
     /// </exception>
     public static DrandRound Verify(ReadOnlySpan<byte> utf8Json, DrandChain chain)
     {

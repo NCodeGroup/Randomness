@@ -76,7 +76,9 @@ internal sealed class NistPulse
     /// </summary>
     /// <param name="utf8Json">The UTF-8 JSON document the beacon served for one pulse.</param>
     /// <returns>The parsed pulse.</returns>
-    /// <exception cref="NistFormatException">The document is not valid JSON, or not a well-formed pulse.</exception>
+    /// <exception cref="NistFormatException">
+    /// The document is not valid JSON, its text is not well-formed Unicode, or it is not a well-formed pulse.
+    /// </exception>
     public static NistPulse Parse(ReadOnlySpan<byte> utf8Json)
     {
         if (!Utf8JsonText.IsText(utf8Json))
