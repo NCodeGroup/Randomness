@@ -79,3 +79,5 @@ records are indexed in [project-template/](project-template/README.md).
 | [1011](1011-the-generator-is-composed-without-a-host-by-a-builder-over-a-private-service-container.md) | The generator is composed without a host by a builder over a private service container | Accepted |
 | [1012](1012-secrets-live-only-in-stack-or-pinned-memory-and-the-packages-take-no-buffer-library-dependency.md) | Secrets live only in stack or pinned memory, and the packages take no buffer library dependency | Accepted |
 | [1013](1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md) | Supplied beacon documents are verified offline by each beacon's own checks | Accepted |
+| [1014](1014-readme-samples-are-compiled-tests-that-markdownsnippets-copies-into-the-readmes.md) | README samples are compiled tests that MarkdownSnippets copies into the READMEs | Accepted |
+| [1016](1016-site-samples-are-compiled-tests-in-a-project-of-their-own-included-by-key-when-the-site-is-built.md) | Site samples are compiled tests in a project of their own, included by key when the site is built | Accepted |
