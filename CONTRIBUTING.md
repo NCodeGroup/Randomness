@@ -6,6 +6,7 @@ Issues and pull requests are welcome. [README.md](README.md) explains the projec
 
 - Git, and PowerShell 7 (`pwsh`): every command here runs from the repository root in PowerShell 7.
 - The .NET SDK that [global.json](global.json) selects, and the runtime of each older .NET a test project targets, which `./build/Get-TestRuntimes.ps1` names. `./build/Install-Dotnet.ps1` installs both beside the .NET that runs `dotnet`, or into the folder `-InstallDir` names; run it as an administrator, or with `sudo`, when .NET is installed system-wide.
+- For the documentation site only: [NCodeGroup/docs](https://github.com/NCodeGroup/docs) cloned into a folder named `docs` beside the main checkout and set up as its README says, and Node.js on `PATH`, at the version its `.node-version` names.
 - On Windows, `git config --global core.longpaths true`, once: a plan's worktree under `.claude/worktrees/` can pass Windows' 260-character path limit.
 
 ## Set Up
@@ -18,12 +19,14 @@ Once in each clone, run `git config core.hooksPath .githooks`. It turns on `.git
 | --- | --- |
 | Build | `dotnet build` |
 | Test | `dotnet test` |
-| Definition of Done, the full gate | `./build/dod.ps1` |
-| The local gate before a push | `./build/dod.ps1 -Fast` |
-| Only the tests a filter matches | `./build/dod.ps1 -Fast -Filter 'FullyQualifiedName~OrderStore'` |
+| Serve the documentation site | `node build/site.mjs dev` |
+| Build the documentation site, then check its layout | `node build/site.mjs build --out <folder>`, then `node build/site.mjs check --out <folder>` |
+| The full gate, which CI runs | `./build/gate.ps1` |
+| The local gate before a push | `./build/gate.ps1 -Fast` |
+| Only the tests a filter matches | `./build/gate.ps1 -Fast -Filter 'FullyQualifiedName~OrderStore'` |
 | Format C# | `dotnet csharpier format .` |
 
-The Definition of Done checks the decision index, checks the formatting, builds in Release with warnings as errors, runs the tests, packs and ends with `Definition of Done: PASSED`. CI runs `./build/dod.ps1` on every pull request.
+The gate restores the tools, checks the sample keys, that the READMEs' samples match their tests and that the API map covers the public API of the four packages, then runs the Definition of Done, which checks the decision index, checks the formatting, builds in Release with warnings as errors, runs the tests, packs and ends with `Definition of Done: PASSED`. CI runs `./build/gate.ps1` on every pull request. A README sample is a test in `tests/NCode.Randomness.Readme.Tests/ReadmeSamplesTests.cs`: change it there and run `dotnet mdsnippets` to copy it into the READMEs ([ADR-1014](docs/decisions/1014-readme-samples-are-compiled-tests-that-markdownsnippets-copies-into-the-readmes.md)).
 
 CI fails when the tests cover less than 90% of the statements or 80% of the branches, the OpenSSF Best Practices gold thresholds, as `./.template/Test-Coverage.ps1` reports from the coverage the tests write ([the decision](docs/decisions/project-template/0026-tests-gate-coverage-at-the-gold-thresholds-and-a-release-waits-for-them.md)). `./build/dod.ps1` collects it and runs the check in its Coverage stage once the solution has a `*.Tests` project. Run `./.template/Test-Coverage.ps1` after the tests to see the figures.
 
@@ -33,7 +36,7 @@ CI fails when the tests cover less than 90% of the statements or 80% of the bran
 2. A change consumers can observe, such as to the public API, behavior, validation or security posture, stored data or a wire format, has its decision recorded in [docs/decisions/](docs/decisions/README.md) before or with the pull request that builds it; that folder's README says how. Bug fixes and internal changes need no record.
 3. Work on a short-lived branch from the default branch. A change that adds or changes behavior adds or updates the automated tests that cover it.
 4. Keep `CHANGELOG.md` in the [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) format; the first change consumers can see creates it. While `AGENTS.md`'s Landing section says `pre-release: untracked` and no version tag of 1.0.0 or later exists, its `## [Unreleased]` section describes the product as it is, under `### Added` and `### Security` only: edit the entry a change adds, reshapes or removes, so it matches the code (ADR-0015 in `docs/decisions/project-template/`). Otherwise add an entry for each change consumers can see under `## [Unreleased]`, grouped under `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` or `### Security`, and a release moves the entries into its version's section.
-5. Before you push, pass the gate: `./build/dod.ps1 -Fast`.
+5. Before you push, pass the gate: `./build/gate.ps1 -Fast`.
 6. Open a pull request into the default branch whose description ends with a `Closes #<issue>` line. The default branch takes changes only through pull requests: a maintainer merges yours once CI passes, NCode Review has approved it and every conversation is resolved. Open it as a draft and mark it ready once you have reviewed it yourself: NCode Review reviews a draft too, and the maintainer who merges reads its approval. Where NCode Review's approver is set up, the NCode Review Approver submits that approval, and it meets the ruleset's required approval, with one writer too; elsewhere GitHub counts none from NCode Review, so where the ruleset requires an approval, someone with write access other than you gives it ([the decision](docs/decisions/project-template/0022-ncode-reviews-approval-gates-the-merge.md), [with one writer](docs/decisions/project-template/0034-with-one-writer-the-baseline-requires-no-approval.md), [the approver](docs/decisions/project-template/0036-a-required-approval-is-met-by-ncode-reviews-approver-app.md)). A push dismisses the approval and starts no review, so someone with write access comments `/review` after one. NCode Review skips a pull request from a fork or one a bot opened, such as Dependabot's: a maintainer approves it.
 
 ## Review Requirements
