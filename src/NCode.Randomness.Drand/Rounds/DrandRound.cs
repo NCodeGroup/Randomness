@@ -64,6 +64,13 @@ internal sealed class DrandRound
     {
         ArgumentNullException.ThrowIfNull(chain);
 
+        if (!Utf8JsonText.IsText(utf8Json))
+        {
+            throw new DrandFormatException(
+                "The drand round is not valid JSON: its text is not well-formed Unicode."
+            );
+        }
+
         JsonElement json;
         try
         {
