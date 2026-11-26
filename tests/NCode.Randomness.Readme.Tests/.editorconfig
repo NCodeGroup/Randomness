@@ -1,0 +1,5 @@
+# The README samples also appear on the documentation site's pages, whose content column holds about 86 characters of
+# code. CSharpier formats this project to 90 columns, so a sample inside a method, indented 8 spaces in its file, stays
+# within that width on the page once the site removes its indentation (ADR-1014). Comments are wrapped by hand.
+[*.cs]
+max_line_length = 90
