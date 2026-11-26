@@ -9,11 +9,12 @@
     Covers a clean set of keys; lines neither MarkdownSnippets nor the site's build reads as a marker, which define no
     key; lines either tool takes for a marker in another form, which the check reports; markers after tabs and before
     trailing white space, which define a key; files the check must read, outside tests/ and under a name git quotes,
-    and files it must not; and each rule it enforces: a key that is not PascalCase letters and digits, a key defined
-    twice, also in another letter case, a site sample's key without the Site prefix, any other key with it, and no key
-    at all. How each tool reads each fixture's marker lines was tested with MarkdownSnippets 29.0.0 and the site's
-    build (ADR-1016). Each failing fixture breaks one rule, and each case checks the exit code and every line the check
-    prints. Exits 1 on the first failed check. build/gate.ps1 runs it before the check.
+    and files it must not; files with CRLF line endings, whose keys are the same as an LF file's; and each rule it
+    enforces: a key that is not PascalCase letters and digits, a key defined twice, also in another letter case, a
+    site sample's key without the Site prefix, any other key with it, and no key at all. How each tool reads each
+    fixture's marker lines was tested with MarkdownSnippets 29.0.0 and the site's build (ADR-1016). Each failing
+    fixture breaks one rule, and each case checks the exit code and every line the check prints. Exits 1 on the first
+    failed check. build/gate.ps1 runs it before the check.
 #>
 $ErrorActionPreference = 'Stop'
 $script = Join-Path $PSScriptRoot 'Assert-SampleKeys.ps1'
@@ -38,6 +39,7 @@ $worktree = ".claude/worktrees/plan/$readme"
 # file to the lines it holds from line 3 on instead. A $Staged file is added to the index, as a committed one is, and
 # the others stay untracked, so the check must read both. A $Deleted file is added to the index and then deleted, as
 # one deleted but not committed is. Every fixture repository ignores .claude/worktrees/, as this one does.
+# A $Crlf file is written with CRLF line endings, every other with LF.
 function Invoke-Case {
     param(
         [string]$Name,
@@ -45,7 +47,8 @@ function Invoke-Case {
         [string[]]$Problems = @(),
         [hashtable]$Lines = @{},
         [string[]]$Staged = @(),
-        [string[]]$Deleted = @()
+        [string[]]$Deleted = @(),
+        [string[]]$Crlf = @()
     )
     $root = Join-Path ([IO.Path]::GetTempPath()) "sample-keys-test-$([guid]::NewGuid().ToString('N'))"
     New-Item -ItemType Directory -Path $root | Out-Null
@@ -59,7 +62,9 @@ function Invoke-Case {
         foreach ($path in $third.Keys) {
             $file = Join-Path $root $path
             New-Item -ItemType Directory -Path (Split-Path -Parent $file) -Force | Out-Null
-            [IO.File]::WriteAllText($file, "// A fixture.`n`n$($third[$path])`n    _ = 0;`n    // end-snippet`n", $utf8)
+            $text = "// A fixture.`n`n$($third[$path])`n    _ = 0;`n    // end-snippet`n"
+            if ($path -cin $Crlf) { $text = $text.Replace("`n", "`r`n") }
+            [IO.File]::WriteAllText($file, $text, $utf8)
         }
         foreach ($path in $Staged + $Deleted) {
             git -C $root add -- $path
@@ -139,6 +144,12 @@ Invoke-Case 'a file whose name git quotes' @{ $readme = 'ZeroedAfterUse'; $quote
     -Problems "ZeroedAfterUse is defined 2 times: ${readme}:3, ${quoted}:3"
 Invoke-Case 'a file git ignores' @{ $readme = 'ZeroedAfterUse'; $worktree = 'ZeroedAfterUse' }
 Invoke-Case 'a file deleted from the work tree' @{ $readme = 'ZeroedAfterUse'; $signatures = 'ZeroedAfterUse' } -Deleted $signatures
+# This repository's .gitattributes checks files out with LF line endings, but the check also reads untracked files,
+# which a Windows tool can write with CRLF line endings: a key there is the same key as in a file with LF endings.
+Invoke-Case 'files with CRLF line endings' @{ $readme = 'ZeroedAfterUse'; $quickStart = 'SiteZeroed' } `
+    -Crlf $readme, $quickStart
+Invoke-Case 'a key in a CRLF file and in an LF file' @{ $readme = 'Zeroed'; $other = 'Zeroed' } -Crlf $other `
+    -Problems "Zeroed is defined 2 times: ${other}:3, ${readme}:3"
 
 Invoke-Case 'key that is not PascalCase' @{ $readme = 'zeroedAfterUse'; $other = 'Zeroed_After'; $more = '9Lives' } `
     -Lines @{ $signatures = '    // begin-snippet: Zeroed After Use' } `
