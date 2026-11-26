@@ -79,6 +79,13 @@ internal sealed class NistPulse
     /// <exception cref="NistFormatException">The document is not valid JSON, or not a well-formed pulse.</exception>
     public static NistPulse Parse(ReadOnlySpan<byte> utf8Json)
     {
+        if (!Utf8JsonText.IsText(utf8Json))
+        {
+            throw new NistFormatException(
+                "The NIST pulse is not valid JSON: its text is not well-formed Unicode."
+            );
+        }
+
         JsonElement json;
         try
         {
