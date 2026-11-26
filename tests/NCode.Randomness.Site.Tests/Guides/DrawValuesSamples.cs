@@ -57,7 +57,9 @@ public sealed class DrawValuesSamples
         random.GetItems<string>(colors, picks); // five colors, repeats allowed
         // end-snippet
 
-        Assert.Equal(Enumerable.Range(1, 10), deck.Order());
+        var expected = Enumerable.Range(1, 10);
+        var sorted = deck.Order();
+        Assert.Equal(expected, sorted);
         Assert.Contains(color, colors);
         Assert.Equal(5, picks.Length);
         Assert.All(picks, pick => Assert.Contains(pick, colors));

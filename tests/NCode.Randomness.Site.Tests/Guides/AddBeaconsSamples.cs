@@ -70,9 +70,7 @@ public sealed class AddBeaconsSamples
         var client = provider
             .GetRequiredService<IHttpClientFactory>()
             .CreateClient(CurbyDefaults.HttpClientName);
-        Assert.Contains(
-            "my-service/1.0",
-            client.DefaultRequestHeaders.UserAgent.ToString()
-        );
+        var userAgent = client.DefaultRequestHeaders.UserAgent.ToString();
+        Assert.Contains("my-service/1.0", userAgent);
     }
 }
