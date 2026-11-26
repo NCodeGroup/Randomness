@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Coverage counts only this repository's assemblies: FsCheck, FsCheck.Xunit and FSharp.Core ship symbols that
+     Microsoft.CodeCoverage would otherwise instrument. -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Exclude>
+                <ModulePath>.*[\\/]FsCheck\.dll$</ModulePath>
+                <ModulePath>.*[\\/]FsCheck\.Xunit\.dll$</ModulePath>
+                <ModulePath>.*[\\/]FSharp\.Core\.dll$</ModulePath>
+              </Exclude>
+            </ModulePaths>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
