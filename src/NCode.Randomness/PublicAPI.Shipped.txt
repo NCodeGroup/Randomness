@@ -1,1 +1,153 @@
 #nullable enable
+const NCode.Randomness.BeaconPulse.MinRandomnessLength = 32 -> int
+const NCode.Randomness.RandomnessDiagnostics.MeterName = "NCode.Randomness" -> string!
+const NCode.Randomness.RandomnessHealthChecksBuilderExtensions.BeaconsCheckName = "randomness-beacons" -> string!
+const NCode.Randomness.RandomnessOptions.SectionName = "Randomness" -> string!
+const NCode.Randomness.VerifiableRandom.MaxContextLength = 1024 -> int
+NCode.Randomness.BeaconError
+NCode.Randomness.BeaconError.InvalidPulse = 2 -> NCode.Randomness.BeaconError
+NCode.Randomness.BeaconError.PulseNotFound = 1 -> NCode.Randomness.BeaconError
+NCode.Randomness.BeaconError.RolledBack = 4 -> NCode.Randomness.BeaconError
+NCode.Randomness.BeaconError.StalePulse = 3 -> NCode.Randomness.BeaconError
+NCode.Randomness.BeaconError.Unavailable = 0 -> NCode.Randomness.BeaconError
+NCode.Randomness.BeaconException
+NCode.Randomness.BeaconException.Beacon.get -> string!
+NCode.Randomness.BeaconException.BeaconException(NCode.Randomness.BeaconError error, string! beacon, string! message, System.Exception! innerException) -> void
+NCode.Randomness.BeaconException.BeaconException(NCode.Randomness.BeaconError error, string! beacon, string! message) -> void
+NCode.Randomness.BeaconException.Error.get -> NCode.Randomness.BeaconError
+NCode.Randomness.BeaconHealth
+NCode.Randomness.BeaconHealth.Healthy = 1 -> NCode.Randomness.BeaconHealth
+NCode.Randomness.BeaconHealth.Pending = 0 -> NCode.Randomness.BeaconHealth
+NCode.Randomness.BeaconHealth.Unavailable = 2 -> NCode.Randomness.BeaconHealth
+NCode.Randomness.BeaconMode
+NCode.Randomness.BeaconMode.Continuous = 0 -> NCode.Randomness.BeaconMode
+NCode.Randomness.BeaconMode.InitializeOnly = 1 -> NCode.Randomness.BeaconMode
+NCode.Randomness.BeaconMode.Offline = 2 -> NCode.Randomness.BeaconMode
+NCode.Randomness.BeaconPulse
+NCode.Randomness.BeaconPulse.Beacon.get -> string!
+NCode.Randomness.BeaconPulse.BeaconPulse(string! beacon, string! chain, long round, string! id, System.DateTimeOffset timestamp, System.ReadOnlySpan<byte> randomness) -> void
+NCode.Randomness.BeaconPulse.Chain.get -> string!
+NCode.Randomness.BeaconPulse.Id.get -> string!
+NCode.Randomness.BeaconPulse.Randomness.get -> System.ReadOnlySpan<byte>
+NCode.Randomness.BeaconPulse.Round.get -> long
+NCode.Randomness.BeaconPulse.Timestamp.get -> System.DateTimeOffset
+NCode.Randomness.BeaconState
+NCode.Randomness.BeaconState.BeaconState() -> void
+NCode.Randomness.BeaconState.ConsecutiveFailures.get -> int
+NCode.Randomness.BeaconState.ConsecutiveFailures.init -> void
+NCode.Randomness.BeaconState.Health.get -> NCode.Randomness.BeaconHealth
+NCode.Randomness.BeaconState.Health.init -> void
+NCode.Randomness.BeaconState.LastAttempt.get -> System.DateTimeOffset?
+NCode.Randomness.BeaconState.LastAttempt.init -> void
+NCode.Randomness.BeaconState.LastError.get -> NCode.Randomness.BeaconError?
+NCode.Randomness.BeaconState.LastError.init -> void
+NCode.Randomness.BeaconState.LastPulse.get -> NCode.Randomness.BeaconPulse?
+NCode.Randomness.BeaconState.LastPulse.init -> void
+NCode.Randomness.BeaconState.Name.get -> string!
+NCode.Randomness.BeaconState.Name.init -> void
+NCode.Randomness.IBeaconStatus
+NCode.Randomness.IBeaconStatus.Beacons.get -> System.Collections.Generic.IReadOnlyList<NCode.Randomness.BeaconState!>!
+NCode.Randomness.IBeaconStatus.Mode.get -> NCode.Randomness.BeaconMode
+NCode.Randomness.IBeaconStatus.WaitForPulseAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+NCode.Randomness.IRandomnessBeacon
+NCode.Randomness.IRandomnessBeacon.GetLatestPulseAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.BeaconPulse!>
+NCode.Randomness.IRandomnessBeacon.GetPulseAsync(long round, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.BeaconPulse!>
+NCode.Randomness.IRandomnessBeacon.Name.get -> string!
+NCode.Randomness.IRandomnessBuilder
+NCode.Randomness.IRandomnessBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+NCode.Randomness.IRandomSource
+NCode.Randomness.IRandomSource.Fill(System.Span<byte> destination) -> void
+NCode.Randomness.ISecureRandom
+NCode.Randomness.IVerifiableRandomFactory
+NCode.Randomness.IVerifiableRandomFactory.CreateAsync(string! beacon, long round, string! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.VerifiableRandom!>
+NCode.Randomness.RandomnessBuilderExtensions
+NCode.Randomness.RandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)
+NCode.Randomness.RandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddBeacon<TBeacon>() -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.RandomnessDiagnostics
+NCode.Randomness.RandomnessHealthChecksBuilderExtensions
+NCode.Randomness.RandomnessHealthChecksBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!)
+NCode.Randomness.RandomnessHealthChecksBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!).AddRandomnessBeacons(params System.Collections.Generic.IEnumerable<string!>! tags) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+NCode.Randomness.RandomnessHost
+NCode.Randomness.RandomnessHost.BeaconStatus.get -> NCode.Randomness.IBeaconStatus!
+NCode.Randomness.RandomnessHost.DisposeAsync() -> System.Threading.Tasks.ValueTask
+NCode.Randomness.RandomnessHost.SecureRandom.get -> NCode.Randomness.ISecureRandom!
+NCode.Randomness.RandomnessHost.VerifiableRandomFactory.get -> NCode.Randomness.IVerifiableRandomFactory!
+NCode.Randomness.RandomnessHostBuilder
+NCode.Randomness.RandomnessHostBuilder.BuildAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.RandomnessHost!>
+NCode.Randomness.RandomnessHostBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+NCode.Randomness.RandomnessOptions
+NCode.Randomness.RandomnessOptions.FetchTimeout.get -> System.TimeSpan
+NCode.Randomness.RandomnessOptions.FetchTimeout.set -> void
+NCode.Randomness.RandomnessOptions.InitialPulseTimeout.get -> System.TimeSpan
+NCode.Randomness.RandomnessOptions.InitialPulseTimeout.set -> void
+NCode.Randomness.RandomnessOptions.MaxClockSkew.get -> System.TimeSpan
+NCode.Randomness.RandomnessOptions.MaxClockSkew.set -> void
+NCode.Randomness.RandomnessOptions.MaxPulseAge.get -> System.TimeSpan
+NCode.Randomness.RandomnessOptions.MaxPulseAge.set -> void
+NCode.Randomness.RandomnessOptions.MaxPulseAgeByBeacon.get -> System.Collections.Generic.Dictionary<string!, System.TimeSpan>!
+NCode.Randomness.RandomnessOptions.MaxPulseAgeByBeacon.set -> void
+NCode.Randomness.RandomnessOptions.MaxRetryDelay.get -> System.TimeSpan
+NCode.Randomness.RandomnessOptions.MaxRetryDelay.set -> void
+NCode.Randomness.RandomnessOptions.Mode.get -> NCode.Randomness.BeaconMode
+NCode.Randomness.RandomnessOptions.Mode.set -> void
+NCode.Randomness.RandomnessOptions.RandomnessOptions() -> void
+NCode.Randomness.RandomnessOptions.RefreshInterval.get -> System.TimeSpan
+NCode.Randomness.RandomnessOptions.RefreshInterval.set -> void
+NCode.Randomness.RandomnessOptions.RequireInitialPulse.get -> bool
+NCode.Randomness.RandomnessOptions.RequireInitialPulse.set -> void
+NCode.Randomness.RandomnessOptions.ReseedAfterBytes.get -> int
+NCode.Randomness.RandomnessOptions.ReseedAfterBytes.set -> void
+NCode.Randomness.RandomnessOptions.ReseedInterval.get -> System.TimeSpan
+NCode.Randomness.RandomnessOptions.ReseedInterval.set -> void
+NCode.Randomness.RandomnessServiceCollectionExtensions
+NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)
+NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddRandomness() -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddRandomness(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddRandomness(System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
+NCode.Randomness.RandomSourceExtensions
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!)
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).AsRandom() -> System.Random!
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetBytes(int count) -> byte[]!
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetItem<T>(System.ReadOnlySpan<T> choices) -> T
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetItems<T>(System.ReadOnlySpan<T> choices, System.Span<T> destination) -> void
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetString(string! alphabet, int length) -> string!
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextBoolean() -> bool
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextDouble() -> double
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextGuid() -> System.Guid
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextInteger<T>() -> T
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextInteger<T>(T maxExclusive) -> T
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextInteger<T>(T minInclusive, T maxExclusive) -> T
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextSingle() -> float
+NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).Shuffle<T>(System.Span<T> values) -> void
+NCode.Randomness.SystemRandomSource
+NCode.Randomness.SystemRandomSource.Fill(System.Span<byte> destination) -> void
+NCode.Randomness.VerifiableRandom
+NCode.Randomness.VerifiableRandom.Context.get -> string!
+NCode.Randomness.VerifiableRandom.Dispose() -> void
+NCode.Randomness.VerifiableRandom.Fill(System.Span<byte> destination) -> void
+NCode.Randomness.VerifiableRandom.Pulse.get -> NCode.Randomness.BeaconPulse!
+override NCode.Randomness.BeaconPulse.ToString() -> string!
+static NCode.Randomness.RandomnessBuilderExtensions.AddBeacon<TBeacon>(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.RandomnessHealthChecksBuilderExtensions.AddRandomnessBeacons(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, params System.Collections.Generic.IEnumerable<string!>! tags) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+static NCode.Randomness.RandomnessHost.CreateBuilder() -> NCode.Randomness.RandomnessHostBuilder!
+static NCode.Randomness.RandomnessHost.CreateBuilder(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.RandomnessHostBuilder!
+static NCode.Randomness.RandomnessHost.CreateBuilder(System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.RandomnessHostBuilder!
+static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> NCode.Randomness.IRandomnessBuilder!
+static NCode.Randomness.RandomSourceExtensions.AsRandom(this NCode.Randomness.IRandomSource! source) -> System.Random!
+static NCode.Randomness.RandomSourceExtensions.GetBytes(this NCode.Randomness.IRandomSource! source, int count) -> byte[]!
+static NCode.Randomness.RandomSourceExtensions.GetItem<T>(this NCode.Randomness.IRandomSource! source, System.ReadOnlySpan<T> choices) -> T
+static NCode.Randomness.RandomSourceExtensions.GetItems<T>(this NCode.Randomness.IRandomSource! source, System.ReadOnlySpan<T> choices, System.Span<T> destination) -> void
+static NCode.Randomness.RandomSourceExtensions.GetString(this NCode.Randomness.IRandomSource! source, string! alphabet, int length) -> string!
+static NCode.Randomness.RandomSourceExtensions.NextBoolean(this NCode.Randomness.IRandomSource! source) -> bool
+static NCode.Randomness.RandomSourceExtensions.NextDouble(this NCode.Randomness.IRandomSource! source) -> double
+static NCode.Randomness.RandomSourceExtensions.NextGuid(this NCode.Randomness.IRandomSource! source) -> System.Guid
+static NCode.Randomness.RandomSourceExtensions.NextInteger<T>(this NCode.Randomness.IRandomSource! source, T maxExclusive) -> T
+static NCode.Randomness.RandomSourceExtensions.NextInteger<T>(this NCode.Randomness.IRandomSource! source, T minInclusive, T maxExclusive) -> T
+static NCode.Randomness.RandomSourceExtensions.NextInteger<T>(this NCode.Randomness.IRandomSource! source) -> T
+static NCode.Randomness.RandomSourceExtensions.NextSingle(this NCode.Randomness.IRandomSource! source) -> float
+static NCode.Randomness.RandomSourceExtensions.Shuffle<T>(this NCode.Randomness.IRandomSource! source, System.Span<T> values) -> void
+static NCode.Randomness.SystemRandomSource.Instance.get -> NCode.Randomness.SystemRandomSource!
+static NCode.Randomness.VerifiableRandom.Algorithm.get -> string!
+static NCode.Randomness.VerifiableRandom.Create(NCode.Randomness.BeaconPulse! pulse, string! context) -> NCode.Randomness.VerifiableRandom!
