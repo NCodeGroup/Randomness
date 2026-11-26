@@ -1859,6 +1859,538 @@
       "api": [
         "NCode.Randomness.Curby.CurbyQuantumRoundVerifier.Verify(System.ReadOnlySpan<byte> round, System.ReadOnlySpan<byte> parameters, System.Collections.Generic.IReadOnlyCollection<System.ReadOnlyMemory<byte>>! documents) -> NCode.Randomness.BeaconPulse!"
       ]
+    },
+    {
+      "id": "nistrandomnessbuilderextensions",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistRandomnessBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class NistRandomnessBuilderExtensions",
+        "extension(IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers the NIST beacon.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions",
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)"
+      ]
+    },
+    {
+      "id": "nistrandomnessbuilderextensions-addnistbeacon",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistRandomnessBuilderExtensions",
+      "member": "AddNistBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddNistBeacon(this IRandomnessBuilder builder)",
+        "public static IRandomnessBuilder AddNistBeacon(this IRandomnessBuilder builder, Action<NistBeaconOptions> configure)",
+        "public static IRandomnessBuilder AddNistBeacon(this IRandomnessBuilder builder, IConfiguration configuration)"
+      ],
+      "summary": "Registers the NIST beacon, named `nist`, with its default options (chain 2 of the NIST Randomness Beacon 2.0 served by `NistDefaults.BaseAddress`, verified against the certificates of `NistDefaults.CertificateIds`), options set by `configure` or options bound from `configuration`, such as `configuration.GetSection(\"RandomnessBeacons:Nist\")`. An unknown configuration key fails the host at start.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddNistBeacon() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddNistBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddNistBeacon(System.Action<NCode.Randomness.Nist.NistBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Nist.NistRandomnessBuilderExtensions.AddNistBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Nist.NistRandomnessBuilderExtensions.AddNistBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Nist.NistBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Nist.NistRandomnessBuilderExtensions.AddNistBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "nistdefaults",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": null,
+      "signatures": [
+        "public static class NistDefaults"
+      ],
+      "summary": "The NIST Randomness Beacon's published identifiers.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Nist.NistDefaults"
+      ]
+    },
+    {
+      "id": "nistdefaults-beaconname",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "BeaconName",
+      "signatures": [
+        "public const string BeaconName = \"nist\""
+      ],
+      "summary": "The name the NIST beacon is registered under: `nist`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Nist.NistDefaults.BeaconName = \"nist\" -> string!"
+      ]
+    },
+    {
+      "id": "nistdefaults-baseaddress",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "BaseAddress",
+      "signatures": [
+        "public const string BaseAddress = \"https://beacon.nist.gov/beacon/2.0/\""
+      ],
+      "summary": "The base address of the NIST Randomness Beacon 2.0 HTTP API.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Nist.NistDefaults.BaseAddress = \"https://beacon.nist.gov/beacon/2.0/\" -> string!"
+      ]
+    },
+    {
+      "id": "nistdefaults-chainindex",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "ChainIndex",
+      "signatures": [
+        "public const long ChainIndex = 2"
+      ],
+      "summary": "The index of the chain the beacon trusts: chain 2, which publishes a pulse every minute.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Nist.NistDefaults.ChainIndex = 2 -> long"
+      ]
+    },
+    {
+      "id": "nistdefaults-httpclientname",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "HttpClientName",
+      "signatures": [
+        "public const string HttpClientName = \"NCode.Randomness.Nist\""
+      ],
+      "summary": "The name of the `HttpClient` the beacon uses, for a host that adds its own handlers, such as a proxy, with `services.AddHttpClient(NistDefaults.HttpClientName)`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Nist.NistDefaults.HttpClientName = \"NCode.Randomness.Nist\" -> string!"
+      ]
+    },
+    {
+      "id": "nistdefaults-certificateids",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "CertificateIds",
+      "signatures": [
+        "public static ImmutableArray<string> CertificateIds { get; }"
+      ],
+      "summary": "The identifiers, oldest first, of the certificates NIST signs chain 2 with. An identifier is the SHA-512 hash of a certificate's DER encoding in lowercase hex, so pinning it pins the certificate and its key: no server, mirror or TLS certificate can substitute another.",
+      "page": "/reference/beacons/",
+      "api": [
+        "static NCode.Randomness.Nist.NistDefaults.CertificateIds.get -> System.Collections.Immutable.ImmutableArray<string!>"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": null,
+      "signatures": [
+        "public sealed class NistBeaconOptions",
+        "public NistBeaconOptions()"
+      ],
+      "summary": "Settings for the NIST beacon, bound from the `RandomnessBeacons:Nist` configuration section, beside the `Randomness` section of the core options, whose strict binding refuses any key it does not know.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions",
+        "NCode.Randomness.Nist.NistBeaconOptions.NistBeaconOptions() -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-sectionname",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "SectionName",
+      "signatures": [
+        "public const string SectionName = \"RandomnessBeacons:Nist\""
+      ],
+      "summary": "The configuration section these options bind from by convention.",
+      "page": "/reference/configuration/",
+      "api": [
+        "const NCode.Randomness.Nist.NistBeaconOptions.SectionName = \"RandomnessBeacons:Nist\" -> string!"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-baseaddress",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "BaseAddress",
+      "signatures": [
+        "public Uri BaseAddress { get; set; }"
+      ],
+      "summary": "The base address of the NIST HTTP API, an absolute `https` URL ending in `/`, with no user info, query or fragment. The default is `NistDefaults.BaseAddress`. A mirror serves the same data: every pulse is verified against the pinned certificates, so a mirror can withhold pulses but never forge one.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.BaseAddress.get -> System.Uri!",
+        "NCode.Randomness.Nist.NistBeaconOptions.BaseAddress.set -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-chainindex",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "ChainIndex",
+      "signatures": [
+        "public long ChainIndex { get; set; }"
+      ],
+      "summary": "The index of the chain to trust. The default is `NistDefaults.ChainIndex`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.ChainIndex.get -> long",
+        "NCode.Randomness.Nist.NistBeaconOptions.ChainIndex.set -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-certificateids",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "CertificateIds",
+      "signatures": [
+        "public List<string> CertificateIds { get; set; }"
+      ],
+      "summary": "The identifiers of the certificates to trust, each the SHA-512 hash of a certificate's DER encoding in hex. When empty, the default, `NistDefaults.CertificateIds` applies; a configured list replaces the defaults.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.CertificateIds.get -> System.Collections.Generic.List<string!>!",
+        "NCode.Randomness.Nist.NistBeaconOptions.CertificateIds.set -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-certificateretrydelay",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "CertificateRetryDelay",
+      "signatures": [
+        "public TimeSpan CertificateRetryDelay { get; set; }"
+      ],
+      "summary": "How long a failed certificate fetch is remembered: until it passes, a pulse that names the certificate fails at once, without another request. The default is 1 minute; it must be from 1 second to 1 day.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.CertificateRetryDelay.get -> System.TimeSpan",
+        "NCode.Randomness.Nist.NistBeaconOptions.CertificateRetryDelay.set -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-maxresponsebytes",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "MaxResponseBytes",
+      "signatures": [
+        "public int MaxResponseBytes { get; set; }"
+      ],
+      "summary": "The largest response body read, in bytes. The default is 64 KiB; a pulse is about 2 KiB.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.MaxResponseBytes.get -> int",
+        "NCode.Randomness.Nist.NistBeaconOptions.MaxResponseBytes.set -> void"
+      ]
+    },
+    {
+      "id": "nistpulseverifier",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistPulseVerifier",
+      "member": null,
+      "signatures": [
+        "public sealed class NistPulseVerifier",
+        "public NistPulseVerifier()",
+        "public NistPulseVerifier(long chainIndex, IReadOnlyCollection<string> certificateIds)"
+      ],
+      "summary": "Verifies NIST Randomness Beacon 2.0 pulse documents that a caller supplies, without the network, by every check the NIST beacon makes: the pinned chain and certificate, the certificate's hash, key size and validity, the pulse's version, cipher suite, signature and output value, and the predecessor's index, time, hash link and precommitment. An instance is immutable and thread-safe.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Nist.NistPulseVerifier",
+        "NCode.Randomness.Nist.NistPulseVerifier.NistPulseVerifier() -> void",
+        "NCode.Randomness.Nist.NistPulseVerifier.NistPulseVerifier(long chainIndex, System.Collections.Generic.IReadOnlyCollection<string!>! certificateIds) -> void"
+      ]
+    },
+    {
+      "id": "nistpulseverifier-verify",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistPulseVerifier",
+      "member": "Verify",
+      "signatures": [
+        "public BeaconPulse Verify(ReadOnlySpan<byte> pulse, ReadOnlySpan<byte> predecessor, ReadOnlySpan<byte> certificate)",
+        "public BeaconPulse Verify(ReadOnlySpan<byte> pulse, ReadOnlySpan<byte> predecessor, ReadOnlySpan<byte> certificate, ReadOnlySpan<byte> predecessorCertificate)"
+      ],
+      "summary": "Verifies a pulse and its predecessor and returns the pulse as the NIST beacon returns it. Each document is as the NIST API serves it: the pulses in UTF-8 JSON, the certificate as PEM. The first overload takes one `certificate`, for a predecessor that names the same certificate; the second takes a `predecessorCertificate` too, as across a certificate rotation. It throws `BeaconException` when a document is malformed or any check fails.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Nist.NistPulseVerifier.Verify(System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor, System.ReadOnlySpan<byte> certificate) -> NCode.Randomness.BeaconPulse!",
+        "NCode.Randomness.Nist.NistPulseVerifier.Verify(System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor, System.ReadOnlySpan<byte> certificate, System.ReadOnlySpan<byte> predecessorCertificate) -> NCode.Randomness.BeaconPulse!"
+      ]
+    },
+    {
+      "id": "drandrandomnessbuilderextensions",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandRandomnessBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class DrandRandomnessBuilderExtensions",
+        "extension(IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers the drand beacon.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions",
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)"
+      ]
+    },
+    {
+      "id": "drandrandomnessbuilderextensions-adddrandbeacon",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandRandomnessBuilderExtensions",
+      "member": "AddDrandBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddDrandBeacon(this IRandomnessBuilder builder)",
+        "public static IRandomnessBuilder AddDrandBeacon(this IRandomnessBuilder builder, Action<DrandBeaconOptions> configure)",
+        "public static IRandomnessBuilder AddDrandBeacon(this IRandomnessBuilder builder, IConfiguration configuration)"
+      ],
+      "summary": "Registers the drand beacon, named `drand`, with its default options (the quicknet chain served by `DrandDefaults.BaseAddress`, verified against the chain's pinned group public key), options set by `configure` or options bound from `configuration`, such as `configuration.GetSection(\"RandomnessBeacons:Drand\")`. An unknown configuration key fails the host at start.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddDrandBeacon() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddDrandBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddDrandBeacon(System.Action<NCode.Randomness.Drand.DrandBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.AddDrandBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.AddDrandBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Drand.DrandBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.AddDrandBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "dranddefaults",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": null,
+      "signatures": [
+        "public static class DrandDefaults"
+      ],
+      "summary": "The drand quicknet chain's published constants.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Drand.DrandDefaults"
+      ]
+    },
+    {
+      "id": "dranddefaults-beaconname",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "BeaconName",
+      "signatures": [
+        "public const string BeaconName = \"drand\""
+      ],
+      "summary": "The name the drand beacon is registered under: `drand`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.BeaconName = \"drand\" -> string!"
+      ]
+    },
+    {
+      "id": "dranddefaults-baseaddress",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "BaseAddress",
+      "signatures": [
+        "public const string BaseAddress = \"https://api.drand.sh/\""
+      ],
+      "summary": "The base address of the drand HTTP API.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.BaseAddress = \"https://api.drand.sh/\" -> string!"
+      ]
+    },
+    {
+      "id": "dranddefaults-chainhash",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "ChainHash",
+      "signatures": [
+        "public const string ChainHash = \"52db9ba7…\""
+      ],
+      "summary": "The hash of the quicknet chain, in lowercase hex: its identifier in the HTTP API.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.ChainHash = \"52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971\" -> string!"
+      ]
+    },
+    {
+      "id": "dranddefaults-publickey",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "PublicKey",
+      "signatures": [
+        "public const string PublicKey = \"83cf0f28…\""
+      ],
+      "summary": "The quicknet chain's pinned group public key: a compressed G2 point in lowercase hex. Every round is verified against it, so no server or mirror can substitute another.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.PublicKey = \"83cf0f2896adee7eb8b5f01fcad3912212c437e0073e911fb90022d3e760183c8c4b450b6a0a6c3ac6a5776a2d1064510d1fec758c921cc22b0e17e63aaf4bcb5ed66304de9cf809bd274ca73bab4af5a6e9c76a4bc09e76eae8991ef5ece45a\" -> string!"
+      ]
+    },
+    {
+      "id": "dranddefaults-genesistime",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "GenesisTime",
+      "signatures": [
+        "public const long GenesisTime = 1692803367"
+      ],
+      "summary": "The time of round 1, in Unix seconds.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.GenesisTime = 1692803367 -> long"
+      ]
+    },
+    {
+      "id": "dranddefaults-period",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "Period",
+      "signatures": [
+        "public const int Period = 3"
+      ],
+      "summary": "The seconds between rounds.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.Period = 3 -> int"
+      ]
+    },
+    {
+      "id": "dranddefaults-httpclientname",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "HttpClientName",
+      "signatures": [
+        "public const string HttpClientName = \"NCode.Randomness.Drand\""
+      ],
+      "summary": "The name of the `HttpClient` the beacon uses, for a host that adds its own handlers, such as a proxy, with `services.AddHttpClient(DrandDefaults.HttpClientName)`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.HttpClientName = \"NCode.Randomness.Drand\" -> string!"
+      ]
+    },
+    {
+      "id": "drandbeaconoptions",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandBeaconOptions",
+      "member": null,
+      "signatures": [
+        "public sealed class DrandBeaconOptions",
+        "public DrandBeaconOptions()"
+      ],
+      "summary": "Settings for the drand beacon, bound from the `RandomnessBeacons:Drand` configuration section, beside the `Randomness` section of the core options, whose strict binding refuses any key it does not know.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Drand.DrandBeaconOptions",
+        "NCode.Randomness.Drand.DrandBeaconOptions.DrandBeaconOptions() -> void"
+      ]
+    },
+    {
+      "id": "drandbeaconoptions-sectionname",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandBeaconOptions",
+      "member": "SectionName",
+      "signatures": [
+        "public const string SectionName = \"RandomnessBeacons:Drand\""
+      ],
+      "summary": "The configuration section these options bind from by convention.",
+      "page": "/reference/configuration/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandBeaconOptions.SectionName = \"RandomnessBeacons:Drand\" -> string!"
+      ]
+    },
+    {
+      "id": "drandbeaconoptions-baseaddress",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandBeaconOptions",
+      "member": "BaseAddress",
+      "signatures": [
+        "public Uri BaseAddress { get; set; }"
+      ],
+      "summary": "The base address of the drand HTTP API, an absolute `https` URL ending in `/`, with no user info, query or fragment. The default is `DrandDefaults.BaseAddress`. A mirror serves the same data: every round is verified against the pinned group key, so a mirror can withhold rounds but never forge one.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Drand.DrandBeaconOptions.BaseAddress.get -> System.Uri!",
+        "NCode.Randomness.Drand.DrandBeaconOptions.BaseAddress.set -> void"
+      ]
+    },
+    {
+      "id": "drandbeaconoptions-maxresponsebytes",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandBeaconOptions",
+      "member": "MaxResponseBytes",
+      "signatures": [
+        "public int MaxResponseBytes { get; set; }"
+      ],
+      "summary": "The largest response body read, in bytes. The default is 16 KiB; a round is about 200 bytes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Drand.DrandBeaconOptions.MaxResponseBytes.get -> int",
+        "NCode.Randomness.Drand.DrandBeaconOptions.MaxResponseBytes.set -> void"
+      ]
+    },
+    {
+      "id": "drandroundverifier",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandRoundVerifier",
+      "member": null,
+      "signatures": [
+        "public sealed class DrandRoundVerifier",
+        "public DrandRoundVerifier()"
+      ],
+      "summary": "Verifies drand quicknet round documents that a caller supplies, without the network, by every check the drand beacon makes: the round's signature must be a point of G1 other than the identity and verify against the pinned group public key for the round number, and a `randomness` member, when present, must be the SHA-256 of the signature. An instance is immutable and thread-safe.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Drand.DrandRoundVerifier",
+        "NCode.Randomness.Drand.DrandRoundVerifier.DrandRoundVerifier() -> void"
+      ]
+    },
+    {
+      "id": "drandroundverifier-verify",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandRoundVerifier",
+      "member": "Verify",
+      "signatures": [
+        "public BeaconPulse Verify(ReadOnlySpan<byte> round)"
+      ],
+      "summary": "Verifies a round against the pinned chain and returns it as the drand beacon returns it. `round` is the round document, as the drand API serves it, in UTF-8 JSON. It throws `BeaconException` when the document is malformed or a check fails.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Drand.DrandRoundVerifier.Verify(System.ReadOnlySpan<byte> round) -> NCode.Randomness.BeaconPulse!"
+      ]
     }
   ]
 }
