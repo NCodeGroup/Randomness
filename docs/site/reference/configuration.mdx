@@ -9,19 +9,19 @@ Every setting is bound strictly and validated when the host starts, so a misspel
 
 The generator and the beacon collector, bound from the `Randomness` section.
 
-| Key | Default | What it sets |
-| --- | --- | --- |
-| `Mode` | `Continuous` | How the beacons are used: `Continuous`, `InitializeOnly` or `Offline`. |
-| `RefreshInterval` | `00:01:00` | How often each beacon is asked for its latest pulse. At least 1 second. |
-| `MaxRetryDelay` | `00:15:00` | The longest wait between attempts while a beacon fails. At least `RefreshInterval`. |
-| `FetchTimeout` | `00:00:30` | How long one attempt to fetch a pulse may take. At least 1 millisecond. |
-| `MaxPulseAge` | `00:10:00` | The oldest a pulse may be, by its own timestamp, to be mixed in. At least 1 second. |
-| `MaxPulseAgeByBeacon:<name>` | empty | The oldest a pulse may be for the beacon of that name, in place of `MaxPulseAge`. Each at least 1 second. A name no registered beacon has fails the host. |
-| `MaxClockSkew` | `00:02:00` | How far a pulse's timestamp may lie ahead of this machine's clock. Zero or more. |
-| `RequireInitialPulse` | `false` | Whether the host fails to start unless a pulse is mixed in within `InitialPulseTimeout`. Not with `Offline`. |
-| `InitialPulseTimeout` | `00:00:30` | How long the host waits at start for the first pulse. At least 1 millisecond. |
-| `ReseedInterval` | `00:01:00` | The longest a generator shard runs before it reseeds from the operating system. At least 1 millisecond. |
-| `ReseedAfterBytes` | `1048576` | The most bytes a shard produces before it reseeds. At least 1. |
+| Key | What it sets |
+| --- | --- |
+| `Mode` | Default: `Continuous`. How the beacons are used: `Continuous`, `InitializeOnly` or `Offline`. |
+| `RefreshInterval` | Default: `00:01:00`. How often each beacon is asked for its latest pulse. At least 1 second. |
+| `MaxRetryDelay` | Default: `00:15:00`. The longest wait between attempts while a beacon fails. At least `RefreshInterval`. |
+| `FetchTimeout` | Default: `00:00:30`. How long one attempt to fetch a pulse may take. At least 1 millisecond. |
+| `MaxPulseAge` | Default: `00:10:00`. The oldest a pulse may be, by its own timestamp, to be mixed in. At least 1 second. |
+| `MaxPulseAgeByBeacon:<name>` | Default: empty. The oldest a pulse may be for the beacon of that name, in place of `MaxPulseAge`. Each at least 1 second. A name no registered beacon has fails the host. |
+| `MaxClockSkew` | Default: `00:02:00`. How far a pulse's timestamp may lie ahead of this machine's clock. Zero or more. |
+| `RequireInitialPulse` | Default: `false`. Whether the host fails to start unless a pulse is mixed in within `InitialPulseTimeout`. Not with `Offline`. |
+| `InitialPulseTimeout` | Default: `00:00:30`. How long the host waits at start for the first pulse. At least 1 millisecond. |
+| `ReseedInterval` | Default: `00:01:00`. The longest a generator shard runs before it reseeds from the operating system. At least 1 millisecond. |
+| `ReseedAfterBytes` | Default: `1048576`. The most bytes a shard produces before it reseeds. At least 1. |
 
 Every period is at most `uint.MaxValue - 1` milliseconds, about 49.7 days.
 
@@ -29,33 +29,33 @@ Every period is at most `uint.MaxValue - 1` milliseconds, about 49.7 days.
 
 Both CURBy beacons, CURBy-RNG and CURBy-Q, read the `RandomnessBeacons:Curby` section.
 
-| Key | Default | What it sets |
-| --- | --- | --- |
-| `BaseAddress` | `https://api.entwine.me/` | The Twine API's address. |
-| `ChainId` | `CurbyDefaults.RngChainId` | The content identifier of the CURBy-RNG chain, which fixes its key. |
-| `QuantumChainId` | `CurbyDefaults.QuantumChainId` | The content identifier of the CURBy-Q chain. |
-| `BellChainId` | `CurbyDefaults.BellChainId` | The content identifier of the Bell chain that CURBy-Q rounds link to. |
-| `MaxResponseBytes` | `262144` | The most bytes read from one response. At least 1024. |
-| `ChainRetryDelay` | `00:01:00` | How long a failed chain fetch is remembered, so a pulse on that chain fails at once meanwhile. From 1 second to 1 day. |
+| Key | What it sets |
+| --- | --- |
+| `BaseAddress` | Default: `https://api.entwine.me/`. The Twine API's address. |
+| `ChainId` | Default: `CurbyDefaults.RngChainId`. The content identifier of the CURBy-RNG chain, which fixes its key. |
+| `QuantumChainId` | Default: `CurbyDefaults.QuantumChainId`. The content identifier of the CURBy-Q chain. |
+| `BellChainId` | Default: `CurbyDefaults.BellChainId`. The content identifier of the Bell chain that CURBy-Q rounds link to. |
+| `MaxResponseBytes` | Default: `262144`. The most bytes read from one response. At least 1024. |
+| `ChainRetryDelay` | Default: `00:01:00`. How long a failed chain fetch is remembered, so a pulse on that chain fails at once meanwhile. From 1 second to 1 day. |
 
 Each chain identifier is a Twine content identifier.
 
 ## RandomnessBeacons:Nist
 
-| Key | Default | What it sets |
-| --- | --- | --- |
-| `BaseAddress` | `https://beacon.nist.gov/beacon/2.0/` | The beacon's address. |
-| `ChainIndex` | `2` | The index of the chain to trust. At least 1. |
-| `CertificateIds` | empty | The certificates to trust. Empty means `NistDefaults.CertificateIds` apply; a list replaces them. Each is a SHA-512 hex identifier, with no duplicates. |
-| `CertificateRetryDelay` | `00:01:00` | How long a failed certificate fetch is remembered, so a pulse that names it fails at once meanwhile. From 1 second to 1 day. |
-| `MaxResponseBytes` | `65536` | The most bytes read from one response. At least 1024. |
+| Key | What it sets |
+| --- | --- |
+| `BaseAddress` | Default: `https://beacon.nist.gov/beacon/2.0/`. The beacon's address. |
+| `ChainIndex` | Default: `2`. The index of the chain to trust. At least 1. |
+| `CertificateIds` | Default: empty. The certificates to trust. Empty means `NistDefaults.CertificateIds` apply; a list replaces them. Each is a SHA-512 hex identifier, with no duplicates. |
+| `CertificateRetryDelay` | Default: `00:01:00`. How long a failed certificate fetch is remembered, so a pulse that names it fails at once meanwhile. From 1 second to 1 day. |
+| `MaxResponseBytes` | Default: `65536`. The most bytes read from one response. At least 1024. |
 
 ## RandomnessBeacons:Drand
 
-| Key | Default | What it sets |
-| --- | --- | --- |
-| `BaseAddress` | `https://api.drand.sh/` | The drand relay's address. |
-| `MaxResponseBytes` | `16384` | The most bytes read from one response. At least 1024. |
+| Key | What it sets |
+| --- | --- |
+| `BaseAddress` | Default: `https://api.drand.sh/`. The drand relay's address. |
+| `MaxResponseBytes` | Default: `16384`. The most bytes read from one response. At least 1024. |
 
 ## HTTP clients
 
