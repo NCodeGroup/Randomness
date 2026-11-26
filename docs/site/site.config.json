@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/NCodeGroup/docs/main/schema/site.config.schema.json",
+  "title": "NCode.Randomness",
+  "description": "Cryptographically secure random numbers for .NET, strengthened by verified public randomness beacons (CURBy, NIST and drand), and reproducible draws anyone can check against a beacon pulse.",
+  "product": "Randomness",
+  "mark": "ncode",
+  "repository": {
+    "url": "https://github.com/NCodeGroup/Randomness",
+    "branch": "main"
+  },
+  "site": {
+    "url": "https://randomness.ncode.io"
+  },
+  "sidebar": [
+    {
+      "label": "Start",
+      "items": [
+        { "slug": "index", "label": "Overview" },
+        "start/quick-start",
+        "start/which-api"
+      ]
+    },
+    {
+      "label": "Guides",
+      "collapsed": true,
+      "items": [
+        { "slug": "guides/make-a-secret", "label": "Make a secret" },
+        { "slug": "guides/draw-values", "label": "Draw unbiased values" },
+        { "slug": "guides/add-beacons", "label": "Add beacons" },
+        { "slug": "guides/choose-a-mode", "label": "Choose a mode" },
+        { "slug": "guides/run-without-a-host", "label": "Run without a host" },
+        { "slug": "guides/run-a-public-draw", "label": "Run a public draw" },
+        { "slug": "guides/check-a-draw", "label": "Check a draw offline" },
+        { "slug": "guides/monitor-beacons", "label": "Monitor the beacons" }
+      ]
+    },
+    {
+      "label": "Concepts",
+      "items": [
+        "concepts/secret-and-public-randomness",
+        "concepts/the-generator",
+        "concepts/trust-anchors",
+        "concepts/outages"
+      ]
+    },
+    {
+      "label": "Reference",
+      "items": [
+        "reference/beacons",
+        "reference/configuration",
+        "reference/draw-algorithm",
+        "reference/api-map"
+      ]
+    }
+  ],
+  "social": [
+    { "label": "GitHub", "href": "https://github.com/NCodeGroup/Randomness" },
+    { "label": "NuGet", "href": "https://www.nuget.org/packages/NCode.Randomness/" }
+  ],
+  "samples": ["tests/**/*.cs"],
+  "requiredHeadings": [{ "pages": ["guides/*"], "headings": ["## Pitfalls"] }]
+}
