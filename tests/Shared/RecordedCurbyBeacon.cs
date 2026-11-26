@@ -22,14 +22,19 @@ public sealed class RecordedCurbyBeacon : IRandomnessBeacon
         GetPulseAsync(LatestRound, cancellationToken);
 
     /// <inheritdoc/>
-    public ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken) =>
-        round is 1620422 or LatestRound
-            ? ValueTask.FromResult(RecordedDocuments.CurbyPulse(round))
-            : ValueTask.FromException<BeaconPulse>(
-                new BeaconException(
-                    BeaconError.PulseNotFound,
-                    Name,
-                    $"Round {round} is not recorded."
-                )
-            );
+    public ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken)
+    {
+        if (round is 1620422 or LatestRound)
+        {
+            var pulse = RecordedDocuments.CurbyPulse(round);
+            return ValueTask.FromResult(pulse);
+        }
+
+        var error = new BeaconException(
+            BeaconError.PulseNotFound,
+            Name,
+            $"Round {round} is not recorded."
+        );
+        return ValueTask.FromException<BeaconPulse>(error);
+    }
 }

@@ -44,13 +44,18 @@ public static class RecordedDocuments
     /// </summary>
     /// <param name="round">The round of the pulse, which is one of the recorded rounds after the first.</param>
     /// <returns>The verified pulse.</returns>
-    public static BeaconPulse CurbyPulse(long round) =>
-        new CurbyPulseVerifier().Verify(
-            Curby("chain.json"),
-            Curby($"pulse-{round}.json"),
-            Curby($"pulse-{round - 1}.json")
-        );
+    public static BeaconPulse CurbyPulse(long round)
+    {
+        var chain = Curby("chain.json");
+        var pulse = Curby($"pulse-{round}.json");
+        var predecessor = Curby($"pulse-{round - 1}.json");
+        var verifier = new CurbyPulseVerifier();
+        return verifier.Verify(chain, pulse, predecessor);
+    }
 
-    private static byte[] Read(string folder, string name) =>
-        File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", folder, name));
+    private static byte[] Read(string folder, string name)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", folder, name);
+        return File.ReadAllBytes(path);
+    }
 }
