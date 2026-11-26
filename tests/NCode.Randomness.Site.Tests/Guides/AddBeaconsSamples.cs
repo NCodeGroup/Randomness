@@ -38,9 +38,9 @@ public sealed class AddBeaconsSamples
     [Fact]
     public void SiteAddBeaconsConfigurationSample_Runs()
     {
+        const string mirror = "https://twine-mirror.example/";
         var builder = Host.CreateApplicationBuilder();
-        builder.Configuration["RandomnessBeacons:Curby:BaseAddress"] =
-            "https://twine-mirror.example/";
+        builder.Configuration["RandomnessBeacons:Curby:BaseAddress"] = mirror;
 
         // begin-snippet: SiteAddBeaconsConfiguration
         var randomness = builder.Configuration.GetSection("Randomness");
@@ -50,7 +50,8 @@ public sealed class AddBeaconsSamples
 
         using var host = builder.Build();
         var options = host.Services.GetRequiredService<IOptions<CurbyBeaconOptions>>();
-        Assert.Equal(new Uri("https://twine-mirror.example/"), options.Value.BaseAddress);
+        var expected = new Uri(mirror);
+        Assert.Equal(expected, options.Value.BaseAddress);
     }
 
     [Fact]
