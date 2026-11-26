@@ -7,9 +7,8 @@ can check against a beacon pulse.
 
 [![CI](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml/badge.svg)](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/NCodeGroup/Randomness/badge)](https://scorecard.dev/viewer/?uri=github.com/NCodeGroup/Randomness)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/17129/badge)](https://www.bestpractices.dev/projects/17129)
 [![NuGet](https://img.shields.io/nuget/v/NCode.Randomness.svg)](https://www.nuget.org/packages/NCode.Randomness/)
-
-[//]: # "Badges: once the project is registered at bestpractices.dev, record its number as docs/best-practices-criteria.md says, then add the OpenSSF Best Practices badge that page shows."
 
 ## Why
 

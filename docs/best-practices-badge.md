@@ -1,18 +1,18 @@
 # OpenSSF Best Practices Badge
 
-A maintainer registers NCode.Randomness at [bestpractices.dev](https://www.bestpractices.dev) and answers the criteria
-there, which is the source of truth; this page doesn't copy the answers. It maps the criteria that need a document to
+NCode.Randomness is [project 17129](https://www.bestpractices.dev/projects/17129) at
+[bestpractices.dev](https://www.bestpractices.dev), where a maintainer answers the criteria. That site is the source of
+truth; this page doesn't copy the answers. It maps the criteria that need a document to
 the evidence this repository holds, so registering is answering, not researching.
 [best-practices-criteria.md](best-practices-criteria.md), which the template keeps current, maps every criterion of the
 three levels to the answer to expect and its evidence, and holds the prompt that registers the project.
 
-[//]: # "Maintainers: once registered, name the project's number here and in the badge below, in place of PROJECT_ID."
-
 ## The Badge
 
-```html
-<a href="https://www.bestpractices.dev/projects/PROJECT_ID"><img alt="OpenSSF Best Practices"
-  src="https://www.bestpractices.dev/projects/PROJECT_ID/badge"></a>
+[README.md](../README.md) shows it:
+
+```markdown
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/17129/badge)](https://www.bestpractices.dev/projects/17129)
 ```
 
 OpenSSF Scorecard's CII-Best-Practices check scores the badge level: in progress 2, passing 5, silver 7, gold 10
@@ -36,9 +36,12 @@ The silver criteria that need a document point to these:
 
 ## Where It Stands
 
-[//]: # "Maintainers: once registered, say which level the site shows and what keeps the next one from being earned, naming the criteria, not a percentage."
+[//]: # "Maintainers: keep this current: which level the site shows and what keeps the next one from being earned, naming the criteria, not a percentage."
 
-Not registered yet. With one maintainer, silver stops below 100%: `access_continuity` is a MUST that only a second owner meets.
+The site shows passing. Silver is held by `access_continuity`, a MUST that only a second owner meets; its SHOULD
+`crypto_algorithm_agility` is unanswered. Gold is held, beyond silver, by `bus_factor`, `two_person_review`,
+`contributors_unassociated`, `security_review`, `require_2FA` (the organization doesn't require two-factor
+authentication) and `small_tasks` (no open issue is labeled `good first issue`).
 
 ## Needs a Person
 
