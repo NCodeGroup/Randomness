@@ -1,0 +1,33 @@
+<Project>
+  <!-- Imported by the README and site sample projects (ADR-1014, ADR-1016): compiles the shared helpers in this folder
+       and copies the adapters' recorded documents beside the test assembly, so a draw or verification sample runs
+       offline against real beacon documents. -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)*.cs" LinkBase="Recorded" />
+    <None
+      Include="$(MSBuildThisFileDirectory)../NCode.Randomness.Curby.Tests/Fixtures/*.json"
+      LinkBase="Fixtures/Curby"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Include="$(MSBuildThisFileDirectory)../NCode.Randomness.Curby.Tests/Fixtures/CurbyQ/*.json"
+      LinkBase="Fixtures/CurbyQ"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Include="$(MSBuildThisFileDirectory)../NCode.Randomness.Nist.Tests/Fixtures/*.json"
+      LinkBase="Fixtures/Nist"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Include="$(MSBuildThisFileDirectory)../NCode.Randomness.Nist.Tests/Fixtures/*.pem"
+      LinkBase="Fixtures/Nist"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Include="$(MSBuildThisFileDirectory)../NCode.Randomness.Drand.Tests/Fixtures/*.json"
+      LinkBase="Fixtures/Drand"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+  </ItemGroup>
+</Project>
