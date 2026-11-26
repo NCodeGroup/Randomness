@@ -29,7 +29,9 @@ An implementation:
 3. **Pins its trust anchor.** The key, certificate or chain identifier the signatures chain to is a constant or a
    validated option, never something the server supplies.
 4. **Bounds every call.** A named `HttpClient` with `AddStandardResilienceHandler`, no redirects, a JSON or binary
-   content-type check, and a response body read under a byte limit while it streams.
+   content-type check, a response body read under a byte limit while it streams, and JSON parsed only once its text is
+   checked as well-formed Unicode: System.Text.Json decodes a string only when it is read, so bad text would otherwise
+   surface late, as an `InvalidOperationException` instead of malformed data.
 5. **Fills the pulse with stable identifiers.** `Beacon` is the adapter's registered name; `Chain` and `Id` are the
    vendor's own identifiers, so a draw can be recomputed from them ([draws.md](draws.md)); `Round` increases within a
    chain; `Randomness` is at least 32 bytes.
