@@ -29,7 +29,8 @@ public sealed class ChooseAModeSamples
         var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
         Assert.Equal(BeaconMode.InitializeOnly, options.Mode);
         Assert.True(options.RequireInitialPulse);
-        Assert.Equal(TimeSpan.FromSeconds(45), options.InitialPulseTimeout);
+        var expectedTimeout = TimeSpan.FromSeconds(45);
+        Assert.Equal(expectedTimeout, options.InitialPulseTimeout);
     }
 
     [Fact]
@@ -64,7 +65,9 @@ public sealed class ChooseAModeSamples
         var ages = provider
             .GetRequiredService<IOptions<RandomnessOptions>>()
             .Value.MaxPulseAgeByBeacon;
-        Assert.Equal(TimeSpan.FromMinutes(20), ages["nist"]);
-        Assert.Equal(TimeSpan.FromMinutes(30), ages["curby-q"]);
+        var expectedNistAge = TimeSpan.FromMinutes(20);
+        var expectedCurbyQAge = TimeSpan.FromMinutes(30);
+        Assert.Equal(expectedNistAge, ages["nist"]);
+        Assert.Equal(expectedCurbyQAge, ages["curby-q"]);
     }
 }

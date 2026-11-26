@@ -25,7 +25,8 @@ public sealed class TheGeneratorSamples
 
         using var provider = services.BuildServiceProvider();
         var options = provider.GetRequiredService<IOptions<RandomnessOptions>>().Value;
-        Assert.Equal(TimeSpan.FromSeconds(30), options.ReseedInterval);
+        var expectedInterval = TimeSpan.FromSeconds(30);
+        Assert.Equal(expectedInterval, options.ReseedInterval);
         Assert.Equal(256 * 1024, options.ReseedAfterBytes);
     }
 }
