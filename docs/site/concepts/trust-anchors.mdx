@@ -1,0 +1,41 @@
+---
+title: Verification and trust anchors
+description: What each beacon's pulse must prove before any byte is used, and which pulses are refused.
+---
+
+A beacon publishes random values over the network, and a network can lie. This page explains what each adapter checks before it hands a pulse to the collector, what it checks the pulse against, and which verified pulses the collector still refuses.
+
+## Every pulse is verified first
+
+An adapter returns only pulses it verified as its vendor's protocol specifies, or it throws `BeaconException`. It verifies against a pinned trust anchor: a constant in the adapter or an option it validates at start, never something the server supplies. A mirror can withhold pulses, which is an outage, but it can never forge one, because it cannot sign for the anchor. [ADR-1002](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md) records the contract.
+
+## What each beacon proves
+
+The beacons differ in what they pin and what they check. [The beacon reference](/reference/beacons/) sets them side by side.
+
+*CURBy-RNG.* The anchor is the chain's content identifier, `CurbyDefaults.RngChainId`, which fixes the chain's RSA key. Each document must hash to its content identifier and hold only Twine's members, each signature must be canonical RS256 by the chain's key, and the predecessor must be one round earlier with a salt that matches its precommitment. [ADR-1003](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1003-curby-pulses-are-verified-against-a-pinned-chain-before-any-byte-is-used.md) records it.
+
+*CURBy-Q.* The anchors are `CurbyDefaults.QuantumChainId` and `CurbyDefaults.BellChainId`. Every pulse of the round must be signed by the chain's key and follow the one before, a Bell pulse must answer the request with the precommitted data hash, and the seed must expand by SHAKE256 from the right seed pulse to the committed parameters. The Bell-test certificate and the extraction are left to CURBy's `curby_verify`. [ADR-1007](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md) records it.
+
+*NIST Randomness Beacon 2.0.* The anchors are the certificate identifiers in `NistDefaults.CertificateIds`, each the SHA-512 hash of a certificate's DER encoding. The certificate must cover the pulse's timestamp, the RSA signature must verify over the signed fields, the output must be the hash of those fields and the signature, and the pulse must chain to its predecessor's output and match its precommitment. [ADR-1009](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1009-nist-pulses-are-verified-against-pinned-certificates-and-their-hash-chain-before-any-byte-is-used.md) records it.
+
+*drand quicknet.* The anchor is the quicknet group public key, `DrandDefaults.PublicKey`. The BLS signature of the round number, hashed to the curve as RFC 9380 specifies, must verify against that key. [ADR-1010](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md) records it.
+
+## Well-formed text
+
+System.Text.Json parses a document without decoding its strings, so bad text would surface only when a member is read. Every adapter therefore checks that a JSON document's text is well-formed Unicode before it reads any member: the bytes must be valid UTF-8, and every `\u` escape of a surrogate must be half of a high-low pair. A document that fails the check is refused as an invalid pulse, `BeaconError.InvalidPulse`.
+
+A document also holds only the members its protocol defines, and signatures must be canonically encoded. A server therefore has no spare byte to vary, and cannot grind a pulse's randomness by trying different encodings of the same signed content.
+
+## Pulses the collector refuses
+
+A verified pulse is mixed in only if the collector accepts it. The collector refuses a pulse that:
+
+- names another beacon;
+- switches chains, belonging to a different chain than the beacon's earlier pulses;
+- is older than the last accepted round of its chain, which is a rollback and is reported as `RolledBack`;
+- reuses an accepted round with other content, which is equivocation;
+- is older than `MaxPulseAge`, or older than the beacon's entry in `MaxPulseAgeByBeacon`, so a stalled beacon or mirror is noticed;
+- is dated more than `MaxClockSkew` ahead of this machine's clock.
+
+The age limits are per beacon, as [ADR-1008](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1008-pulse-staleness-is-judged-per-beacon.md) records, and [ADR-1002](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md) records the rest. A refused pulse is an outage of that beacon, so [the beacon is down](/concepts/outages/) as far as the generator is concerned.
