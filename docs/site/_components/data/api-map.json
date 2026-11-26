@@ -1482,6 +1482,383 @@
       "api": [
         "NCode.Randomness.VerifiableRandom.Dispose() -> void"
       ]
+    },
+    {
+      "id": "curbyrandomnessbuilderextensions",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyRandomnessBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class CurbyRandomnessBuilderExtensions",
+        "extension(IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers the CURBy beacons.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)"
+      ]
+    },
+    {
+      "id": "curbyrandomnessbuilderextensions-addcurbybeacon",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyRandomnessBuilderExtensions",
+      "member": "AddCurbyBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddCurbyBeacon(this IRandomnessBuilder builder)",
+        "public static IRandomnessBuilder AddCurbyBeacon(this IRandomnessBuilder builder, Action<CurbyBeaconOptions> configure)",
+        "public static IRandomnessBuilder AddCurbyBeacon(this IRandomnessBuilder builder, IConfiguration configuration)"
+      ],
+      "summary": "Registers the CURBy beacon, named `curby`, with its default options (the CURBy-RNG chain served by `CurbyDefaults.BaseAddress`), options set by `configure` or options bound from `configuration`, such as `configuration.GetSection(\"RandomnessBeacons:Curby\")`. An unknown configuration key fails the host at start.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon(System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "curbyrandomnessbuilderextensions-addcurbyquantumbeacon",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyRandomnessBuilderExtensions",
+      "member": "AddCurbyQuantumBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddCurbyQuantumBeacon(this IRandomnessBuilder builder)",
+        "public static IRandomnessBuilder AddCurbyQuantumBeacon(this IRandomnessBuilder builder, Action<CurbyBeaconOptions> configure)",
+        "public static IRandomnessBuilder AddCurbyQuantumBeacon(this IRandomnessBuilder builder, IConfiguration configuration)"
+      ],
+      "summary": "Registers the CURBy-Q beacon, named `curby-q`, with its default options (the CURBy-Q and Bell chains served by `CurbyDefaults.BaseAddress`), options set by `configure` or options bound from `configuration`. It allows `curby-q` pulses up to 30 minutes old, unless `Randomness:MaxPulseAgeByBeacon:curby-q` or a longer `Randomness:MaxPulseAge` is set.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyQuantumBeacon() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyQuantumBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyQuantumBeacon(System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyQuantumBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyQuantumBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyQuantumBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "curbydefaults",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": null,
+      "signatures": [
+        "public static class CurbyDefaults"
+      ],
+      "summary": "The CURBy beacon's published identifiers.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyDefaults"
+      ]
+    },
+    {
+      "id": "curbydefaults-beaconname",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "BeaconName",
+      "signatures": [
+        "public const string BeaconName = \"curby\""
+      ],
+      "summary": "The name the CURBy beacon is registered under: `curby`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.BeaconName = \"curby\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-rngchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "RngChainId",
+      "signatures": [
+        "public const string RngChainId = \"bafyriqci…\""
+      ],
+      "summary": "The content identifier of the CURBy-RNG chain, the beacon's randomness chain, which publishes a pulse every minute. A content identifier is the hash of the chain's document, which holds the chain's signing key, so pinning it pins the key: no server, mirror or TLS certificate can substitute another.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.RngChainId = \"bafyriqci6f3st2mg7gq733ho4zvvth32zpy2mtiylixwmhoz6d627eo3jfpmbxepe54u2zdvymonq5sp3armtm4rodxsynsirr5g3xsbd3q4s\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-quantumbeaconname",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "QuantumBeaconName",
+      "signatures": [
+        "public const string QuantumBeaconName = \"curby-q\""
+      ],
+      "summary": "The name the CURBy-Q beacon is registered under: `curby-q`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.QuantumBeaconName = \"curby-q\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-quantumchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "QuantumChainId",
+      "signatures": [
+        "public const string QuantumChainId = \"bafyriqhi…\""
+      ],
+      "summary": "The content identifier of the CURBy-Q (DIRNG) chain, whose rounds publish randomness extracted from a loophole-free Bell test. A content identifier is the hash of the chain's document, which holds the chain's signing key, so pinning it pins the key.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.QuantumChainId = \"bafyriqhijw5soalbtppuwwjbskfiriqy6swa5qd5trgbzx4nypnu7mp7iyhx7m2iin2nxnglmngvjgirzb7bvlisxq3uygoik7ozbybxnftiw\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-bellchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "BellChainId",
+      "signatures": [
+        "public const string BellChainId = \"bafyriqe3…\""
+      ],
+      "summary": "The content identifier of the Bell chain, on which the Bell experiment answers each CURBy-Q request with the hash of its data. Pinning it pins its signing key.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.BellChainId = \"bafyriqe3zxf5g4ifgqhea5zozxpdcfi5qcpkfpogtxzbizmmuxdjuzuq44a2cifbr7xplo4kcfsdz2c5pxfxektavrqxxb3nvbmclxz7qiz6e\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-baseaddress",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "BaseAddress",
+      "signatures": [
+        "public const string BaseAddress = \"https://api.entwine.me/\""
+      ],
+      "summary": "The base address of the HTTP API that serves CURBy's Twine chains.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.BaseAddress = \"https://api.entwine.me/\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-httpclientname",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "HttpClientName",
+      "signatures": [
+        "public const string HttpClientName = \"NCode.Randomness.Curby\""
+      ],
+      "summary": "The name of the `HttpClient` the beacon uses, for a host that adds its own handlers, such as a proxy, with `services.AddHttpClient(CurbyDefaults.HttpClientName)`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.HttpClientName = \"NCode.Randomness.Curby\" -> string!"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": null,
+      "signatures": [
+        "public sealed class CurbyBeaconOptions",
+        "public CurbyBeaconOptions()"
+      ],
+      "summary": "Settings for the CURBy and CURBy-Q beacons, which share them, bound from the `RandomnessBeacons:Curby` configuration section, beside the `Randomness` section of the core options, whose strict binding refuses any key it does not know.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.CurbyBeaconOptions() -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-sectionname",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "SectionName",
+      "signatures": [
+        "public const string SectionName = \"RandomnessBeacons:Curby\""
+      ],
+      "summary": "The configuration section these options bind from by convention.",
+      "page": "/reference/configuration/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyBeaconOptions.SectionName = \"RandomnessBeacons:Curby\" -> string!"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-baseaddress",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "BaseAddress",
+      "signatures": [
+        "public Uri BaseAddress { get; set; }"
+      ],
+      "summary": "The base address of the Twine HTTP API, an absolute `https` URL ending in `/`, with no user info, query or fragment. The default is `CurbyDefaults.BaseAddress`. A mirror serves the same data: every document is verified against `ChainId`, so a mirror can withhold pulses but never forge one.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.get -> System.Uri!",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-chainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "ChainId",
+      "signatures": [
+        "public string ChainId { get; set; }"
+      ],
+      "summary": "The content identifier of the chain to trust. The default is `CurbyDefaults.RngChainId`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.get -> string!",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-quantumchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "QuantumChainId",
+      "signatures": [
+        "public string QuantumChainId { get; set; }"
+      ],
+      "summary": "The content identifier of the CURBy-Q chain to trust. The default is `CurbyDefaults.QuantumChainId`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.get -> string!",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-bellchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "BellChainId",
+      "signatures": [
+        "public string BellChainId { get; set; }"
+      ],
+      "summary": "The content identifier of the Bell chain to trust, on which the Bell experiment answers each CURBy-Q request. The default is `CurbyDefaults.BellChainId`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.BellChainId.get -> string!",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.BellChainId.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-maxresponsebytes",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "MaxResponseBytes",
+      "signatures": [
+        "public int MaxResponseBytes { get; set; }"
+      ],
+      "summary": "The largest response body read, in bytes. The default is 256 KiB; a pulse is about 4 KiB.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.get -> int",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-chainretrydelay",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "ChainRetryDelay",
+      "signatures": [
+        "public TimeSpan ChainRetryDelay { get; set; }"
+      ],
+      "summary": "How long a failed chain fetch is remembered: until it passes, a pulse on that chain fails at once, without another request. The default is 1 minute; it must be from 1 second to 1 day.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.ChainRetryDelay.get -> System.TimeSpan",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.ChainRetryDelay.set -> void"
+      ]
+    },
+    {
+      "id": "curbypulseverifier",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyPulseVerifier",
+      "member": null,
+      "signatures": [
+        "public sealed class CurbyPulseVerifier",
+        "public CurbyPulseVerifier()",
+        "public CurbyPulseVerifier(string chainId)"
+      ],
+      "summary": "Verifies CURBy-RNG pulse documents that a caller supplies, without the network, by every check the CURBy beacon makes: chain, pulse and predecessor each hash to their CIDs and are signed by the chain's key, the predecessor is one round earlier, and the pulse's salt matches its precommitment. An instance is immutable and thread-safe.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyPulseVerifier",
+        "NCode.Randomness.Curby.CurbyPulseVerifier.CurbyPulseVerifier() -> void",
+        "NCode.Randomness.Curby.CurbyPulseVerifier.CurbyPulseVerifier(string! chainId) -> void"
+      ]
+    },
+    {
+      "id": "curbypulseverifier-verify",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyPulseVerifier",
+      "member": "Verify",
+      "signatures": [
+        "public BeaconPulse Verify(ReadOnlySpan<byte> chain, ReadOnlySpan<byte> pulse, ReadOnlySpan<byte> predecessor)"
+      ],
+      "summary": "Verifies a pulse against the pinned chain and returns it as the CURBy beacon returns it. Each document is the UTF-8 JSON the Twine API serves; `predecessor` is the pulse one round before `pulse`. It throws `BeaconException` when a document is malformed or any check fails.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyPulseVerifier.Verify(System.ReadOnlySpan<byte> chain, System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor) -> NCode.Randomness.BeaconPulse!"
+      ]
+    },
+    {
+      "id": "curbyquantumroundverifier",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyQuantumRoundVerifier",
+      "member": null,
+      "signatures": [
+        "public sealed class CurbyQuantumRoundVerifier",
+        "public CurbyQuantumRoundVerifier()",
+        "public CurbyQuantumRoundVerifier(string quantumChainId, string bellChainId)"
+      ],
+      "summary": "Verifies a CURBy-Q round from documents that a caller supplies, without the network, by every check the CURBy-Q beacon makes. The Bell-test certificate and the extraction are not verified. An instance is immutable and thread-safe.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyQuantumRoundVerifier",
+        "NCode.Randomness.Curby.CurbyQuantumRoundVerifier.CurbyQuantumRoundVerifier() -> void",
+        "NCode.Randomness.Curby.CurbyQuantumRoundVerifier.CurbyQuantumRoundVerifier(string! quantumChainId, string! bellChainId) -> void"
+      ]
+    },
+    {
+      "id": "curbyquantumroundverifier-verify",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyQuantumRoundVerifier",
+      "member": "Verify",
+      "signatures": [
+        "public BeaconPulse Verify(ReadOnlySpan<byte> round, ReadOnlySpan<byte> parameters, IReadOnlyCollection<ReadOnlyMemory<byte>> documents)"
+      ],
+      "summary": "Verifies a round against the pinned chains and returns its pulse as the CURBy-Q beacon returns it. `round` is the JSON array of its pulses, `parameters` the extractor's parameters, and `documents` the chain and pulse documents the round links to, in any order. It throws `BeaconException` when a document is malformed or missing, the round has no randomness, or any check fails.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyQuantumRoundVerifier.Verify(System.ReadOnlySpan<byte> round, System.ReadOnlySpan<byte> parameters, System.Collections.Generic.IReadOnlyCollection<System.ReadOnlyMemory<byte>>! documents) -> NCode.Randomness.BeaconPulse!"
+      ]
     }
   ]
 }
