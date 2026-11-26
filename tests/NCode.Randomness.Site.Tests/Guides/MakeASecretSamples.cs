@@ -16,7 +16,8 @@ public sealed class MakeASecretSamples
         ISecureRandom random = SystemRandomSource.Instance;
 
         // begin-snippet: SiteMakeASecretCode
-        var code = random.GetString("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 16); // 16 characters, no 0, O, 1 or I
+        // 16 characters, with no 0, O, 1 or I to misread.
+        var code = random.GetString("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 16);
         // end-snippet
 
         Assert.Equal(16, code.Length);

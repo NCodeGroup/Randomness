@@ -21,9 +21,8 @@ public sealed class MonitorBeaconsSamples
         var cancellationToken = CancellationToken.None;
 
         // begin-snippet: SiteMonitorBeaconsHealth
-        builder
-            .Services.AddRandomness(builder.Configuration.GetSection("Randomness"))
-            .AddCurbyBeacon();
+        var section = builder.Configuration.GetSection("Randomness");
+        builder.Services.AddRandomness(section).AddCurbyBeacon();
         builder.Services.AddHealthChecks().AddRandomnessBeacons("ready");
 
         using var host = builder.Build();
