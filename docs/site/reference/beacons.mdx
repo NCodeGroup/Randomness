@@ -1,0 +1,35 @@
+---
+title: Every beacon
+description: "Each beacon side by side: what it publishes, what it is pinned to, what it proves, and how to check it offline."
+---
+
+import BeaconMatrix from '@site/components/BeaconMatrix.astro';
+
+The matrix below is drawn from one data file, so every beacon is described in the same terms. Each card names its package, how to register it, what it publishes, the trust anchor it is pinned to, what the package checks before any byte is used, and the verifier that runs the same checks offline. [Configuration](/reference/configuration/) lists the settings each card names.
+
+<BeaconMatrix />
+
+## Reading the matrix
+
+- *Hash-chained:* each pulse commits to the one before it, and the package checks that link. A beacon whose rounds stand alone, such as drand, is marked No.
+- *Precommitment checked:* the beacon publishes a commitment to a value before the pulse that reveals it, and the package checks that the revealed value matches.
+- *Verified fully in process:* nothing is left to a tool outside the package. CURBy-Q is the one marked No: its Bell-test certificate and its extraction are left to CURBy's `curby_verify`, and the card's *Checks* line says what the package verifies.
+
+The text fields say what a pulse's randomness is, how many bytes it carries, what a draw records as the pulse's ID, and how old a pulse may be before it is no longer mixed in.
+
+## Your own beacon
+
+A beacon is any type that implements `IRandomnessBeacon`: a `Name`, `GetLatestPulseAsync` and `GetPulseAsync` for one round. It returns a `BeaconPulse`, which holds:
+
+- `Beacon`, the beacon's name.
+- `Chain`, the chain the pulse belongs to.
+- `Round`, its round number.
+- `Id`, the identifier a draw records for the pulse.
+- `Timestamp`, when the pulse was published.
+- `Randomness`, at least `BeaconPulse.MinRandomnessLength` bytes, which is 32.
+
+An adapter verifies a pulse against its pinned trust anchor before it builds a `BeaconPulse`, so a pulse the generator receives has already been checked. [Writing a Beacon Adapter](https://github.com/NCodeGroup/Randomness/blob/main/docs/beacon-adapters.md) sets out the whole contract.
+
+## Next steps
+
+[Add beacons](/guides/add-beacons/) registers them, and [Configuration](/reference/configuration/) lists every setting.
