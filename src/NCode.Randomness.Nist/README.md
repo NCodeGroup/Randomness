@@ -38,8 +38,9 @@ The package depends on NCode.Randomness, so adding it brings the generator too. 
 
 <!-- snippet: NistRegistration -->
 ```cs
-var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
-var nist = builder.Configuration.GetSection(NistBeaconOptions.SectionName);
+var configuration = builder.Configuration;
+var randomness = configuration.GetSection(RandomnessOptions.SectionName);
+var nist = configuration.GetSection(NistBeaconOptions.SectionName);
 builder.Services.AddRandomness(randomness).AddNistBeacon(nist);
 ```
 <!-- endSnippet -->

@@ -17,10 +17,11 @@ public sealed class SecretAndPublicRandomnessSamples
         // begin-snippet: SiteSecretAndPublicKinds
         ISecureRandom secrets = SystemRandomSource.Instance;
         using var draw = VerifiableRandom.Create(pulse, "example-raffle-2026-11-25");
-        IRandomSource values = draw; // a draw is an IRandomSource, never an ISecureRandom
+        // A draw is an IRandomSource, never an ISecureRandom.
+        IRandomSource values = draw;
 
         var secretRoll = secrets.NextInteger(1, 7); // nobody can predict it
-        var drawRoll = values.NextInteger(1, 7); // everyone with the pulse can recompute it
+        var drawRoll = values.NextInteger(1, 7); // anyone can recompute it
         // end-snippet
 
         Assert.IsNotAssignableFrom<ISecureRandom>(draw);

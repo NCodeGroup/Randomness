@@ -31,7 +31,8 @@ public sealed class MonitorBeaconsSamples
             check => check.Tags.Contains("ready"),
             cancellationToken
         );
-        // report.Status: Healthy, or Degraded while a beacon is unavailable; never Unhealthy
+        // report.Status: Healthy, or Degraded while a beacon is unavailable;
+        // never Unhealthy
         // end-snippet
 
         Assert.Equal(HealthStatus.Healthy, report.Status);
@@ -52,9 +53,8 @@ public sealed class MonitorBeaconsSamples
         var status = randomness.BeaconStatus;
         foreach (var beacon in status.Beacons)
         {
-            lines.Add(
-                $"{beacon.Name}: {beacon.Health}, failures {beacon.ConsecutiveFailures}"
-            );
+            var failures = beacon.ConsecutiveFailures;
+            lines.Add($"{beacon.Name}: {beacon.Health}, failures {failures}");
         }
         // end-snippet
 

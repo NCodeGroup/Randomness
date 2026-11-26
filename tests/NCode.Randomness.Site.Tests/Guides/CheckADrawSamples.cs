@@ -17,7 +17,8 @@ public sealed class CheckADrawSamples
             "bafyriqbtxzd22eybdovubearwfjyzlyowyhxqdkbzyboftamh6rhob2jafopfz4h2nf3eec4nawu2gil2vpgn57qilrlh23piwyozlugpmcvc";
 
         // begin-snippet: SiteCheckADrawCompare
-        // The documents are authentic, but are they the round the draw committed to?
+        // The documents are authentic, but are they the round
+        // the draw committed to?
         if (
             pulse.Beacon != "curby"
             || pulse.Round != committedRound

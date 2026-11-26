@@ -25,8 +25,9 @@ public sealed class RunAPublicDrawSamples
         );
 
         // begin-snippet: SiteRunAPublicDrawPublish
-        // The record to publish with the result: the beacon, the round, the pulse's ID,
-        // the context and the algorithm's name, which is all anyone needs to recompute it.
+        // The record to publish with the result: the beacon,
+        // the round, the pulse's ID, the context and the algorithm's
+        // name, which is all anyone needs to recompute it.
         var record = string.Join(
             ", ",
             $"{draw.Pulse.Beacon} round {draw.Pulse.Round}",
@@ -49,10 +50,12 @@ public sealed class RunAPublicDrawSamples
         var pulse = RecordedDocuments.CurbyPulse(1620423);
 
         // begin-snippet: SiteRunAPublicDrawFromPulse
-        using var draw = VerifiableRandom.Create(pulse, "example-raffle-2026-11-25");
+        var context = "example-raffle-2026-11-25";
+        using var draw = VerifiableRandom.Create(pulse, context);
         var bytes = draw.GetBytes(32);
         var first = Convert.ToHexStringLower(bytes);
-        // first is e43e360c…986e, the bytes docs/draws.md's reference implementation prints.
+        // first is e43e360c…986e, the bytes that docs/draws.md's
+        // reference implementation prints.
         // end-snippet
 
         Assert.Equal(

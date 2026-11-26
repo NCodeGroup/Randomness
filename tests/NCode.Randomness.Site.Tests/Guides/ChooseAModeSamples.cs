@@ -52,7 +52,8 @@ public sealed class ChooseAModeSamples
     {
         // begin-snippet: SiteChooseAModeMaxPulseAge
         var services = new ServiceCollection();
-        // curby-q gets 30 minutes from AddCurbyQuantumBeacon(), as it names no limit here.
+        // curby-q gets 30 minutes from AddCurbyQuantumBeacon(),
+        // as it names no limit here.
         services
             .AddRandomness(options =>
                 options.MaxPulseAgeByBeacon["nist"] = TimeSpan.FromMinutes(20)

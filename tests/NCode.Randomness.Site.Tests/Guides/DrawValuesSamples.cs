@@ -16,7 +16,7 @@ public sealed class DrawValuesSamples
         // begin-snippet: SiteDrawValuesRange
         var roll = random.NextInteger(1, 7); // int in [1, 7), a die roll
         long offset = random.NextInteger(-1_000L, 1_000L); // long in [-1000, 1000)
-        UInt128 id = random.NextInteger<UInt128>(); // every one of the 128 bits random
+        UInt128 id = random.NextInteger<UInt128>(); // all 128 bits random
         var index = random.NextInteger(10); // int in [0, 10)
         // end-snippet
 
@@ -32,8 +32,8 @@ public sealed class DrawValuesSamples
         ISecureRandom random = SystemRandomSource.Instance;
 
         // begin-snippet: SiteDrawValuesFractions
-        double ratio = random.NextDouble(); // double in [0, 1), 53 random bits
-        float share = random.NextSingle(); // float in [0, 1), 24 random bits
+        double ratio = random.NextDouble(); // in [0, 1), 53 random bits
+        float share = random.NextSingle(); // in [0, 1), 24 random bits
         bool heads = random.NextBoolean(); // true or false, equally likely
         // end-snippet
 
@@ -49,7 +49,7 @@ public sealed class DrawValuesSamples
 
         // begin-snippet: SiteDrawValuesShuffle
         int[] deck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        random.Shuffle<int>(deck); // the same ten numbers in a new order, by Fisher–Yates
+        random.Shuffle<int>(deck); // the same ten numbers, reordered by Fisher–Yates
 
         string[] colors = ["red", "green", "blue"];
         var color = random.GetItem<string>(colors); // one of the three colors

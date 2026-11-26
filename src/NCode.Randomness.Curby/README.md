@@ -33,8 +33,9 @@ CURBy-Q beacon; this sample registers both:
 
 <!-- snippet: CurbyRegistration -->
 ```cs
-var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
-var curby = builder.Configuration.GetSection(CurbyBeaconOptions.SectionName);
+var configuration = builder.Configuration;
+var randomness = configuration.GetSection(RandomnessOptions.SectionName);
+var curby = configuration.GetSection(CurbyBeaconOptions.SectionName);
 builder
     .Services.AddRandomness(randomness)
     .AddCurbyBeacon(curby)
@@ -72,9 +73,9 @@ var rolls = Enumerable
     .Range(0, 5)
     .Select(_ => draw.NextInteger(1, 101))
     .ToArray();
-// first is e43e360c9e2b9cd6a094e04a64e65922a3581ba6864da1cb1490244522f9986e and
-// rolls is 80, 38, 69, 95, 91, the values the reference implementation in
-// docs/draws.md prints for this pulse and context.
+// first is e43e360c9e2b9cd6a094e04a64e65922a3581ba6864da1cb1490244522f9986e,
+// and rolls is 80, 38, 69, 95, 91, the values the reference
+// implementation in docs/draws.md prints for this pulse and context.
 ```
 <!-- endSnippet -->
 

@@ -12,7 +12,7 @@ public sealed class DrawAlgorithmSamples
     public void SiteDrawAlgorithmNameSample_Runs()
     {
         // begin-snippet: SiteDrawAlgorithmName
-        var name = VerifiableRandom.Algorithm; // "ncode-randomness-draw/1"
+        var name = VerifiableRandom.Algorithm; // ncode-randomness-draw/1
         var longest = VerifiableRandom.MaxContextLength; // 1024 characters
         // end-snippet
 

@@ -50,10 +50,11 @@ Register the generator, the CURBy, NIST and drand beacons, and a health check th
 <!-- snippet: QuickStart -->
 ```cs
 var builder = Host.CreateApplicationBuilder(args);
-var randomness = builder.Configuration.GetSection(RandomnessOptions.SectionName);
-var curby = builder.Configuration.GetSection(CurbyBeaconOptions.SectionName);
-var nist = builder.Configuration.GetSection(NistBeaconOptions.SectionName);
-var drand = builder.Configuration.GetSection(DrandBeaconOptions.SectionName);
+var configuration = builder.Configuration;
+var randomness = configuration.GetSection(RandomnessOptions.SectionName);
+var curby = configuration.GetSection(CurbyBeaconOptions.SectionName);
+var nist = configuration.GetSection(NistBeaconOptions.SectionName);
+var drand = configuration.GetSection(DrandBeaconOptions.SectionName);
 builder
     .Services.AddRandomness(randomness)
     .AddCurbyBeacon(curby)
@@ -141,6 +142,7 @@ Console tools and libraries that run without a host build the same generator and
 
 <!-- snippet: WithoutDependencyInjection -->
 ```cs
+// The Randomness section of any IConfiguration.
 var section = configuration.GetSection(RandomnessOptions.SectionName);
 var builder = RandomnessHost.CreateBuilder(section);
 builder.AddCurbyBeacon().AddNistBeacon().AddDrandBeacon();
@@ -216,9 +218,9 @@ var rolls = Enumerable
     .Range(0, 5)
     .Select(_ => draw.NextInteger(1, 101))
     .ToArray();
-// first is e43e360c9e2b9cd6a094e04a64e65922a3581ba6864da1cb1490244522f9986e and
-// rolls is 80, 38, 69, 95, 91, the values the reference implementation in
-// docs/draws.md prints for this pulse and context.
+// first is e43e360c9e2b9cd6a094e04a64e65922a3581ba6864da1cb1490244522f9986e,
+// and rolls is 80, 38, 69, 95, 91, the values the reference
+// implementation in docs/draws.md prints for this pulse and context.
 ```
 <!-- endSnippet -->
 
