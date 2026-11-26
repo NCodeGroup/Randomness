@@ -1,0 +1,794 @@
+{
+  "$comment": "The API map on /reference/api-map/, drawn by ApiMap.astro. Every line of src/NCode.Randomness/PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt, and of the same files of NCode.Randomness.Curby, NCode.Randomness.Nist and NCode.Randomness.Drand, is in exactly one entry's api, which build/Assert-ApiMap.ps1 checks. Text fields take code and [links](/x/).",
+  "groups": [
+    {
+      "id": "secure",
+      "title": "Secure random values"
+    },
+    {
+      "id": "registration",
+      "title": "Registration and hosting"
+    },
+    {
+      "id": "beacons",
+      "title": "Beacons and their status"
+    },
+    {
+      "id": "draws",
+      "title": "Reproducible draws"
+    },
+    {
+      "id": "curby",
+      "title": "NCode.Randomness.Curby"
+    },
+    {
+      "id": "nist",
+      "title": "NCode.Randomness.Nist"
+    },
+    {
+      "id": "drand",
+      "title": "NCode.Randomness.Drand"
+    }
+  ],
+  "entries": [
+    {
+      "id": "isecurerandom",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "ISecureRandom",
+      "member": null,
+      "signatures": [
+        "public interface ISecureRandom : IRandomSource"
+      ],
+      "summary": "A cryptographically secure random source: its bytes are unpredictable to everyone, so they suit keys, secrets, tokens, salts and nonces. It adds no member to `IRandomSource`; it is a capability that the type system checks.",
+      "page": "/guides/make-a-secret/",
+      "api": [
+        "NCode.Randomness.ISecureRandom"
+      ]
+    },
+    {
+      "id": "irandomsource",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "IRandomSource",
+      "member": null,
+      "signatures": [
+        "public interface IRandomSource"
+      ],
+      "summary": "Produces uniformly distributed random bytes. Every typed value, range, shuffle and selection in this library is built on this one operation.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.IRandomSource"
+      ]
+    },
+    {
+      "id": "irandomsource-fill",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "IRandomSource",
+      "member": "Fill",
+      "signatures": [
+        "void Fill(Span<byte> destination)"
+      ],
+      "summary": "Fills `destination` with random bytes. An empty buffer is left as it is.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.IRandomSource.Fill(System.Span<byte> destination) -> void"
+      ]
+    },
+    {
+      "id": "systemrandomsource",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "SystemRandomSource",
+      "member": null,
+      "signatures": [
+        "public sealed class SystemRandomSource : ISecureRandom"
+      ],
+      "summary": "The operating system's cryptographically secure random number generator as an `ISecureRandom`. Use it wherever no beacon is wanted, such as in an air-gapped deployment.",
+      "page": "/guides/make-a-secret/",
+      "api": [
+        "NCode.Randomness.SystemRandomSource"
+      ]
+    },
+    {
+      "id": "systemrandomsource-instance",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "SystemRandomSource",
+      "member": "Instance",
+      "signatures": [
+        "public static SystemRandomSource Instance { get; }"
+      ],
+      "summary": "The shared instance. The type is stateless and thread-safe, so the one instance serves every caller, and it needs no disposal.",
+      "page": "/guides/make-a-secret/",
+      "api": [
+        "static NCode.Randomness.SystemRandomSource.Instance.get -> NCode.Randomness.SystemRandomSource!"
+      ]
+    },
+    {
+      "id": "systemrandomsource-fill",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "SystemRandomSource",
+      "member": "Fill",
+      "signatures": [
+        "public void Fill(Span<byte> destination)"
+      ],
+      "summary": "Fills `destination` with bytes from `RandomNumberGenerator`.",
+      "page": "/guides/make-a-secret/",
+      "api": [
+        "NCode.Randomness.SystemRandomSource.Fill(System.Span<byte> destination) -> void"
+      ]
+    },
+    {
+      "id": "randomsourceextensions",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": null,
+      "signatures": [
+        "public static class RandomSourceExtensions",
+        "extension(IRandomSource source)"
+      ],
+      "summary": "Typed values, ranges, shuffles and selections over any `IRandomSource`. Every member is unbiased, and deterministic given the source's bytes.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions",
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!)"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-asrandom",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "AsRandom",
+      "signatures": [
+        "public static Random AsRandom(this IRandomSource source)"
+      ],
+      "summary": "Returns a `Random` that draws every value from this source, for an API that takes one. It is as secret, and as thread-safe, as the source.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).AsRandom() -> System.Random!",
+        "static NCode.Randomness.RandomSourceExtensions.AsRandom(this NCode.Randomness.IRandomSource! source) -> System.Random!"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-getbytes",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "GetBytes",
+      "signatures": [
+        "public static byte[] GetBytes(this IRandomSource source, int count)"
+      ],
+      "summary": "Returns a new array of `count` random bytes. The array is neither pinned nor cleared, so for a key call `Fill` on a `stackalloc` or pinned span and clear it after use.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetBytes(int count) -> byte[]!",
+        "static NCode.Randomness.RandomSourceExtensions.GetBytes(this NCode.Randomness.IRandomSource! source, int count) -> byte[]!"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-getitem",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "GetItem",
+      "signatures": [
+        "public static T GetItem<T>(this IRandomSource source, ReadOnlySpan<T> choices)"
+      ],
+      "summary": "Returns one of `choices`, each equally likely. There must be at least one choice.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetItem<T>(System.ReadOnlySpan<T> choices) -> T",
+        "static NCode.Randomness.RandomSourceExtensions.GetItem<T>(this NCode.Randomness.IRandomSource! source, System.ReadOnlySpan<T> choices) -> T"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-getitems",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "GetItems",
+      "signatures": [
+        "public static void GetItems<T>(this IRandomSource source, ReadOnlySpan<T> choices, Span<T> destination)"
+      ],
+      "summary": "Fills `destination` with values chosen independently from `choices`, each equally likely, with repetition.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetItems<T>(System.ReadOnlySpan<T> choices, System.Span<T> destination) -> void",
+        "static NCode.Randomness.RandomSourceExtensions.GetItems<T>(this NCode.Randomness.IRandomSource! source, System.ReadOnlySpan<T> choices, System.Span<T> destination) -> void"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-getstring",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "GetString",
+      "signatures": [
+        "public static string GetString(this IRandomSource source, string alphabet, int length)"
+      ],
+      "summary": "Returns a string of `length` characters chosen independently from `alphabet`, such as a password or a recovery code. Each character of the alphabet must be distinct.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetString(string! alphabet, int length) -> string!",
+        "static NCode.Randomness.RandomSourceExtensions.GetString(this NCode.Randomness.IRandomSource! source, string! alphabet, int length) -> string!"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextboolean",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextBoolean",
+      "signatures": [
+        "public static bool NextBoolean(this IRandomSource source)"
+      ],
+      "summary": "Returns `true` or `false` with equal probability.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextBoolean() -> bool",
+        "static NCode.Randomness.RandomSourceExtensions.NextBoolean(this NCode.Randomness.IRandomSource! source) -> bool"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextdouble",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextDouble",
+      "signatures": [
+        "public static double NextDouble(this IRandomSource source)"
+      ],
+      "summary": "Returns a `double` drawn uniformly from [0, 1), with all 53 bits of its mantissa random.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextDouble() -> double",
+        "static NCode.Randomness.RandomSourceExtensions.NextDouble(this NCode.Randomness.IRandomSource! source) -> double"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextguid",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextGuid",
+      "signatures": [
+        "public static Guid NextGuid(this IRandomSource source)"
+      ],
+      "summary": "Returns a random RFC 9562 version 4 `Guid`, with 122 random bits.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextGuid() -> System.Guid",
+        "static NCode.Randomness.RandomSourceExtensions.NextGuid(this NCode.Randomness.IRandomSource! source) -> System.Guid"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextinteger",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextInteger",
+      "signatures": [
+        "public static T NextInteger<T>(this IRandomSource source) where T : IBinaryInteger<T>, IMinMaxValue<T>",
+        "public static T NextInteger<T>(this IRandomSource source, T maxExclusive) where T : IBinaryInteger<T>, IMinMaxValue<T>",
+        "public static T NextInteger<T>(this IRandomSource source, T minInclusive, T maxExclusive) where T : IBinaryInteger<T>, IMinMaxValue<T>"
+      ],
+      "summary": "Returns an integer drawn uniformly from every value of `T`, from zero up to `maxExclusive`, or from `minInclusive` up to `maxExclusive`. A die roll is `NextInteger(1, 7)`.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextInteger<T>() -> T",
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextInteger<T>(T maxExclusive) -> T",
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextInteger<T>(T minInclusive, T maxExclusive) -> T",
+        "static NCode.Randomness.RandomSourceExtensions.NextInteger<T>(this NCode.Randomness.IRandomSource! source, T maxExclusive) -> T",
+        "static NCode.Randomness.RandomSourceExtensions.NextInteger<T>(this NCode.Randomness.IRandomSource! source, T minInclusive, T maxExclusive) -> T",
+        "static NCode.Randomness.RandomSourceExtensions.NextInteger<T>(this NCode.Randomness.IRandomSource! source) -> T"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextsingle",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextSingle",
+      "signatures": [
+        "public static float NextSingle(this IRandomSource source)"
+      ],
+      "summary": "Returns a `float` drawn uniformly from [0, 1), with all 24 bits of its mantissa random.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextSingle() -> float",
+        "static NCode.Randomness.RandomSourceExtensions.NextSingle(this NCode.Randomness.IRandomSource! source) -> float"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-shuffle",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "Shuffle",
+      "signatures": [
+        "public static void Shuffle<T>(this IRandomSource source, Span<T> values)"
+      ],
+      "summary": "Shuffles `values` in place with the Fisher–Yates algorithm, so every order is equally likely.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).Shuffle<T>(System.Span<T> values) -> void",
+        "static NCode.Randomness.RandomSourceExtensions.Shuffle<T>(this NCode.Randomness.IRandomSource! source, System.Span<T> values) -> void"
+      ]
+    },
+    {
+      "id": "randomnessservicecollectionextensions",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessServiceCollectionExtensions",
+      "member": null,
+      "signatures": [
+        "public static class RandomnessServiceCollectionExtensions",
+        "extension(IServiceCollection services)"
+      ],
+      "summary": "Registers the secure generator, the beacon collector and reproducible draws.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessServiceCollectionExtensions",
+        "NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)"
+      ]
+    },
+    {
+      "id": "randomnessservicecollectionextensions-addrandomness",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessServiceCollectionExtensions",
+      "member": "AddRandomness",
+      "signatures": [
+        "public static IRandomnessBuilder AddRandomness(this IServiceCollection services)",
+        "public static IRandomnessBuilder AddRandomness(this IServiceCollection services, Action<RandomnessOptions> configure)",
+        "public static IRandomnessBuilder AddRandomness(this IServiceCollection services, IConfiguration configuration)"
+      ],
+      "summary": "Registers `ISecureRandom`, `IBeaconStatus`, `IVerifiableRandomFactory` and the background beacon collector, with default options, options set by `configure` or options bound from `configuration`. Add beacons to the returned builder; with none, the generator runs from the operating system's entropy alone.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddRandomness() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddRandomness(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddRandomness(System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "irandomnessbuilder",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBuilder",
+      "member": null,
+      "signatures": [
+        "public interface IRandomnessBuilder"
+      ],
+      "summary": "Adds beacons and other parts to the randomness services that `AddRandomness()` registers or a `RandomnessHost` builds.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBuilder"
+      ]
+    },
+    {
+      "id": "irandomnessbuilder-services",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBuilder",
+      "member": "Services",
+      "signatures": [
+        "IServiceCollection Services { get; }"
+      ],
+      "summary": "Gets the service collection.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!"
+      ]
+    },
+    {
+      "id": "randomnessbuilderextensions",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class RandomnessBuilderExtensions",
+        "extension(IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers randomness beacons.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessBuilderExtensions",
+        "NCode.Randomness.RandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)"
+      ]
+    },
+    {
+      "id": "randomnessbuilderextensions-addbeacon",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessBuilderExtensions",
+      "member": "AddBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddBeacon<TBeacon>(this IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers `TBeacon` as a singleton beacon. Each beacon class registers once, and its `IRandomnessBeacon.Name` must be unique among the registered beacons.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddBeacon<TBeacon>() -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.RandomnessBuilderExtensions.AddBeacon<TBeacon>(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "randomnesshost",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": null,
+      "signatures": [
+        "public sealed class RandomnessHost : IAsyncDisposable"
+      ],
+      "summary": "The secure generator, the background beacon collection and reproducible draws, composed without dependency injection, for console tools and libraries that run without a host. Keep one instance for the life of the application.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost"
+      ]
+    },
+    {
+      "id": "randomnesshost-createbuilder",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "CreateBuilder",
+      "signatures": [
+        "public static RandomnessHostBuilder CreateBuilder()",
+        "public static RandomnessHostBuilder CreateBuilder(Action<RandomnessOptions> configure)",
+        "public static RandomnessHostBuilder CreateBuilder(IConfiguration configuration)"
+      ],
+      "summary": "Creates a builder with default options, options set by `configure` or options bound from `configuration`. An unknown configuration key fails `BuildAsync`, so a misspelled setting is never silently ignored.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "static NCode.Randomness.RandomnessHost.CreateBuilder() -> NCode.Randomness.RandomnessHostBuilder!",
+        "static NCode.Randomness.RandomnessHost.CreateBuilder(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.RandomnessHostBuilder!",
+        "static NCode.Randomness.RandomnessHost.CreateBuilder(System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.RandomnessHostBuilder!"
+      ]
+    },
+    {
+      "id": "randomnesshost-securerandom",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "SecureRandom",
+      "signatures": [
+        "public ISecureRandom SecureRandom { get; }"
+      ],
+      "summary": "Gets the secure generator.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost.SecureRandom.get -> NCode.Randomness.ISecureRandom!"
+      ]
+    },
+    {
+      "id": "randomnesshost-beaconstatus",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "BeaconStatus",
+      "signatures": [
+        "public IBeaconStatus BeaconStatus { get; }"
+      ],
+      "summary": "Gets the health of the beacon collection.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost.BeaconStatus.get -> NCode.Randomness.IBeaconStatus!"
+      ]
+    },
+    {
+      "id": "randomnesshost-verifiablerandomfactory",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "VerifiableRandomFactory",
+      "signatures": [
+        "public IVerifiableRandomFactory VerifiableRandomFactory { get; }"
+      ],
+      "summary": "Gets the factory for reproducible draws.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost.VerifiableRandomFactory.get -> NCode.Randomness.IVerifiableRandomFactory!"
+      ]
+    },
+    {
+      "id": "randomnesshost-disposeasync",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "DisposeAsync",
+      "signatures": [
+        "public ValueTask DisposeAsync()"
+      ],
+      "summary": "Stops the beacon collection, waiting up to 30 seconds, and disposes the generator, zeroing its state. A second call does nothing.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost.DisposeAsync() -> System.Threading.Tasks.ValueTask"
+      ]
+    },
+    {
+      "id": "randomnesshostbuilder",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHostBuilder",
+      "member": null,
+      "signatures": [
+        "public sealed class RandomnessHostBuilder : IRandomnessBuilder"
+      ],
+      "summary": "Composes a `RandomnessHost`: add beacons with the adapters' extension members, such as `AddCurbyBeacon()`, then call `BuildAsync` once.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHostBuilder"
+      ]
+    },
+    {
+      "id": "randomnesshostbuilder-services",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHostBuilder",
+      "member": "Services",
+      "signatures": [
+        "public IServiceCollection Services { get; }"
+      ],
+      "summary": "Gets the services the host is built from. Add what a host would add, such as a logging provider; a registration made after `BuildAsync` has no effect.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHostBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!"
+      ]
+    },
+    {
+      "id": "randomnesshostbuilder-buildasync",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHostBuilder",
+      "member": "BuildAsync",
+      "signatures": [
+        "public ValueTask<RandomnessHost> BuildAsync(CancellationToken cancellationToken)"
+      ],
+      "summary": "Builds the host: checks every setting, as a host does at start, and starts collecting beacon pulses in the background. With `RequireInitialPulse` set, it waits for the first pulse.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHostBuilder.BuildAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.RandomnessHost!>"
+      ]
+    },
+    {
+      "id": "randomnessoptions",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": null,
+      "signatures": [
+        "public sealed class RandomnessOptions",
+        "public RandomnessOptions()"
+      ],
+      "summary": "Settings for the secure generator and the beacon collector, bound from the `Randomness` configuration section.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions",
+        "NCode.Randomness.RandomnessOptions.RandomnessOptions() -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-sectionname",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "SectionName",
+      "signatures": [
+        "public const string SectionName = \"Randomness\""
+      ],
+      "summary": "The configuration section these options bind from by convention.",
+      "page": "/reference/configuration/",
+      "api": [
+        "const NCode.Randomness.RandomnessOptions.SectionName = \"Randomness\" -> string!"
+      ]
+    },
+    {
+      "id": "randomnessoptions-mode",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "Mode",
+      "signatures": [
+        "public BeaconMode Mode { get; set; }"
+      ],
+      "summary": "How the registered beacons are used. The default is `BeaconMode.Continuous`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.Mode.get -> NCode.Randomness.BeaconMode",
+        "NCode.Randomness.RandomnessOptions.Mode.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-refreshinterval",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "RefreshInterval",
+      "signatures": [
+        "public TimeSpan RefreshInterval { get; set; }"
+      ],
+      "summary": "How often each beacon is asked for its latest pulse. The default is one minute, the cadence at which CURBy publishes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.RefreshInterval.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.RefreshInterval.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-maxretrydelay",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "MaxRetryDelay",
+      "signatures": [
+        "public TimeSpan MaxRetryDelay { get; set; }"
+      ],
+      "summary": "The longest wait between attempts while a beacon fails; the wait doubles from `RefreshInterval` up to it, with jitter. The default is fifteen minutes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.MaxRetryDelay.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.MaxRetryDelay.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-fetchtimeout",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "FetchTimeout",
+      "signatures": [
+        "public TimeSpan FetchTimeout { get; set; }"
+      ],
+      "summary": "How long one attempt to fetch a pulse may take. The default is thirty seconds.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.FetchTimeout.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.FetchTimeout.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-maxpulseage",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "MaxPulseAge",
+      "signatures": [
+        "public TimeSpan MaxPulseAge { get; set; }"
+      ],
+      "summary": "The oldest a pulse may be, by its own timestamp, to be mixed in; an older one means a beacon or a mirror has stalled. The default is ten minutes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.MaxPulseAge.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.MaxPulseAge.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-maxpulseagebybeacon",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "MaxPulseAgeByBeacon",
+      "signatures": [
+        "public Dictionary<string, TimeSpan> MaxPulseAgeByBeacon { get; set; }"
+      ],
+      "summary": "The oldest a pulse may be, by beacon name, in place of `MaxPulseAge`, for a beacon that publishes less often. A name that no registered beacon has fails the host at start. Empty by default.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.MaxPulseAgeByBeacon.get -> System.Collections.Generic.Dictionary<string!, System.TimeSpan>!",
+        "NCode.Randomness.RandomnessOptions.MaxPulseAgeByBeacon.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-maxclockskew",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "MaxClockSkew",
+      "signatures": [
+        "public TimeSpan MaxClockSkew { get; set; }"
+      ],
+      "summary": "How far a pulse's timestamp may lie ahead of this machine's clock. The default is two minutes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.MaxClockSkew.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.MaxClockSkew.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-requireinitialpulse",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "RequireInitialPulse",
+      "signatures": [
+        "public bool RequireInitialPulse { get; set; }"
+      ],
+      "summary": "Whether the host fails to start unless a beacon pulse is mixed in within `InitialPulseTimeout`. The default is `false`: a beacon outage never stops an application.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.RequireInitialPulse.get -> bool",
+        "NCode.Randomness.RandomnessOptions.RequireInitialPulse.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-initialpulsetimeout",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "InitialPulseTimeout",
+      "signatures": [
+        "public TimeSpan InitialPulseTimeout { get; set; }"
+      ],
+      "summary": "How long the host waits at start for the first pulse when `RequireInitialPulse` is set. The default is thirty seconds.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.InitialPulseTimeout.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.InitialPulseTimeout.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-reseedinterval",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "ReseedInterval",
+      "signatures": [
+        "public TimeSpan ReseedInterval { get; set; }"
+      ],
+      "summary": "The longest any generator shard runs before it reseeds from the operating system. The default is one minute.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.ReseedInterval.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.ReseedInterval.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-reseedafterbytes",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "ReseedAfterBytes",
+      "signatures": [
+        "public int ReseedAfterBytes { get; set; }"
+      ],
+      "summary": "The most bytes any generator shard produces before it reseeds from the operating system. The default is one mebibyte.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.ReseedAfterBytes.get -> int",
+        "NCode.Randomness.RandomnessOptions.ReseedAfterBytes.set -> void"
+      ]
+    },
+    {
+      "id": "beaconmode",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "BeaconMode",
+      "member": null,
+      "signatures": [
+        "public enum BeaconMode",
+        "Continuous = 0",
+        "InitializeOnly = 1",
+        "Offline = 2"
+      ],
+      "summary": "How the library uses the registered randomness beacons. `Continuous` fetches at start and every `RefreshInterval`, `InitializeOnly` fetches until each beacon has given one pulse, and `Offline` contacts no beacon. In every mode, random values are generated locally and never wait on a beacon.",
+      "page": "/guides/choose-a-mode/",
+      "api": [
+        "NCode.Randomness.BeaconMode",
+        "NCode.Randomness.BeaconMode.Continuous = 0 -> NCode.Randomness.BeaconMode",
+        "NCode.Randomness.BeaconMode.InitializeOnly = 1 -> NCode.Randomness.BeaconMode",
+        "NCode.Randomness.BeaconMode.Offline = 2 -> NCode.Randomness.BeaconMode"
+      ]
+    }
+  ]
+}
