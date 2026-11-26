@@ -1,0 +1,162 @@
+---
+title: NCode.Randomness
+description: "Cryptographically secure random numbers for .NET, strengthened by verified public randomness beacons (CURBy, NIST and drand), and reproducible draws anyone can check against a beacon pulse."
+tableOfContents: false
+hero:
+  title: >-
+    <span class="landing-eyebrow" aria-hidden="true"><span>NCode.Randomness</span><span>a .NET library from NCode
+    Group</span><span>Apache-2.0</span></span>Secrets nobody can predict. Draws anyone can check.
+  tagline: >-
+    <p><code>ISecureRandom</code> makes keys, tokens and values with an SP 800-90A generator seeded by the operating
+    system and reseeded with every verified pulse from CURBy, NIST and drand. A draw from one pulse can be recomputed
+    by anyone, and every sample on this site is a test.</p>
+    <p class="landing-limit">A beacon's bytes never become a secret on their own, and no random value waits on the
+    network.</p>
+  image:
+    html: >-
+      <figure class="landing-stack not-content" aria-label="A drawing: three beacons' pulses, each verified against
+      its pinned anchor, then mixed into the generator, which reseeds."><div class="landing-stack__lamps"
+      aria-hidden="true"><span class="ncode-status"><span class="ncode-lamp ncode-lamp--on"></span>Verified</span><span
+      class="ncode-status"><span class="ncode-lamp ncode-lamp--on"></span>Mixed in</span><span
+      class="ncode-readout">3 beacons</span></div><div class="landing-stack__screen" aria-hidden="true"><div
+      class="landing-stack__head"><span>beacons</span><span>verify, then mix</span></div><ol
+      class="landing-stack__rows"><li class="ls-row"><span class="ls-row__n">1</span><code>curby</code><span
+      class="ls-row__log">pulse 1620423 verified</span></li><li class="ls-row"><span
+      class="ls-row__n">2</span><code>nist</code><span class="ls-row__log">pulse 2043331 verified</span></li><li
+      class="ls-row"><span class="ls-row__n">3</span><code>drand</code><span class="ls-row__log">round 34271222
+      verified</span></li><li class="ls-row ls-row--cursor"><span class="ls-row__n">4</span><code>ISecureRandom</code><span
+      class="ls-row__log">reseeded</span></li></ol></div><figcaption>Three beacons' pulses, each verified against its
+      pinned anchor, then mixed into the generator, which reseeds. A drawing of the flow, not a trace of a real
+      process.</figcaption></figure>
+  actions:
+    - text: Quick start
+      link: /start/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: Which API?
+      link: /start/which-api/
+      variant: secondary
+---
+
+import { Card, CardGrid } from '@ncodegroup/docs/components';
+import LandingHero from '@site/components/LandingHero.astro';
+import LandingSituations from '@site/components/LandingSituations.astro';
+
+```sh
+dotnet add package NCode.Randomness
+dotnet add package NCode.Randomness.Curby
+dotnet add package NCode.Randomness.Nist
+dotnet add package NCode.Randomness.Drand
+```
+
+<LandingHero />
+
+<div class="landing-badges">
+
+[![NuGet version](https://img.shields.io/nuget/v/NCode.Randomness?logo=nuget)](https://www.nuget.org/packages/NCode.Randomness/)
+[![NuGet downloads](https://img.shields.io/nuget/dt/NCode.Randomness?logo=nuget)](https://www.nuget.org/packages/NCode.Randomness/)
+[![CI](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml?query=branch%3Amain)
+[![Target framework](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2FNCodeGroup%2FRandomness%2Fmain%2Fsrc%2FNCode.Randomness%2FNCode.Randomness.csproj&query=%2F%2FTargetFramework%20%7C%20%2F%2FTargetFrameworks&label=target&logo=dotnet&color=512BD4)](https://www.nuget.org/packages/NCode.Randomness#supportedframeworks-body-tab)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/NCodeGroup/Randomness/badge)](https://scorecard.dev/viewer/?uri=github.com/NCodeGroup/Randomness)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/17129/badge)](https://www.bestpractices.dev/projects/17129)
+[![License](https://img.shields.io/github/license/NCodeGroup/Randomness)](https://github.com/NCodeGroup/Randomness/blob/main/LICENSE.txt)
+
+</div>
+
+<CardGrid>
+<Card title="You have a task">
+
+Each guide is one situation, its code and its pitfalls.
+
+[Find your situation](#find-your-situation)
+
+</Card>
+<Card title="You are choosing an API">
+
+[Which API?](/start/which-api/)
+
+[Every beacon](/reference/beacons/)
+
+</Card>
+<Card title="You want the rules">
+
+[Secret and public randomness](/concepts/secret-and-public-randomness/)
+
+[Verification and trust anchors](/concepts/trust-anchors/)
+
+</Card>
+</CardGrid>
+
+## One generator, three beacons
+
+One registration adds the generator and three beacons, and one `ISecureRandom` makes a secret.
+
+```cs snippet=QuickStart
+```
+
+The drawing above is this flow: each beacon's pulse is verified and mixed into the generator in the background, and the secret you make never waits on any of them.
+
+## What it does. What it does not.
+
+<CardGrid>
+<Card title="It does">
+
+- Run an SP 800-90A HMAC_DRBG per processor, seeded from the operating system.
+- Mix each verified pulse into that generator and never use a pulse alone for a secret.
+  [ADR-1000](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1000-beacon-randomness-is-mixed-into-a-local-generator-and-never-used-alone-for-secrets.md)
+- Verify every pulse against a pinned anchor before any byte is used.
+- Fetch pulses in the background, so no random value waits on the network.
+- Draw unbiased values of every integer type.
+- Make draws that anyone can reproduce from one pulse, by the algorithm `ncode-randomness-draw/1`.
+
+</Card>
+<Card title="It does not">
+
+- Use a beacon's bytes alone for a secret. Everyone who reads the beacon sees the same bytes.
+- Stop the application when a beacon is down. [Outages](/concepts/outages/)
+- Verify CURBy-Q's Bell test or its extraction in process.
+  [ADR-1007](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md)
+- Keep a key safe in the array `GetBytes` returns. [Make a secret](/guides/make-a-secret/)
+- Make a draw secret. Anyone can recompute it from the pulse.
+
+</Card>
+</CardGrid>
+
+## Find your situation
+
+Each guide is one situation, its code and its pitfalls.
+
+<LandingSituations>
+- **I make secrets, and I need to…**
+  - [make a key, token or code](/guides/make-a-secret/)
+  - [draw unbiased values](/guides/draw-values/)
+  - [run without a host](/guides/run-without-a-host/)
+- **I run the service, and I need to…**
+  - [add beacons](/guides/add-beacons/)
+  - [choose a mode](/guides/choose-a-mode/)
+  - [monitor the beacons](/guides/monitor-beacons/)
+  - [see every setting](/reference/configuration/)
+- **I run a draw others check, and I need to…**
+  - [run a public draw](/guides/run-a-public-draw/)
+  - [check a draw offline](/guides/check-a-draw/)
+  - [read the algorithm](/reference/draw-algorithm/)
+- **I review the security, and I need to…**
+  - [know why a pulse never makes a secret](/concepts/secret-and-public-randomness/)
+  - [know what each beacon proves](/concepts/trust-anchors/)
+  - [compare the beacons](/reference/beacons/)
+  - [see every public member](/reference/api-map/)
+</LandingSituations>
+
+Not sure which API you need? [Which API?](/start/which-api/) asks a few questions and names one.
+
+## In the packages
+
+- Four packages: `NCode.Randomness`, with the generator and the draws, and `NCode.Randomness.Curby`,
+  `NCode.Randomness.Nist` and `NCode.Randomness.Drand`, one adapter for each beacon.
+- The target framework is `net10.0`, which the badge shows and
+  [nuget.org](https://www.nuget.org/packages/NCode.Randomness#supportedframeworks-body-tab) lists.
+- Every C# sample on this site is a test the pull request build compiles and runs.
+- The reasons behind the design are on record in
+  [docs/decisions](https://github.com/NCodeGroup/Randomness/tree/main/docs/decisions).
+- Apache License 2.0, copyright NCode Group. A vulnerability is reported privately, as the
+  [security policy](https://github.com/NCodeGroup/Randomness/blob/main/SECURITY.md) says.
