@@ -11,14 +11,16 @@ namespace NCode.Randomness.Nist.Tests;
 public class NistPulseVerifierPropertyTests
 {
     private const string Replay = "20261125,1";
+    private const string CertificatePrefix = "5b6386e6";
 
     #region Verify Tests
 
     [Property(Replay = Replay)]
     public void Verify_WithAnyBytesAsThePulse_ThrowsInvalidPulse(NonNull<byte[]> bytes)
     {
-        var predecessor = Encoding.UTF8.GetBytes(NistFixtures.Pulse(NistFixtures.LatestIndex - 1));
-        var certificate = NistFixtures.Certificate("5b6386e6");
+        var predecessorJson = NistFixtures.Pulse(NistFixtures.LatestIndex - 1);
+        var predecessor = Encoding.UTF8.GetBytes(predecessorJson);
+        var certificate = NistFixtures.Certificate(CertificatePrefix);
         var verifier = new NistPulseVerifier();
 
         var exception = Assert.Throws<BeaconException>(() =>
@@ -35,11 +37,13 @@ public class NistPulseVerifierPropertyTests
         byte value
     )
     {
+        var pulseJson = NistFixtures.Pulse(NistFixtures.LatestIndex);
+        var predecessorJson = NistFixtures.Pulse(NistFixtures.LatestIndex - 1);
         byte[][] documents =
         [
-            Encoding.UTF8.GetBytes(NistFixtures.Pulse(NistFixtures.LatestIndex)),
-            Encoding.UTF8.GetBytes(NistFixtures.Pulse(NistFixtures.LatestIndex - 1)),
-            NistFixtures.Certificate("5b6386e6"),
+            Encoding.UTF8.GetBytes(pulseJson),
+            Encoding.UTF8.GetBytes(predecessorJson),
+            NistFixtures.Certificate(CertificatePrefix),
         ];
         var changed = documents[document.Get % documents.Length];
         changed[position.Get % changed.Length] = value;
@@ -56,7 +60,9 @@ public class NistPulseVerifierPropertyTests
             return;
         }
 
-        Assert.Equal(NistFixtures.LatestOutput, Convert.ToHexString(pulse.Randomness));
+        var randomness = Convert.ToHexString(pulse.Randomness);
+
+        Assert.Equal(NistFixtures.LatestOutput, randomness);
     }
 
     #endregion

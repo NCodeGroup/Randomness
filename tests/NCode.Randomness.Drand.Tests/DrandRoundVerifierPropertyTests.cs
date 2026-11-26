@@ -30,7 +30,8 @@ public class DrandRoundVerifierPropertyTests
         byte value
     )
     {
-        var round = Encoding.UTF8.GetBytes(DrandFixtures.Round(DrandFixtures.LatestRound));
+        var roundJson = DrandFixtures.Round(DrandFixtures.LatestRound);
+        var round = Encoding.UTF8.GetBytes(roundJson);
         round[position.Get % round.Length] = value;
         var verifier = new DrandRoundVerifier();
 
@@ -45,7 +46,9 @@ public class DrandRoundVerifierPropertyTests
             return;
         }
 
-        Assert.Equal(DrandFixtures.LatestRandomness, Convert.ToHexStringLower(pulse.Randomness));
+        var randomness = Convert.ToHexStringLower(pulse.Randomness);
+
+        Assert.Equal(DrandFixtures.LatestRandomness, randomness);
     }
 
     #endregion
