@@ -1,32 +1,40 @@
-# NCode.Randomness
+<p align="center">
+  <img src="NCodeGroup.png" alt="NCode" width="96" height="96">
+</p>
 
-Cryptographically secure random numbers for .NET, strengthened by public randomness beacons such as
-[CURBy](https://random.colorado.edu/), the University of Colorado Boulder's randomness beacon, the
-[NIST Randomness Beacon](https://beacon.nist.gov/) and [drand](https://drand.love/), and reproducible draws that anyone
-can check against a beacon pulse.
+<h1 align="center">NCode.Randomness</h1>
 
-[![CI](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml/badge.svg)](https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/NCodeGroup/Randomness/badge)](https://scorecard.dev/viewer/?uri=github.com/NCodeGroup/Randomness)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/17129/badge)](https://www.bestpractices.dev/projects/17129)
-[![NuGet](https://img.shields.io/nuget/v/NCode.Randomness.svg)](https://www.nuget.org/packages/NCode.Randomness/)
+<p align="center">
+  Cryptographically secure random numbers for .NET, strengthened by public randomness beacons such as CURBy, the NIST Randomness Beacon and drand, and reproducible draws that anyone can check against a beacon pulse.
+</p>
 
-## Why
+<p align="center">
+  <a href="https://www.nuget.org/packages/NCode.Randomness/"><img alt="NuGet version" src="https://img.shields.io/nuget/v/NCode.Randomness?logo=nuget"></a>
+  <a href="https://www.nuget.org/packages/NCode.Randomness/"><img alt="NuGet downloads" src="https://img.shields.io/nuget/dt/NCode.Randomness?logo=nuget"></a>
+  <a href="https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml?query=branch%3Amain"><img alt="CI" src="https://github.com/NCodeGroup/Randomness/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://www.nuget.org/packages/NCode.Randomness#supportedframeworks-body-tab"><img alt="Target framework" src="https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2FNCodeGroup%2FRandomness%2Fmain%2Fsrc%2FNCode.Randomness%2FNCode.Randomness.csproj&query=%2F%2FTargetFramework%20%7C%20%2F%2FTargetFrameworks&label=target&logo=dotnet&color=512BD4"></a>
+  <a href="https://randomness.ncode.io/"><img alt="Documentation" src="https://img.shields.io/badge/docs-randomness.ncode.io-512BD4"></a>
+  <a href="LICENSE.txt"><img alt="License" src="https://img.shields.io/github/license/NCodeGroup/Randomness"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/NCodeGroup/Randomness"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/NCodeGroup/Randomness/badge"></a>
+  <a href="https://www.bestpractices.dev/projects/17129"><img alt="OpenSSF Best Practices" src="https://www.bestpractices.dev/projects/17129/badge"></a>
+</p>
 
-CURBy publishes 512 bits of randomness every minute, certified by a loophole-free Bell test, and signs every pulse.
-That is ideal for **public** randomness, a raffle or an audit that anyone can check, and dangerous for **secrets**:
-everyone who reads the beacon sees the same bytes. This library gives each use what it needs:
+CURBy, the [University of Colorado Boulder's randomness beacon](https://random.colorado.edu/), publishes 512 bits of randomness every minute, certified by a loophole-free Bell test, and signs every pulse. That is ideal for **public** randomness, a raffle or an audit that anyone can check, and dangerous for **secrets**: everyone who reads the beacon sees the same bytes. NCode.Randomness gives each use what it needs, with CURBy, the [NIST Randomness Beacon](https://beacon.nist.gov/) and [drand](https://drand.love/) behind one API. Random values never wait on the network: beacon pulses are fetched and verified in the background, and an outage in Boulder only stops the extra diversification.
 
-| You need | Use | What you get |
-|---|---|---|
-| Keys, tokens, salts, nonces, passwords | `ISecureRandom` | An SP 800-90A HMAC_DRBG seeded by the operating system and reseeded with every beacon pulse: at least as strong as the OS generator, whatever a beacon does |
-| A draw others can verify | `IVerifiableRandomFactory` | A deterministic stream from one verified pulse and a context label, reproducible by anyone, specified in [docs/draws.md](docs/draws.md) |
-| No dependency injection | `RandomnessHost` | The same generator and beacons, built and disposed by your code, for console tools and libraries |
-| No beacon at all | `SystemRandomSource.Instance` | The operating system's generator behind the same API |
+This page is the full guide; nuget.org shows the shorter [package readme](src/NCode.Randomness/README.md).
 
-Random values never wait on the network: beacon pulses are fetched and verified in the background, and an outage in
-Boulder only stops the extra diversification.
+The [documentation site](https://randomness.ncode.io/) has a quick start, a guide for each task, the rules behind them, a reference of every beacon and an API map of every public member.
 
-## Packages
+## Installation
+
+```shell
+dotnet add package NCode.Randomness
+dotnet add package NCode.Randomness.Curby
+dotnet add package NCode.Randomness.Nist
+dotnet add package NCode.Randomness.Drand
+```
+
+Add only the beacon adapters you use; each adapter package depends on `NCode.Randomness`. Each package targets `net10.0`.
 
 | Package | What it holds |
 |---|---|
@@ -35,22 +43,36 @@ Boulder only stops the extra diversification.
 | `NCode.Randomness.Nist` | The NIST Randomness Beacon 2.0 adapter: pulses verified against pinned certificates and their hash chain |
 | `NCode.Randomness.Drand` | The drand adapter: quicknet rounds verified against the League of Entropy's pinned BLS key |
 
-## Quick Start
+## Quick start
 
-```csharp
+Register the generator, the CURBy, NIST and drand beacons, and a health check that reports them:
+
+<!-- snippet: QuickStart -->
+```cs
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services
-    .AddRandomness(builder.Configuration.GetSection(RandomnessOptions.SectionName))
-    .AddCurbyBeacon(builder.Configuration.GetSection(CurbyBeaconOptions.SectionName));
+builder
+    .Services.AddRandomness(
+        builder.Configuration.GetSection(RandomnessOptions.SectionName)
+    )
+    .AddCurbyBeacon(
+        builder.Configuration.GetSection(CurbyBeaconOptions.SectionName)
+    )
+    .AddNistBeacon(
+        builder.Configuration.GetSection(NistBeaconOptions.SectionName)
+    )
+    .AddDrandBeacon(
+        builder.Configuration.GetSection(DrandBeaconOptions.SectionName)
+    );
 builder.Services.AddHealthChecks().AddRandomnessBeacons("ready");
 ```
+<!-- endSnippet -->
 
-Add `.AddNistBeacon()` and `.AddDrandBeacon()` to register the NIST and drand beacons as well, so no beacon is trusted
-alone.
+Register several beacons so no beacon is trusted alone; leave out the adapters you do not use.
 
 Inject `ISecureRandom` wherever a secret is made:
 
-```csharp
+<!-- snippet: TokenService -->
+```cs
 public sealed class TokenService(ISecureRandom random)
 {
     private const string Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -60,11 +82,26 @@ public sealed class TokenService(ISecureRandom random)
     public int RollDie() => random.NextInteger(1, 7);
 }
 ```
+<!-- endSnippet -->
+
+## Usage
+
+### Choosing an API
+
+| You need | Use | What you get |
+|---|---|---|
+| Keys, tokens, salts, nonces, passwords | `ISecureRandom` | An SP 800-90A HMAC_DRBG seeded by the operating system and reseeded with every beacon pulse: at least as strong as the OS generator, whatever a beacon does |
+| A draw others can verify | `IVerifiableRandomFactory` | A deterministic stream from one verified pulse and a context label, reproducible by anyone, specified in [docs/draws.md](docs/draws.md) |
+| No dependency injection | `RandomnessHost` | The same generator and beacons, built and disposed by your code, for console tools and libraries |
+| No beacon at all | `SystemRandomSource.Instance` | The operating system's generator behind the same API |
+
+### Making a secret
 
 Fill a key straight into memory that is cleared after use, such as a `stackalloc` span, rather than taking a `byte[]`
 from `GetBytes`: the garbage collector can move an array and leave copies of the key behind.
 
-```csharp
+<!-- snippet: FillKey -->
+```cs
 Span<byte> key = stackalloc byte[32];
 try
 {
@@ -75,45 +112,55 @@ finally
 {
     CryptographicOperations.ZeroMemory(key);
 }
+// The key is all zeros again, and mac holds the code.
 ```
+<!-- endSnippet -->
 
 A key that outlives one method belongs in a pinned buffer that is zeroed on dispose, such as one from
 [NCode.Buffers](https://www.nuget.org/packages/NCode.Buffers/)'
 `BufferFactory.Rent(32, isSensitive: true, out Span<byte> key)`. `Fill` takes any span, so the two packages work
 together without either depending on the other.
 
+### Drawing typed values
+
 Every value is unbiased: integer ranges use rejection sampling, never a modulo. One generic method covers every
 integer type, from `byte` to `UInt128`:
 
-```csharp
-var roll = random.NextInteger(1, 7);                        // int in [1, 7)
-long offset = random.NextInteger(-1_000L, 1_000L);          // long in [-1000, 1000)
-UInt128 id = random.NextInteger<UInt128>();                 // all 128 bits
-double ratio = random.NextDouble();                         // [0, 1), 53 random bits
-Guid token = random.NextGuid();                             // RFC 9562 version 4
-random.Shuffle<int>(deck);                                  // Fisher–Yates
+<!-- snippet: TypedValues -->
+```cs
+var roll = random.NextInteger(1, 7); // int in [1, 7)
+long offset = random.NextInteger(-1_000L, 1_000L); // long in [-1000, 1000)
+UInt128 id = random.NextInteger<UInt128>(); // all 128 bits
+double ratio = random.NextDouble(); // [0, 1), 53 random bits
+Guid token = random.NextGuid(); // RFC 9562 version 4
+random.Shuffle<int>(deck); // Fisher–Yates
 var color = random.GetItem<string>(["red", "green", "blue"]);
-Random legacy = random.AsRandom();                          // for APIs that take a System.Random
+Random legacy = random.AsRandom(); // for APIs that take a System.Random
 ```
+<!-- endSnippet -->
 
-## Without Dependency Injection
+### Running without dependency injection
 
 Console tools and libraries that run without a host build the same generator and beacons with `RandomnessHost`:
 
-```csharp
-var builder = RandomnessHost.CreateBuilder();
+<!-- snippet: WithoutDependencyInjection -->
+```cs
+var builder = RandomnessHost.CreateBuilder(
+    configuration.GetSection(RandomnessOptions.SectionName)
+);
 builder.AddCurbyBeacon().AddNistBeacon().AddDrandBeacon();
 await using var randomness = await builder.BuildAsync(cancellationToken);
 
 Guid id = randomness.SecureRandom.NextGuid();
 ```
+<!-- endSnippet -->
 
 `CreateBuilder` takes nothing, an `Action<RandomnessOptions>` or a configuration section, as `AddRandomness` does.
 `BuildAsync` checks every setting, as a host does at start, and starts collecting pulses in the background; disposing
 the host stops the collection and zeroes the generator's state. Add a logging provider through `builder.Services` to
 see the collector's logs.
 
-## Modes
+### Choosing a mode
 
 Set `Randomness:Mode` in configuration, or `options.Mode` in code:
 
@@ -134,22 +181,52 @@ Set `Randomness:Mode` in configuration, or `options.Mode` in code:
 Without it, the default, the application starts and runs even when every beacon is down. Every setting is bound
 strictly and validated when the host starts, so a misspelled key stops the host instead of being ignored.
 
-## Reproducible Draws
+### Running a reproducible draw
 
 Commit to a future round and a context first, then draw:
 
-```csharp
-using var draw = await draws.CreateAsync("curby", round: 1620423, context: "example-raffle-2026-11-25", cancellationToken);
+<!-- snippet: PublicDraw -->
+```cs
+using var draw = await draws.CreateAsync(
+    "curby",
+    round: 1620423,
+    context: "example-raffle-2026-11-25",
+    cancellationToken
+);
 var winner = entrants[draw.NextInteger(0, entrants.Length)];
 // Publish draw.Pulse.Id with the result, so anyone can recompute it.
 ```
+<!-- endSnippet -->
 
 [docs/draws.md](docs/draws.md) gives the procedure, the exact algorithm, and a short reference implementation in
-Python that reproduces any draw without .NET. To check a published draw without the network, the beacon adapter's
-verifier, `CurbyPulseVerifier`, `CurbyQuantumRoundVerifier`, `NistPulseVerifier` or `DrandRoundVerifier`, verifies the
-documents the beacon served for the round against its pinned anchor and returns the pulse to derive the draw from.
+Python that reproduces any draw without .NET.
 
-## Security Model
+### Checking a draw offline
+
+To check a published draw without the network, the beacon adapter's verifier, `CurbyPulseVerifier`,
+`CurbyQuantumRoundVerifier`, `NistPulseVerifier` or `DrandRoundVerifier`, verifies the documents the beacon served for
+the round against its pinned anchor and returns the pulse to derive the draw from. This one checks a CURBy-RNG round:
+
+<!-- snippet: CurbyVerify -->
+```cs
+var pulse = new CurbyPulseVerifier().Verify(
+    chainJson,
+    pulseJson,
+    predecessorJson
+);
+using var draw = VerifiableRandom.Create(pulse, context);
+var first = Convert.ToHexStringLower(draw.GetBytes(32));
+var rolls = Enumerable
+    .Range(0, 5)
+    .Select(_ => draw.NextInteger(1, 101))
+    .ToArray();
+// first is e43e360c9e2b9cd6a094e04a64e65922a3581ba6864da1cb1490244522f9986e and
+// rolls is 80, 38, 69, 95, 91, the values the reference implementation in
+// docs/draws.md prints for this pulse and context.
+```
+<!-- endSnippet -->
+
+## Security model
 
 - Secret output rests on the operating system's CSPRNG; beacon pulses are only additional input, so a forged, replayed
   or missing pulse cannot weaken it
@@ -171,12 +248,13 @@ documents the beacon served for the round against its pinned anchor and returns 
   specifies, must verify against the pinned quicknet group key, and the randomness is the SHA-256 of that signature
   ([ADR-1010](docs/decisions/1010-drand-rounds-are-verified-against-the-pinned-quicknet-key-with-a-managed-bls12-381-library.md)).
 - Documents must hold only the members Twine defines and signatures must be canonically encoded, so a server cannot
-  grind a pulse's randomness without breaking its signature or hash.
+  grind a pulse's randomness without breaking its signature or hash. JSON whose text is not well-formed Unicode is
+  refused before any member is read.
 - Pulses that roll back, switch chains, equivocate or are out of date are refused
   ([ADR-1002](docs/decisions/1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md)).
 - [docs/assurance-case.md](docs/assurance-case.md) states the requirements and the threat model.
 
-## Resilience and Operations
+## Resilience and operations
 
 - Each beacon is fetched on its own loop, with a per-fetch timeout, HTTP retries and a circuit breaker, and back-off
   with jitter while it fails.
@@ -186,43 +264,14 @@ documents the beacon served for the round against its pinned anchor and returns 
 - More beacons mean no single point of trust: [docs/beacon-adapters.md](docs/beacon-adapters.md) is the contract for
   an adapter to another vendor.
 
-## Development
-
-Run from the repository root in PowerShell 7:
-
-| Task | Command |
-|---|---|
-| Build | `dotnet build` |
-| Test | `dotnet test` |
-
-## AI-Assisted Workflow
-
-This repository is set up for plan-then-execute coding: Claude Opus plans each change into `PLAN.md`, a cheaper model executes it one verified step at a time, and any step that needs a decision goes back to Opus. [AGENTS.md](AGENTS.md) is the index of the instructions every agent follows.
-
-Work in Claude Code or GitHub Copilot, and switch whenever you like: both have the same commands, and `PLAN.md` is the only state they share, so one can plan and the other execute. Each bills its own subscription.
-
-| Tool | Plan | Execute | Re-plan one step | Review | Land, then finish |
-|---|---|---|---|---|---|
-| Claude Code | `/plan-feature <what to build>` (or `/plan-bugfix`, `/plan-refactor`, `/plan-tests`, …), or `/plan-issue #42` for an issue, then review `PLAN.md` | `/orchestrate-plan` | `/replan-step N` | `/review-plan-diff` | `/ship-plan`, then `/finish-plan` |
-| Copilot Chat in VS Code | The Copilot Planner agent on Opus, or `/plan-feature` or `/plan-issue #42` | Run all steps with subagents, or Execute next step | Re-plan with the planner | Review the work | `/ship-plan`, then `/finish-plan` |
-| Copilot CLI | `copilot --model claude-opus-5.5`, then `/plan-feature` or `/plan-issue #42` | `/orchestrate-plan` | `/replan-step N` | `/review-plan-diff` | `/ship-plan`, then `/finish-plan` |
-
-In Claude Code, plan in Accept edits mode and execute in Auto.
-
-Each plan gets its own git worktree under `.claude/worktrees/`, in every tool, so several sessions can work on different plans at once.
-
-The workflow files come from a Copier template, which owns them: never edit `.template/`, `.template-version`, `.githooks/pre-push`, `.github/instructions/project-template.instructions.md`, `.copier-answers.yml`, `CLAUDE.md` or the commands, agents and skills the template generates. To change how agents work here, edit `AGENTS.md` or a file it lists. To pull in template improvements, run `.\.template\Update-Project.ps1`: it updates itself, replaces the template's files, merges template changes into the shared settings files, and never touches `AGENTS.md` or this README. To plan the update first, with a trial run, the project files that need changing and the checks, run `/plan-template-update`. The weekly `template-update` workflow opens an issue, labeled `template-update`, when a newer template version is out, and closes it once the project has updated; `/plan-issue` plans it.
-
 ## Project
 
-- [CONTRIBUTING.md](CONTRIBUTING.md): how to set up, build, test and propose a change.
+- [Documentation site](https://randomness.ncode.io/): the quick start, the guides, the concepts, the beacon reference and the API map.
+- [CONTRIBUTING.md](CONTRIBUTING.md): how to set up, build, test and propose a change, and the AI-assisted workflow.
+- [Issues](https://github.com/NCodeGroup/Randomness/issues): report a bug or ask for a feature.
 - [SECURITY.md](SECURITY.md): how to report a vulnerability privately.
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [GOVERNANCE.md](GOVERNANCE.md) and [ROADMAP.md](ROADMAP.md): how we work together, who decides, and where the project is going.
 - [docs/architecture.md](docs/architecture.md) and [docs/assurance-case.md](docs/assurance-case.md): how the project is built, and why it meets its security requirements.
 - [docs/decisions/](docs/decisions/README.md): the decisions behind the design, the project's and the template's.
 - [CHANGELOG.md](CHANGELOG.md): in the Keep a Changelog format, what the product does until its first stable release, and what changed in each release from then on.
-- [LICENSE.txt](LICENSE.txt): the license.
-
-## License
-
-NCode.Randomness is licensed under the [Apache License 2.0](LICENSE.txt).
+- [LICENSE.txt](LICENSE.txt): Apache License 2.0, copyright NCode Group.
