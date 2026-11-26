@@ -420,6 +420,20 @@ public class TwineVerificationTests
     }
 
     [Fact]
+    public void Verify_WithHeaderHoldingInvalidUtf8_Throws()
+    {
+        byte[] header = [.. "{\"alg\":\""u8, 0x80, .. "\"}"u8];
+        using var builder = new TwineBuilder(headerUtf8: header);
+        var chainDocument = Document(builder.ChainJson);
+
+        var exception = Assert.Throws<TwineFormatException>(() =>
+            TwineChain.Verify(chainDocument, builder.ChainCid, RngFamily)
+        );
+
+        Assert.Contains("not well-formed Unicode", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Verify_WithHeaderNamingTypeAndKey_Succeeds()
     {
         using var builder = new TwineBuilder(header: """{"alg":"RS256","typ":"JWT","kid":"1"}""");

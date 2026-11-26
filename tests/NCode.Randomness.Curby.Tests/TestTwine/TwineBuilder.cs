@@ -26,11 +26,12 @@ internal sealed class TwineBuilder : IDisposable
     public TwineBuilder(
         int keySize = 2048,
         string specification = "twine/1.0.x/rng/1.0.x",
-        string header = """{"alg":"RS256"}"""
+        string header = """{"alg":"RS256"}""",
+        byte[]? headerUtf8 = null
     )
     {
         Key = RSA.Create(keySize);
-        Header = header;
+        HeaderUtf8 = headerUtf8 ?? Encoding.UTF8.GetBytes(header);
         var parameters = Key.ExportParameters(false);
         var jwk = Ipld.Map(
             ("alg", Ipld.Text("RS256")),
@@ -55,7 +56,7 @@ internal sealed class TwineBuilder : IDisposable
 
     public RSA Key { get; }
 
-    private string Header { get; }
+    private byte[] HeaderUtf8 { get; }
 
     private IpldMap ChainContent { get; }
 
@@ -158,9 +159,7 @@ internal sealed class TwineBuilder : IDisposable
     {
         byte[] payload = [0x14, 0x40, .. Sha3.HashData512(DagCbor.Encode(content))];
         var signingInput =
-            Base64Url.EncodeToString(Encoding.UTF8.GetBytes(Header))
-            + "."
-            + Base64Url.EncodeToString(payload);
+            Base64Url.EncodeToString(HeaderUtf8) + "." + Base64Url.EncodeToString(payload);
         var signature = Key.SignData(
             Encoding.ASCII.GetBytes(signingInput),
             HashAlgorithmName.SHA256,
