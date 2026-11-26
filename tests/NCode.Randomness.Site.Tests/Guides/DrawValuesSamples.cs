@@ -20,9 +20,10 @@ public sealed class DrawValuesSamples
         var index = random.NextInteger(10); // int in [0, 10)
         // end-snippet
 
+        var otherId = random.NextInteger<UInt128>();
         Assert.InRange(roll, 1, 6);
         Assert.InRange(offset, -1_000L, 999L);
-        Assert.InRange(id, UInt128.MinValue, UInt128.MaxValue);
+        Assert.NotEqual(otherId, id); // two 128-bit draws match with probability 2^-128
         Assert.InRange(index, 0, 9);
     }
 
@@ -37,9 +38,18 @@ public sealed class DrawValuesSamples
         bool heads = random.NextBoolean(); // true or false, equally likely
         // end-snippet
 
+        var flips = new bool[64];
+        flips[0] = heads;
+        for (var i = 1; i < flips.Length; i++)
+        {
+            flips[i] = random.NextBoolean();
+        }
+
         Assert.True(ratio is >= 0.0 and < 1.0);
         Assert.True(share is >= 0.0f and < 1.0f);
-        Assert.Contains(heads, new[] { true, false });
+        // 64 flips land alike with probability 2^-63.
+        Assert.Contains(true, flips);
+        Assert.Contains(false, flips);
     }
 
     [Fact]

@@ -111,7 +111,8 @@ public sealed class ReadmeSamplesTests
         Assert.Contains(color, new[] { "red", "green", "blue" });
         var legacyRoll = legacy.Next(10);
         Assert.InRange(legacyRoll, 0, 9);
-        Assert.IsType<UInt128>(id);
+        var otherId = random.NextInteger<UInt128>();
+        Assert.NotEqual(otherId, id);
     }
 
     [Fact]
