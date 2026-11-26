@@ -4,8 +4,12 @@
 #requires -version 7
 <#
 .SYNOPSIS
-    The project's gate: the sample key check (build/Assert-SampleKeys.ps1, tested offline by build/Test-AssertSampleKeys.ps1), the README samples check (build/Assert-Markdown.ps1, tested offline by build/Test-AssertMarkdown.ps1) and the API map check (build/Assert-ApiMap.ps1, tested offline by build/Test-AssertApiMap.ps1), then the Definition of Done, build/dod.ps1, whose Format stage runs the CSharpier check (project-template ADR-0148, ADR-1014, ADR-1016).
+    The project's gate: the sample key, README samples and API map checks, then the Definition of Done.
 .DESCRIPTION
+    Runs the sample key check (build/Assert-SampleKeys.ps1, tested offline by build/Test-AssertSampleKeys.ps1), the
+    README samples check (build/Assert-Markdown.ps1, tested offline by build/Test-AssertMarkdown.ps1) and the API map
+    check (build/Assert-ApiMap.ps1, tested offline by build/Test-AssertApiMap.ps1), then the Definition of Done,
+    build/dod.ps1, whose Format stage runs the CSharpier check (project-template ADR-0148, ADR-1014, ADR-1016).
     build/dod.ps1 is template-owned and has no stage for the samples, so this script runs those checks before it, as
     project-template ADR-0117 says. -Fast and -Filter are passed on to build/dod.ps1.
 #>
