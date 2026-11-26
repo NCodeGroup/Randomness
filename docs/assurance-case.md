@@ -71,6 +71,13 @@ mirror, and the beacon operator's future behavior are not.
   wrong chain, bad or foreign signature, disallowed JWS headers, broken precommitment, wrong ordering, malformed
   payloads, unpinned NIST certificates, broken NIST links and precommitments, and foreign and identity BLS signatures;
   and each acceptance rule (rollback, equivocation, staleness).
+- **Property tests:** FsCheck generates the inputs, and each property replays a fixed seed, so every run repeats:
+  `UniformSampler.NextInteger` returns a value in any `byte` or `long` range and, for a `long` range, the same value
+  for the same bytes; `NextDouble` returns a value in [0, 1); `Shuffle` returns a permutation; `GetString` uses only
+  its alphabet; base32 round-trips and decodes only its one canonical form; and each offline verifier,
+  `CurbyPulseVerifier`, `CurbyQuantumRoundVerifier`, `NistPulseVerifier` and `DrandRoundVerifier`, given any bytes or
+  a served document with any one byte changed, either refuses it with `BeaconException` and `InvalidPulse` or returns
+  the pulse's own randomness.
 - **Coverage:** `./build/dod.ps1` fails below 90% of lines or 80% of branches.
 
 - **Gate:** `./build/dod.ps1` builds in Release with warnings as errors
