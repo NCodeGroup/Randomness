@@ -19,11 +19,18 @@
   <a href="https://www.bestpractices.dev/projects/17129"><img alt="OpenSSF Best Practices" src="https://www.bestpractices.dev/projects/17129/badge"></a>
 </p>
 
-CURBy, the [University of Colorado Boulder's randomness beacon](https://random.colorado.edu/), publishes 512 bits of randomness every minute, certified by a loophole-free Bell test, and signs every pulse. That is ideal for **public** randomness, a raffle or an audit that anyone can check, and dangerous for **secrets**: everyone who reads the beacon sees the same bytes. NCode.Randomness gives each use what it needs, with CURBy, the [NIST Randomness Beacon](https://beacon.nist.gov/) and [drand](https://drand.love/) behind one API. Random values never wait on the network: beacon pulses are fetched and verified in the background, and an outage in Boulder only stops the extra diversification.
+CURBy, the [University of Colorado Boulder's randomness beacon](https://random.colorado.edu/), publishes 512 bits of
+randomness every minute, certified by a loophole-free Bell test, and signs every pulse. That is ideal for **public**
+randomness, a raffle or an audit that anyone can check, and dangerous for **secrets**: everyone who reads the beacon
+sees the same bytes. NCode.Randomness gives each use what it needs, with CURBy, the
+[NIST Randomness Beacon](https://beacon.nist.gov/) and [drand](https://drand.love/) behind one API. Random values never
+wait on the network: beacon pulses are fetched and verified in the background, and an outage in Boulder only stops the
+extra diversification.
 
 This page is the full guide; nuget.org shows the shorter [package readme](src/NCode.Randomness/README.md).
 
-The [documentation site](https://randomness.ncode.io/) has a quick start, a guide for each task, the rules behind them, a reference of every beacon and an API map of every public member.
+The [documentation site](https://randomness.ncode.io/) has a quick start, a guide for each task, the rules behind them,
+a reference of every beacon and an API map of every public member.
 
 ## Installation
 
@@ -34,7 +41,8 @@ dotnet add package NCode.Randomness.Nist
 dotnet add package NCode.Randomness.Drand
 ```
 
-Add only the beacon adapters you use; each adapter package depends on `NCode.Randomness`. Each package targets `net10.0`.
+Add only the beacon adapters you use; each adapter package depends on `NCode.Randomness`. Each package targets
+`net10.0`.
 
 | Package | What it holds |
 |---|---|
