@@ -11,5 +11,6 @@
     <Project Path="tests/NCode.Randomness.Nist.Tests/NCode.Randomness.Nist.Tests.csproj" />
     <Project Path="tests/NCode.Randomness.Drand.Tests/NCode.Randomness.Drand.Tests.csproj" />
     <Project Path="tests/NCode.Randomness.Readme.Tests/NCode.Randomness.Readme.Tests.csproj" />
+    <Project Path="tests/NCode.Randomness.Site.Tests/NCode.Randomness.Site.Tests.csproj" />
   </Folder>
 </Solution>
