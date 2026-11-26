@@ -18,9 +18,8 @@ public class CurbyPulseVerifierPropertyTests
     public void Verify_WithAnyBytesAsThePulse_ThrowsInvalidPulse(NonNull<byte[]> bytes)
     {
         var chain = Encoding.UTF8.GetBytes(CurbyFixtures.Chain);
-        var predecessor = Encoding.UTF8.GetBytes(
-            CurbyFixtures.Pulse(CurbyFixtures.LatestRound - 1)
-        );
+        var predecessorJson = CurbyFixtures.Pulse(CurbyFixtures.LatestRound - 1);
+        var predecessor = Encoding.UTF8.GetBytes(predecessorJson);
         var verifier = new CurbyPulseVerifier();
 
         var exception = Assert.Throws<BeaconException>(() =>
@@ -37,11 +36,13 @@ public class CurbyPulseVerifierPropertyTests
         byte value
     )
     {
+        var pulseJson = CurbyFixtures.Pulse(CurbyFixtures.LatestRound);
+        var predecessorJson = CurbyFixtures.Pulse(CurbyFixtures.LatestRound - 1);
         byte[][] documents =
         [
             Encoding.UTF8.GetBytes(CurbyFixtures.Chain),
-            Encoding.UTF8.GetBytes(CurbyFixtures.Pulse(CurbyFixtures.LatestRound)),
-            Encoding.UTF8.GetBytes(CurbyFixtures.Pulse(CurbyFixtures.LatestRound - 1)),
+            Encoding.UTF8.GetBytes(pulseJson),
+            Encoding.UTF8.GetBytes(predecessorJson),
         ];
         var changed = documents[document.Get % documents.Length];
         changed[position.Get % changed.Length] = value;
@@ -58,7 +59,9 @@ public class CurbyPulseVerifierPropertyTests
             return;
         }
 
-        Assert.Equal(CurbyFixtures.LatestRandomness, Convert.ToHexStringLower(pulse.Randomness));
+        var randomness = Convert.ToHexStringLower(pulse.Randomness);
+
+        Assert.Equal(CurbyFixtures.LatestRandomness, randomness);
     }
 
     #endregion

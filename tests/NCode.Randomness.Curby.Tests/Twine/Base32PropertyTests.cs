@@ -16,7 +16,10 @@ public class Base32PropertyTests
     [Property(Replay = Replay)]
     public void Encode_WithAnyBytes_DecodesToTheSameBytes(NonNull<byte[]> bytes)
     {
-        Assert.Equal(bytes.Get, Base32.Decode(Base32.Encode(bytes.Get)));
+        var text = Base32.Encode(bytes.Get);
+        var decoded = Base32.Decode(text);
+
+        Assert.Equal(bytes.Get, decoded);
     }
 
     #endregion
@@ -38,7 +41,9 @@ public class Base32PropertyTests
             return;
         }
 
-        Assert.Equal(text.Get, Base32.Encode(bytes));
+        var encoded = Base32.Encode(bytes);
+
+        Assert.Equal(text.Get, encoded);
     }
 
     #endregion
