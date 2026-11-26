@@ -71,6 +71,10 @@ mirror, and the beacon operator's future behavior are not.
   wrong chain, bad or foreign signature, disallowed JWS headers, broken precommitment, wrong ordering, malformed
   payloads, unpinned NIST certificates, broken NIST links and precommitments, and foreign and identity BLS signatures;
   and each acceptance rule (rollback, equivocation, staleness).
+- **Property tests:** FsCheck generates the inputs, from a fixed seed so every run repeats: every bounded value the
+  sampler returns lies in its range and repeats for the same bytes, a shuffle is a permutation, base32 round-trips in
+  its one canonical form, and each offline verifier, given any bytes or a served document with any one byte changed,
+  either refuses it with `BeaconException` and `InvalidPulse` or returns the pulse's own randomness.
 - **Coverage:** `./build/dod.ps1` fails below 90% of lines or 80% of branches.
 
 - **Gate:** `./build/dod.ps1` builds in Release with warnings as errors
