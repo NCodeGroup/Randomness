@@ -1,0 +1,59 @@
+---
+title: The draw algorithm
+description: "ncode-randomness-draw/1: how a pulse and a context become a stream of values anyone can recompute."
+---
+
+A reproducible draw is a versioned, specified algorithm, so anyone who has the pulse and the context can recompute every value. The algorithm is named `ncode-randomness-draw/1`, and the library exposes its name and the longest context it accepts.
+
+```cs snippet=SiteDrawAlgorithmName
+```
+
+A draw's values are public to everyone who reads the pulse. Never derive a key, token or other secret from one; use `ISecureRandom` for those. [ADR-1004](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1004-reproducible-draws-are-a-versioned-specified-algorithm-and-never-a-secure-random.md) records why.
+
+All lengths are counts of bytes. `LP(x)` is the 4-byte big-endian length of `x` followed by `x`, and text is UTF-8.
+
+## Instantiate
+
+The algorithm instantiates HMAC_DRBG with HMAC-SHA-512 (NIST SP 800-90A Rev. 1, section 10.1.2), with:
+
+- *Entropy input:* the pulse's randomness. For CURBy, the 64-byte SHA3-512 digest in the pulse's CID; for CURBy-Q, beacon `curby-q`, the round's 64-byte `randomness`; for NIST, beacon `nist`, the pulse's 64-byte `outputValue`; for drand, beacon `drand`, the 32-byte SHA-256 of the round's signature.
+- *Nonce:* `LP(beacon) || LP(chain) || round as an 8-byte big-endian integer || LP(pulse ID)`.
+- *Personalization string:* `LP("ncode-randomness-draw/1") || LP(context)`.
+
+## Stream
+
+The stream is the outputs of consecutive generate requests of exactly 64 bytes each, with no additional input, read in order. How a caller splits its reads does not change the bytes.
+
+## Sample
+
+Each value comes from the next bytes of the stream:
+
+- *An integer in `[min, max)`:* let `r = max - min`. If `r = 1`, the value is `min` and no byte is read. Otherwise let `b` be the bit length of `r - 1`; read `ceil(b / 8)` bytes as a little-endian unsigned integer, keep its low `b` bits, and repeat until the result is less than `r`. The value is `min` plus the result.
+- *An integer over every value of an `n`-byte type:* read `n` bytes as little-endian two's complement.
+- *A double in `[0, 1)`:* read 8 bytes as a little-endian unsigned integer, shift it right by 11, and multiply by 2<sup>-53</sup>. A single takes 4 bytes, shifted right by 8, times 2<sup>-24</sup>. A boolean is the low bit of 1 byte.
+- *A shuffle of `n` items:* for `i` from `n - 1` down to 1, draw `j` in `[0, i + 1)` and swap items `i` and `j`.
+- *A choice from `n` items:* draw an index in `[0, n)`. A string from an alphabet is one choice per character.
+- *A GUID:* read 16 bytes, set the version nibble to 4 and the RFC 9562 variant, as `NextGuid` documents.
+
+The [full specification](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md) also covers how to run a fair draw and how to check one offline.
+
+## A pinned example
+
+CURBy-RNG round 1620423 with the context `example-raffle-2026-11-25` gives these values, all read in this order from one draw:
+
+- The first 32 bytes: `e43e360c9e2b9cd6a094e04a64e65922a3581ba6864da1cb1490244522f9986e`.
+- Then five rolls of 1..100: 80, 38, 69, 95, 91.
+- Then a shuffle of 1..10: 10, 2, 8, 1, 4, 9, 5, 3, 6, 7.
+
+The rolls come only after the 32 bytes are read, because each read takes the next bytes of the stream.
+
+## Reference implementation
+
+This Python program uses only the standard library and shares no code with the .NET library. It reproduces the example above, and the library's tests pin their output to what it prints.
+
+```python file=docs/draws.md from="import hashlib" to='print("shuffle of 1..10:"' title="Reference implementation"
+```
+
+## Next steps
+
+[Check a draw](/guides/check-a-draw/) recomputes a published draw from the documents its beacon served, and [Run a public draw](/guides/run-a-public-draw/) shows how to commit to one first.

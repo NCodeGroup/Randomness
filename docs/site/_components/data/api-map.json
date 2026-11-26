@@ -1,0 +1,2396 @@
+{
+  "$comment": "The API map on /reference/api-map/, drawn by ApiMap.astro. Every line of src/NCode.Randomness/PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt, and of the same files of NCode.Randomness.Curby, NCode.Randomness.Nist and NCode.Randomness.Drand, is in exactly one entry's api, which build/Assert-ApiMap.ps1 checks. Text fields take code and [links](/x/).",
+  "groups": [
+    {
+      "id": "secure",
+      "title": "Secure random values"
+    },
+    {
+      "id": "registration",
+      "title": "Registration and hosting"
+    },
+    {
+      "id": "beacons",
+      "title": "Beacons and their status"
+    },
+    {
+      "id": "draws",
+      "title": "Reproducible draws"
+    },
+    {
+      "id": "curby",
+      "title": "NCode.Randomness.Curby"
+    },
+    {
+      "id": "nist",
+      "title": "NCode.Randomness.Nist"
+    },
+    {
+      "id": "drand",
+      "title": "NCode.Randomness.Drand"
+    }
+  ],
+  "entries": [
+    {
+      "id": "isecurerandom",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "ISecureRandom",
+      "member": null,
+      "signatures": [
+        "public interface ISecureRandom : IRandomSource"
+      ],
+      "summary": "A cryptographically secure random source: its bytes are unpredictable to everyone, so they suit keys, secrets, tokens, salts and nonces. It adds no member to `IRandomSource`; it is a capability that the type system checks.",
+      "page": "/guides/make-a-secret/",
+      "api": [
+        "NCode.Randomness.ISecureRandom"
+      ]
+    },
+    {
+      "id": "irandomsource",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "IRandomSource",
+      "member": null,
+      "signatures": [
+        "public interface IRandomSource"
+      ],
+      "summary": "Produces uniformly distributed random bytes. Every typed value, range, shuffle and selection in this library is built on this one operation.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.IRandomSource"
+      ]
+    },
+    {
+      "id": "irandomsource-fill",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "IRandomSource",
+      "member": "Fill",
+      "signatures": [
+        "void Fill(Span<byte> destination)"
+      ],
+      "summary": "Fills `destination` with random bytes. An empty buffer is left as it is.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.IRandomSource.Fill(System.Span<byte> destination) -> void"
+      ]
+    },
+    {
+      "id": "systemrandomsource",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "SystemRandomSource",
+      "member": null,
+      "signatures": [
+        "public sealed class SystemRandomSource : ISecureRandom"
+      ],
+      "summary": "The operating system's cryptographically secure random number generator as an `ISecureRandom`. Use it wherever no beacon is wanted, such as in an air-gapped deployment.",
+      "page": "/guides/make-a-secret/",
+      "api": [
+        "NCode.Randomness.SystemRandomSource"
+      ]
+    },
+    {
+      "id": "systemrandomsource-instance",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "SystemRandomSource",
+      "member": "Instance",
+      "signatures": [
+        "public static SystemRandomSource Instance { get; }"
+      ],
+      "summary": "The shared instance. The type is stateless and thread-safe, so the one instance serves every caller, and it needs no disposal.",
+      "page": "/guides/make-a-secret/",
+      "api": [
+        "static NCode.Randomness.SystemRandomSource.Instance.get -> NCode.Randomness.SystemRandomSource!"
+      ]
+    },
+    {
+      "id": "systemrandomsource-fill",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "SystemRandomSource",
+      "member": "Fill",
+      "signatures": [
+        "public void Fill(Span<byte> destination)"
+      ],
+      "summary": "Fills `destination` with bytes from `RandomNumberGenerator`.",
+      "page": "/guides/make-a-secret/",
+      "api": [
+        "NCode.Randomness.SystemRandomSource.Fill(System.Span<byte> destination) -> void"
+      ]
+    },
+    {
+      "id": "randomsourceextensions",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": null,
+      "signatures": [
+        "public static class RandomSourceExtensions",
+        "extension(IRandomSource source)"
+      ],
+      "summary": "Typed values, ranges, shuffles and selections over any `IRandomSource`. Every member is unbiased, and deterministic given the source's bytes.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions",
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!)"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-asrandom",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "AsRandom",
+      "signatures": [
+        "public static Random AsRandom(this IRandomSource source)"
+      ],
+      "summary": "Returns a `Random` that draws every value from this source, for an API that takes one. It is as secret, and as thread-safe, as the source.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).AsRandom() -> System.Random!",
+        "static NCode.Randomness.RandomSourceExtensions.AsRandom(this NCode.Randomness.IRandomSource! source) -> System.Random!"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-getbytes",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "GetBytes",
+      "signatures": [
+        "public static byte[] GetBytes(this IRandomSource source, int count)"
+      ],
+      "summary": "Returns a new array of `count` random bytes. The array is neither pinned nor cleared, so for a key call `Fill` on a `stackalloc` or pinned span and clear it after use.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetBytes(int count) -> byte[]!",
+        "static NCode.Randomness.RandomSourceExtensions.GetBytes(this NCode.Randomness.IRandomSource! source, int count) -> byte[]!"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-getitem",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "GetItem",
+      "signatures": [
+        "public static T GetItem<T>(this IRandomSource source, ReadOnlySpan<T> choices)"
+      ],
+      "summary": "Returns one of `choices`, each equally likely. There must be at least one choice.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetItem<T>(System.ReadOnlySpan<T> choices) -> T",
+        "static NCode.Randomness.RandomSourceExtensions.GetItem<T>(this NCode.Randomness.IRandomSource! source, System.ReadOnlySpan<T> choices) -> T"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-getitems",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "GetItems",
+      "signatures": [
+        "public static void GetItems<T>(this IRandomSource source, ReadOnlySpan<T> choices, Span<T> destination)"
+      ],
+      "summary": "Fills `destination` with values chosen independently from `choices`, each equally likely, with repetition.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetItems<T>(System.ReadOnlySpan<T> choices, System.Span<T> destination) -> void",
+        "static NCode.Randomness.RandomSourceExtensions.GetItems<T>(this NCode.Randomness.IRandomSource! source, System.ReadOnlySpan<T> choices, System.Span<T> destination) -> void"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-getstring",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "GetString",
+      "signatures": [
+        "public static string GetString(this IRandomSource source, string alphabet, int length)"
+      ],
+      "summary": "Returns a string of `length` characters chosen independently from `alphabet`, such as a password or a recovery code. Each character of the alphabet must be distinct.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).GetString(string! alphabet, int length) -> string!",
+        "static NCode.Randomness.RandomSourceExtensions.GetString(this NCode.Randomness.IRandomSource! source, string! alphabet, int length) -> string!"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextboolean",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextBoolean",
+      "signatures": [
+        "public static bool NextBoolean(this IRandomSource source)"
+      ],
+      "summary": "Returns `true` or `false` with equal probability.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextBoolean() -> bool",
+        "static NCode.Randomness.RandomSourceExtensions.NextBoolean(this NCode.Randomness.IRandomSource! source) -> bool"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextdouble",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextDouble",
+      "signatures": [
+        "public static double NextDouble(this IRandomSource source)"
+      ],
+      "summary": "Returns a `double` drawn uniformly from [0, 1), with all 53 bits of its mantissa random.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextDouble() -> double",
+        "static NCode.Randomness.RandomSourceExtensions.NextDouble(this NCode.Randomness.IRandomSource! source) -> double"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextguid",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextGuid",
+      "signatures": [
+        "public static Guid NextGuid(this IRandomSource source)"
+      ],
+      "summary": "Returns a random RFC 9562 version 4 `Guid`, with 122 random bits.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextGuid() -> System.Guid",
+        "static NCode.Randomness.RandomSourceExtensions.NextGuid(this NCode.Randomness.IRandomSource! source) -> System.Guid"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextinteger",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextInteger",
+      "signatures": [
+        "public static T NextInteger<T>(this IRandomSource source) where T : IBinaryInteger<T>, IMinMaxValue<T>",
+        "public static T NextInteger<T>(this IRandomSource source, T maxExclusive) where T : IBinaryInteger<T>, IMinMaxValue<T>",
+        "public static T NextInteger<T>(this IRandomSource source, T minInclusive, T maxExclusive) where T : IBinaryInteger<T>, IMinMaxValue<T>"
+      ],
+      "summary": "Returns an integer drawn uniformly from every value of `T`, from zero up to `maxExclusive`, or from `minInclusive` up to `maxExclusive`. A die roll is `NextInteger(1, 7)`.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextInteger<T>() -> T",
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextInteger<T>(T maxExclusive) -> T",
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextInteger<T>(T minInclusive, T maxExclusive) -> T",
+        "static NCode.Randomness.RandomSourceExtensions.NextInteger<T>(this NCode.Randomness.IRandomSource! source, T maxExclusive) -> T",
+        "static NCode.Randomness.RandomSourceExtensions.NextInteger<T>(this NCode.Randomness.IRandomSource! source, T minInclusive, T maxExclusive) -> T",
+        "static NCode.Randomness.RandomSourceExtensions.NextInteger<T>(this NCode.Randomness.IRandomSource! source) -> T"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-nextsingle",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "NextSingle",
+      "signatures": [
+        "public static float NextSingle(this IRandomSource source)"
+      ],
+      "summary": "Returns a `float` drawn uniformly from [0, 1), with all 24 bits of its mantissa random.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).NextSingle() -> float",
+        "static NCode.Randomness.RandomSourceExtensions.NextSingle(this NCode.Randomness.IRandomSource! source) -> float"
+      ]
+    },
+    {
+      "id": "randomsourceextensions-shuffle",
+      "group": "secure",
+      "package": "NCode.Randomness",
+      "type": "RandomSourceExtensions",
+      "member": "Shuffle",
+      "signatures": [
+        "public static void Shuffle<T>(this IRandomSource source, Span<T> values)"
+      ],
+      "summary": "Shuffles `values` in place with the Fisher–Yates algorithm, so every order is equally likely.",
+      "page": "/guides/draw-values/",
+      "api": [
+        "NCode.Randomness.RandomSourceExtensions.extension(NCode.Randomness.IRandomSource!).Shuffle<T>(System.Span<T> values) -> void",
+        "static NCode.Randomness.RandomSourceExtensions.Shuffle<T>(this NCode.Randomness.IRandomSource! source, System.Span<T> values) -> void"
+      ]
+    },
+    {
+      "id": "randomnessservicecollectionextensions",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessServiceCollectionExtensions",
+      "member": null,
+      "signatures": [
+        "public static class RandomnessServiceCollectionExtensions",
+        "extension(IServiceCollection services)"
+      ],
+      "summary": "Registers the secure generator, the beacon collector and reproducible draws.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessServiceCollectionExtensions",
+        "NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!)"
+      ]
+    },
+    {
+      "id": "randomnessservicecollectionextensions-addrandomness",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessServiceCollectionExtensions",
+      "member": "AddRandomness",
+      "signatures": [
+        "public static IRandomnessBuilder AddRandomness(this IServiceCollection services)",
+        "public static IRandomnessBuilder AddRandomness(this IServiceCollection services, Action<RandomnessOptions> configure)",
+        "public static IRandomnessBuilder AddRandomness(this IServiceCollection services, IConfiguration configuration)"
+      ],
+      "summary": "Registers `ISecureRandom`, `IBeaconStatus`, `IVerifiableRandomFactory` and the background beacon collector, with default options, options set by `configure` or options bound from `configuration`. Add beacons to the returned builder; with none, the generator runs from the operating system's entropy alone.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddRandomness() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddRandomness(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.RandomnessServiceCollectionExtensions.extension(Microsoft.Extensions.DependencyInjection.IServiceCollection!).AddRandomness(System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.RandomnessServiceCollectionExtensions.AddRandomness(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "irandomnessbuilder",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBuilder",
+      "member": null,
+      "signatures": [
+        "public interface IRandomnessBuilder"
+      ],
+      "summary": "Adds beacons and other parts to the randomness services that `AddRandomness()` registers or a `RandomnessHost` builds.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBuilder"
+      ]
+    },
+    {
+      "id": "irandomnessbuilder-services",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBuilder",
+      "member": "Services",
+      "signatures": [
+        "IServiceCollection Services { get; }"
+      ],
+      "summary": "Gets the service collection.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!"
+      ]
+    },
+    {
+      "id": "randomnessbuilderextensions",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class RandomnessBuilderExtensions",
+        "extension(IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers randomness beacons.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessBuilderExtensions",
+        "NCode.Randomness.RandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)"
+      ]
+    },
+    {
+      "id": "randomnessbuilderextensions-addbeacon",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessBuilderExtensions",
+      "member": "AddBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddBeacon<TBeacon>(this IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers `TBeacon` as a singleton beacon. Each beacon class registers once, and its `IRandomnessBeacon.Name` must be unique among the registered beacons.",
+      "page": "/guides/add-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddBeacon<TBeacon>() -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.RandomnessBuilderExtensions.AddBeacon<TBeacon>(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "randomnesshost",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": null,
+      "signatures": [
+        "public sealed class RandomnessHost : IAsyncDisposable"
+      ],
+      "summary": "The secure generator, the background beacon collection and reproducible draws, composed without dependency injection, for console tools and libraries that run without a host. Keep one instance for the life of the application.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost"
+      ]
+    },
+    {
+      "id": "randomnesshost-createbuilder",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "CreateBuilder",
+      "signatures": [
+        "public static RandomnessHostBuilder CreateBuilder()",
+        "public static RandomnessHostBuilder CreateBuilder(Action<RandomnessOptions> configure)",
+        "public static RandomnessHostBuilder CreateBuilder(IConfiguration configuration)"
+      ],
+      "summary": "Creates a builder with default options, options set by `configure` or options bound from `configuration`. An unknown configuration key fails `BuildAsync`, so a misspelled setting is never silently ignored.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "static NCode.Randomness.RandomnessHost.CreateBuilder() -> NCode.Randomness.RandomnessHostBuilder!",
+        "static NCode.Randomness.RandomnessHost.CreateBuilder(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.RandomnessHostBuilder!",
+        "static NCode.Randomness.RandomnessHost.CreateBuilder(System.Action<NCode.Randomness.RandomnessOptions!>! configure) -> NCode.Randomness.RandomnessHostBuilder!"
+      ]
+    },
+    {
+      "id": "randomnesshost-securerandom",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "SecureRandom",
+      "signatures": [
+        "public ISecureRandom SecureRandom { get; }"
+      ],
+      "summary": "Gets the secure generator.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost.SecureRandom.get -> NCode.Randomness.ISecureRandom!"
+      ]
+    },
+    {
+      "id": "randomnesshost-beaconstatus",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "BeaconStatus",
+      "signatures": [
+        "public IBeaconStatus BeaconStatus { get; }"
+      ],
+      "summary": "Gets the health of the beacon collection.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost.BeaconStatus.get -> NCode.Randomness.IBeaconStatus!"
+      ]
+    },
+    {
+      "id": "randomnesshost-verifiablerandomfactory",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "VerifiableRandomFactory",
+      "signatures": [
+        "public IVerifiableRandomFactory VerifiableRandomFactory { get; }"
+      ],
+      "summary": "Gets the factory for reproducible draws.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost.VerifiableRandomFactory.get -> NCode.Randomness.IVerifiableRandomFactory!"
+      ]
+    },
+    {
+      "id": "randomnesshost-disposeasync",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHost",
+      "member": "DisposeAsync",
+      "signatures": [
+        "public ValueTask DisposeAsync()"
+      ],
+      "summary": "Stops the beacon collection, waiting up to 30 seconds, and disposes the generator, zeroing its state. A second call does nothing.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHost.DisposeAsync() -> System.Threading.Tasks.ValueTask"
+      ]
+    },
+    {
+      "id": "randomnesshostbuilder",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHostBuilder",
+      "member": null,
+      "signatures": [
+        "public sealed class RandomnessHostBuilder : IRandomnessBuilder"
+      ],
+      "summary": "Composes a `RandomnessHost`: add beacons with the adapters' extension members, such as `AddCurbyBeacon()`, then call `BuildAsync` once.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHostBuilder"
+      ]
+    },
+    {
+      "id": "randomnesshostbuilder-services",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHostBuilder",
+      "member": "Services",
+      "signatures": [
+        "public IServiceCollection Services { get; }"
+      ],
+      "summary": "Gets the services the host is built from. Add what a host would add, such as a logging provider; a registration made after `BuildAsync` has no effect.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHostBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!"
+      ]
+    },
+    {
+      "id": "randomnesshostbuilder-buildasync",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHostBuilder",
+      "member": "BuildAsync",
+      "signatures": [
+        "public ValueTask<RandomnessHost> BuildAsync(CancellationToken cancellationToken)"
+      ],
+      "summary": "Builds the host: checks every setting, as a host does at start, and starts collecting beacon pulses in the background. With `RequireInitialPulse` set, it waits for the first pulse.",
+      "page": "/guides/run-without-a-host/",
+      "api": [
+        "NCode.Randomness.RandomnessHostBuilder.BuildAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.RandomnessHost!>"
+      ]
+    },
+    {
+      "id": "randomnessoptions",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": null,
+      "signatures": [
+        "public sealed class RandomnessOptions",
+        "public RandomnessOptions()"
+      ],
+      "summary": "Settings for the secure generator and the beacon collector, bound from the `Randomness` configuration section.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions",
+        "NCode.Randomness.RandomnessOptions.RandomnessOptions() -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-sectionname",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "SectionName",
+      "signatures": [
+        "public const string SectionName = \"Randomness\""
+      ],
+      "summary": "The configuration section these options bind from by convention.",
+      "page": "/reference/configuration/",
+      "api": [
+        "const NCode.Randomness.RandomnessOptions.SectionName = \"Randomness\" -> string!"
+      ]
+    },
+    {
+      "id": "randomnessoptions-mode",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "Mode",
+      "signatures": [
+        "public BeaconMode Mode { get; set; }"
+      ],
+      "summary": "How the registered beacons are used. The default is `BeaconMode.Continuous`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.Mode.get -> NCode.Randomness.BeaconMode",
+        "NCode.Randomness.RandomnessOptions.Mode.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-refreshinterval",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "RefreshInterval",
+      "signatures": [
+        "public TimeSpan RefreshInterval { get; set; }"
+      ],
+      "summary": "How often each beacon is asked for its latest pulse. The default is one minute, the cadence at which CURBy publishes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.RefreshInterval.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.RefreshInterval.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-maxretrydelay",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "MaxRetryDelay",
+      "signatures": [
+        "public TimeSpan MaxRetryDelay { get; set; }"
+      ],
+      "summary": "The longest wait between attempts while a beacon fails; the wait doubles from `RefreshInterval` up to it, with jitter. The default is fifteen minutes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.MaxRetryDelay.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.MaxRetryDelay.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-fetchtimeout",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "FetchTimeout",
+      "signatures": [
+        "public TimeSpan FetchTimeout { get; set; }"
+      ],
+      "summary": "How long one attempt to fetch a pulse may take. The default is thirty seconds.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.FetchTimeout.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.FetchTimeout.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-maxpulseage",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "MaxPulseAge",
+      "signatures": [
+        "public TimeSpan MaxPulseAge { get; set; }"
+      ],
+      "summary": "The oldest a pulse may be, by its own timestamp, to be mixed in; an older one means a beacon or a mirror has stalled. The default is ten minutes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.MaxPulseAge.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.MaxPulseAge.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-maxpulseagebybeacon",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "MaxPulseAgeByBeacon",
+      "signatures": [
+        "public Dictionary<string, TimeSpan> MaxPulseAgeByBeacon { get; set; }"
+      ],
+      "summary": "The oldest a pulse may be, by beacon name, in place of `MaxPulseAge`, for a beacon that publishes less often. A name that no registered beacon has fails the host at start. Empty by default.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.MaxPulseAgeByBeacon.get -> System.Collections.Generic.Dictionary<string!, System.TimeSpan>!",
+        "NCode.Randomness.RandomnessOptions.MaxPulseAgeByBeacon.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-maxclockskew",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "MaxClockSkew",
+      "signatures": [
+        "public TimeSpan MaxClockSkew { get; set; }"
+      ],
+      "summary": "How far a pulse's timestamp may lie ahead of this machine's clock. The default is two minutes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.MaxClockSkew.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.MaxClockSkew.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-requireinitialpulse",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "RequireInitialPulse",
+      "signatures": [
+        "public bool RequireInitialPulse { get; set; }"
+      ],
+      "summary": "Whether the host fails to start unless a beacon pulse is mixed in within `InitialPulseTimeout`. The default is `false`: a beacon outage never stops an application.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.RequireInitialPulse.get -> bool",
+        "NCode.Randomness.RandomnessOptions.RequireInitialPulse.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-initialpulsetimeout",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "InitialPulseTimeout",
+      "signatures": [
+        "public TimeSpan InitialPulseTimeout { get; set; }"
+      ],
+      "summary": "How long the host waits at start for the first pulse when `RequireInitialPulse` is set. The default is thirty seconds.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.InitialPulseTimeout.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.InitialPulseTimeout.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-reseedinterval",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "ReseedInterval",
+      "signatures": [
+        "public TimeSpan ReseedInterval { get; set; }"
+      ],
+      "summary": "The longest any generator shard runs before it reseeds from the operating system. The default is one minute.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.ReseedInterval.get -> System.TimeSpan",
+        "NCode.Randomness.RandomnessOptions.ReseedInterval.set -> void"
+      ]
+    },
+    {
+      "id": "randomnessoptions-reseedafterbytes",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "RandomnessOptions",
+      "member": "ReseedAfterBytes",
+      "signatures": [
+        "public int ReseedAfterBytes { get; set; }"
+      ],
+      "summary": "The most bytes any generator shard produces before it reseeds from the operating system. The default is one mebibyte.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.RandomnessOptions.ReseedAfterBytes.get -> int",
+        "NCode.Randomness.RandomnessOptions.ReseedAfterBytes.set -> void"
+      ]
+    },
+    {
+      "id": "beaconmode",
+      "group": "registration",
+      "package": "NCode.Randomness",
+      "type": "BeaconMode",
+      "member": null,
+      "signatures": [
+        "public enum BeaconMode",
+        "Continuous = 0",
+        "InitializeOnly = 1",
+        "Offline = 2"
+      ],
+      "summary": "How the library uses the registered randomness beacons. `Continuous` fetches at start and every `RefreshInterval`, `InitializeOnly` fetches until each beacon has given one pulse, and `Offline` contacts no beacon. In every mode, random values are generated locally and never wait on a beacon.",
+      "page": "/guides/choose-a-mode/",
+      "api": [
+        "NCode.Randomness.BeaconMode",
+        "NCode.Randomness.BeaconMode.Continuous = 0 -> NCode.Randomness.BeaconMode",
+        "NCode.Randomness.BeaconMode.InitializeOnly = 1 -> NCode.Randomness.BeaconMode",
+        "NCode.Randomness.BeaconMode.Offline = 2 -> NCode.Randomness.BeaconMode"
+      ]
+    },
+    {
+      "id": "irandomnessbeacon",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBeacon",
+      "member": null,
+      "signatures": [
+        "public interface IRandomnessBeacon"
+      ],
+      "summary": "A public randomness beacon, such as CURBy: the port each vendor's adapter implements. An implementation verifies every pulse as its vendor's protocol specifies before it returns it, and throws `BeaconException` rather than return a pulse it could not verify.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBeacon"
+      ]
+    },
+    {
+      "id": "irandomnessbeacon-name",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBeacon",
+      "member": "Name",
+      "signatures": [
+        "string Name { get; }"
+      ],
+      "summary": "Gets the name the beacon is registered under, unique among the registered beacons, such as `curby`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBeacon.Name.get -> string!"
+      ]
+    },
+    {
+      "id": "irandomnessbeacon-getlatestpulseasync",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBeacon",
+      "member": "GetLatestPulseAsync",
+      "signatures": [
+        "ValueTask<BeaconPulse> GetLatestPulseAsync(CancellationToken cancellationToken)"
+      ],
+      "summary": "Fetches and verifies the beacon's latest pulse. It throws `BeaconException` when the beacon gave no verifiable pulse.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBeacon.GetLatestPulseAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.BeaconPulse!>"
+      ]
+    },
+    {
+      "id": "irandomnessbeacon-getpulseasync",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IRandomnessBeacon",
+      "member": "GetPulseAsync",
+      "signatures": [
+        "ValueTask<BeaconPulse> GetPulseAsync(long round, CancellationToken cancellationToken)"
+      ],
+      "summary": "Fetches and verifies the pulse of `round`. It throws `BeaconException`, with `BeaconError.PulseNotFound` when the round has not been published.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.IRandomnessBeacon.GetPulseAsync(long round, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.BeaconPulse!>"
+      ]
+    },
+    {
+      "id": "beaconpulse",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": null,
+      "signatures": [
+        "public sealed class BeaconPulse",
+        "public BeaconPulse(string beacon, string chain, long round, string id, DateTimeOffset timestamp, ReadOnlySpan<byte> randomness)"
+      ],
+      "summary": "One verified output of a randomness beacon. A beacon adapter returns a pulse only after it has verified it as its vendor's protocol specifies, so every pulse that reaches the library is authentic. Its randomness is public: everyone who reads the beacon sees the same bytes.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse",
+        "NCode.Randomness.BeaconPulse.BeaconPulse(string! beacon, string! chain, long round, string! id, System.DateTimeOffset timestamp, System.ReadOnlySpan<byte> randomness) -> void"
+      ]
+    },
+    {
+      "id": "beaconpulse-minrandomnesslength",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "MinRandomnessLength",
+      "signatures": [
+        "public const int MinRandomnessLength = 32"
+      ],
+      "summary": "The fewest random bytes a pulse may carry: enough to seed a generator at a security strength of 256 bits.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.BeaconPulse.MinRandomnessLength = 32 -> int"
+      ]
+    },
+    {
+      "id": "beaconpulse-beacon",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Beacon",
+      "signatures": [
+        "public string Beacon { get; }"
+      ],
+      "summary": "Gets the name the beacon is registered under.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Beacon.get -> string!"
+      ]
+    },
+    {
+      "id": "beaconpulse-chain",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Chain",
+      "signatures": [
+        "public string Chain { get; }"
+      ],
+      "summary": "Gets the vendor's identifier of the sequence the pulse belongs to.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Chain.get -> string!"
+      ]
+    },
+    {
+      "id": "beaconpulse-round",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Round",
+      "signatures": [
+        "public long Round { get; }"
+      ],
+      "summary": "Gets the pulse's position in its chain.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Round.get -> long"
+      ]
+    },
+    {
+      "id": "beaconpulse-id",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Id",
+      "signatures": [
+        "public string Id { get; }"
+      ],
+      "summary": "Gets the vendor's identifier of this pulse.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Id.get -> string!"
+      ]
+    },
+    {
+      "id": "beaconpulse-timestamp",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Timestamp",
+      "signatures": [
+        "public DateTimeOffset Timestamp { get; }"
+      ],
+      "summary": "Gets when the beacon published the pulse.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Timestamp.get -> System.DateTimeOffset"
+      ]
+    },
+    {
+      "id": "beaconpulse-randomness",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "Randomness",
+      "signatures": [
+        "public ReadOnlySpan<byte> Randomness { get; }"
+      ],
+      "summary": "Gets the pulse's public random bytes.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.BeaconPulse.Randomness.get -> System.ReadOnlySpan<byte>"
+      ]
+    },
+    {
+      "id": "beaconpulse-tostring",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconPulse",
+      "member": "ToString",
+      "signatures": [
+        "public override string ToString()"
+      ],
+      "summary": "Describes the pulse by its beacon, round and ID, as `curby round 1620423 (bafyri...)`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "override NCode.Randomness.BeaconPulse.ToString() -> string!"
+      ]
+    },
+    {
+      "id": "beaconerror",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconError",
+      "member": null,
+      "signatures": [
+        "public enum BeaconError",
+        "Unavailable = 0",
+        "PulseNotFound = 1",
+        "InvalidPulse = 2",
+        "StalePulse = 3",
+        "RolledBack = 4"
+      ],
+      "summary": "Why a beacon gave no usable pulse. `Unavailable` is a beacon that could not be reached, `PulseNotFound` a round it has not published, `InvalidPulse` an answer that failed verification, `StalePulse` a pulse too old or too far ahead, and `RolledBack` a round earlier than one already mixed in.",
+      "page": "/concepts/outages/",
+      "api": [
+        "NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.InvalidPulse = 2 -> NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.PulseNotFound = 1 -> NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.RolledBack = 4 -> NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.StalePulse = 3 -> NCode.Randomness.BeaconError",
+        "NCode.Randomness.BeaconError.Unavailable = 0 -> NCode.Randomness.BeaconError"
+      ]
+    },
+    {
+      "id": "beaconexception",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconException",
+      "member": null,
+      "signatures": [
+        "public sealed class BeaconException : Exception",
+        "public BeaconException(BeaconError error, string beacon, string message)",
+        "public BeaconException(BeaconError error, string beacon, string message, Exception innerException)"
+      ],
+      "summary": "A beacon gave no usable pulse. `Error` says why, for code to act on.",
+      "page": "/concepts/outages/",
+      "api": [
+        "NCode.Randomness.BeaconException",
+        "NCode.Randomness.BeaconException.BeaconException(NCode.Randomness.BeaconError error, string! beacon, string! message, System.Exception! innerException) -> void",
+        "NCode.Randomness.BeaconException.BeaconException(NCode.Randomness.BeaconError error, string! beacon, string! message) -> void"
+      ]
+    },
+    {
+      "id": "beaconexception-error",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconException",
+      "member": "Error",
+      "signatures": [
+        "public BeaconError Error { get; }"
+      ],
+      "summary": "Gets why the beacon gave no usable pulse.",
+      "page": "/concepts/outages/",
+      "api": [
+        "NCode.Randomness.BeaconException.Error.get -> NCode.Randomness.BeaconError"
+      ]
+    },
+    {
+      "id": "beaconexception-beacon",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconException",
+      "member": "Beacon",
+      "signatures": [
+        "public string Beacon { get; }"
+      ],
+      "summary": "Gets the name of the beacon.",
+      "page": "/concepts/outages/",
+      "api": [
+        "NCode.Randomness.BeaconException.Beacon.get -> string!"
+      ]
+    },
+    {
+      "id": "ibeaconstatus",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IBeaconStatus",
+      "member": null,
+      "signatures": [
+        "public interface IBeaconStatus"
+      ],
+      "summary": "What the beacon collector has done: for status pages, health checks, and code that waits for beacon entropy.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.IBeaconStatus"
+      ]
+    },
+    {
+      "id": "ibeaconstatus-mode",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IBeaconStatus",
+      "member": "Mode",
+      "signatures": [
+        "BeaconMode Mode { get; }"
+      ],
+      "summary": "Gets the mode the collector runs in.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.IBeaconStatus.Mode.get -> NCode.Randomness.BeaconMode"
+      ]
+    },
+    {
+      "id": "ibeaconstatus-beacons",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IBeaconStatus",
+      "member": "Beacons",
+      "signatures": [
+        "IReadOnlyList<BeaconState> Beacons { get; }"
+      ],
+      "summary": "Gets a snapshot of each registered beacon, in registration order.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.IBeaconStatus.Beacons.get -> System.Collections.Generic.IReadOnlyList<NCode.Randomness.BeaconState!>!"
+      ]
+    },
+    {
+      "id": "ibeaconstatus-waitforpulseasync",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "IBeaconStatus",
+      "member": "WaitForPulseAsync",
+      "signatures": [
+        "ValueTask WaitForPulseAsync(CancellationToken cancellationToken)"
+      ],
+      "summary": "Waits until at least one beacon pulse has been mixed into the generator. Generation never needs this; use it where a policy demands beacon entropy before some operation.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.IBeaconStatus.WaitForPulseAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask"
+      ]
+    },
+    {
+      "id": "beaconstate",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": null,
+      "signatures": [
+        "public sealed class BeaconState",
+        "public BeaconState()"
+      ],
+      "summary": "A snapshot of one beacon's state.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState",
+        "NCode.Randomness.BeaconState.BeaconState() -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-name",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "Name",
+      "signatures": [
+        "public required string Name { get; init; }"
+      ],
+      "summary": "Gets the name the beacon is registered under.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.Name.get -> string!",
+        "NCode.Randomness.BeaconState.Name.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-health",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "Health",
+      "signatures": [
+        "public BeaconHealth Health { get; init; }"
+      ],
+      "summary": "Gets how the beacon is doing.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.Health.get -> NCode.Randomness.BeaconHealth",
+        "NCode.Randomness.BeaconState.Health.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-lastpulse",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "LastPulse",
+      "signatures": [
+        "public BeaconPulse? LastPulse { get; init; }"
+      ],
+      "summary": "Gets the last pulse mixed in from the beacon, or `null` when there is none.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.LastPulse.get -> NCode.Randomness.BeaconPulse?",
+        "NCode.Randomness.BeaconState.LastPulse.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-lastattempt",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "LastAttempt",
+      "signatures": [
+        "public DateTimeOffset? LastAttempt { get; init; }"
+      ],
+      "summary": "Gets when the last fetch finished, or `null` when none has.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.LastAttempt.get -> System.DateTimeOffset?",
+        "NCode.Randomness.BeaconState.LastAttempt.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-lasterror",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "LastError",
+      "signatures": [
+        "public BeaconError? LastError { get; init; }"
+      ],
+      "summary": "Gets why the last fetch gave no usable pulse, or `null` when it gave one.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.LastError.get -> NCode.Randomness.BeaconError?",
+        "NCode.Randomness.BeaconState.LastError.init -> void"
+      ]
+    },
+    {
+      "id": "beaconstate-consecutivefailures",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconState",
+      "member": "ConsecutiveFailures",
+      "signatures": [
+        "public int ConsecutiveFailures { get; init; }"
+      ],
+      "summary": "Gets how many fetches in a row have given no usable pulse.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconState.ConsecutiveFailures.get -> int",
+        "NCode.Randomness.BeaconState.ConsecutiveFailures.init -> void"
+      ]
+    },
+    {
+      "id": "beaconhealth",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "BeaconHealth",
+      "member": null,
+      "signatures": [
+        "public enum BeaconHealth",
+        "Pending = 0",
+        "Healthy = 1",
+        "Unavailable = 2"
+      ],
+      "summary": "How a beacon is doing, as the collector last saw it. `Pending` is a beacon whose first fetch has not finished, `Healthy` one whose last fetch gave a verified, fresh pulse, and `Unavailable` one whose last fetch failed or whose pulse was refused. Random values stay secure while a beacon is unavailable.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.BeaconHealth",
+        "NCode.Randomness.BeaconHealth.Healthy = 1 -> NCode.Randomness.BeaconHealth",
+        "NCode.Randomness.BeaconHealth.Pending = 0 -> NCode.Randomness.BeaconHealth",
+        "NCode.Randomness.BeaconHealth.Unavailable = 2 -> NCode.Randomness.BeaconHealth"
+      ]
+    },
+    {
+      "id": "randomnesshealthchecksbuilderextensions",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHealthChecksBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class RandomnessHealthChecksBuilderExtensions",
+        "extension(IHealthChecksBuilder builder)"
+      ],
+      "summary": "Registers the randomness beacons' health check.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessHealthChecksBuilderExtensions",
+        "NCode.Randomness.RandomnessHealthChecksBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!)"
+      ]
+    },
+    {
+      "id": "randomnesshealthchecksbuilderextensions-beaconscheckname",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHealthChecksBuilderExtensions",
+      "member": "BeaconsCheckName",
+      "signatures": [
+        "public const string BeaconsCheckName = \"randomness-beacons\""
+      ],
+      "summary": "The name the health check is registered under.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "const NCode.Randomness.RandomnessHealthChecksBuilderExtensions.BeaconsCheckName = \"randomness-beacons\" -> string!"
+      ]
+    },
+    {
+      "id": "randomnesshealthchecksbuilderextensions-addrandomnessbeacons",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessHealthChecksBuilderExtensions",
+      "member": "AddRandomnessBeacons",
+      "signatures": [
+        "public static IHealthChecksBuilder AddRandomnessBeacons(this IHealthChecksBuilder builder, params IEnumerable<string> tags)"
+      ],
+      "summary": "Adds a check that reports `Degraded` while any beacon is unavailable. Tag it to keep it out of a liveness probe: a beacon is an external dependency.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessHealthChecksBuilderExtensions.extension(Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!).AddRandomnessBeacons(params System.Collections.Generic.IEnumerable<string!>! tags) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!",
+        "static NCode.Randomness.RandomnessHealthChecksBuilderExtensions.AddRandomnessBeacons(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, params System.Collections.Generic.IEnumerable<string!>! tags) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!"
+      ]
+    },
+    {
+      "id": "randomnessdiagnostics",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessDiagnostics",
+      "member": null,
+      "signatures": [
+        "public static class RandomnessDiagnostics"
+      ],
+      "summary": "The names under which the library reports its telemetry.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "NCode.Randomness.RandomnessDiagnostics"
+      ]
+    },
+    {
+      "id": "randomnessdiagnostics-metername",
+      "group": "beacons",
+      "package": "NCode.Randomness",
+      "type": "RandomnessDiagnostics",
+      "member": "MeterName",
+      "signatures": [
+        "public const string MeterName = \"NCode.Randomness\""
+      ],
+      "summary": "The name of the library's `Meter`.",
+      "page": "/guides/monitor-beacons/",
+      "api": [
+        "const NCode.Randomness.RandomnessDiagnostics.MeterName = \"NCode.Randomness\" -> string!"
+      ]
+    },
+    {
+      "id": "iverifiablerandomfactory",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "IVerifiableRandomFactory",
+      "member": null,
+      "signatures": [
+        "public interface IVerifiableRandomFactory"
+      ],
+      "summary": "Creates reproducible draws from the registered beacons' pulses.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.IVerifiableRandomFactory"
+      ]
+    },
+    {
+      "id": "iverifiablerandomfactory-createasync",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "IVerifiableRandomFactory",
+      "member": "CreateAsync",
+      "signatures": [
+        "ValueTask<VerifiableRandom> CreateAsync(string beacon, long round, string context, CancellationToken cancellationToken)"
+      ],
+      "summary": "Fetches and verifies the pulse of `round` from `beacon`, and derives its stream for `context`. Dispose the stream when the draw is done.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.IVerifiableRandomFactory.CreateAsync(string! beacon, long round, string! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<NCode.Randomness.VerifiableRandom!>"
+      ]
+    },
+    {
+      "id": "verifiablerandom",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": null,
+      "signatures": [
+        "public sealed class VerifiableRandom : IRandomSource, IDisposable"
+      ],
+      "summary": "A reproducible random stream derived from one verified beacon pulse and a context label: a draw that anyone can check. Its bytes are public to everyone who reads the pulse, so it is deliberately not an `ISecureRandom`.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom"
+      ]
+    },
+    {
+      "id": "verifiablerandom-maxcontextlength",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "MaxContextLength",
+      "signatures": [
+        "public const int MaxContextLength = 1024"
+      ],
+      "summary": "The longest context, in characters.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "const NCode.Randomness.VerifiableRandom.MaxContextLength = 1024 -> int"
+      ]
+    },
+    {
+      "id": "verifiablerandom-algorithm",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Algorithm",
+      "signatures": [
+        "public static string Algorithm { get; }"
+      ],
+      "summary": "Gets the name and version of the derivation and sampling algorithms: `ncode-randomness-draw/1`.",
+      "page": "/reference/draw-algorithm/",
+      "api": [
+        "static NCode.Randomness.VerifiableRandom.Algorithm.get -> string!"
+      ]
+    },
+    {
+      "id": "verifiablerandom-pulse",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Pulse",
+      "signatures": [
+        "public BeaconPulse Pulse { get; }"
+      ],
+      "summary": "Gets the pulse the stream is derived from.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom.Pulse.get -> NCode.Randomness.BeaconPulse!"
+      ]
+    },
+    {
+      "id": "verifiablerandom-context",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Context",
+      "signatures": [
+        "public string Context { get; }"
+      ],
+      "summary": "Gets the context label the stream is derived with.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom.Context.get -> string!"
+      ]
+    },
+    {
+      "id": "verifiablerandom-create",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Create",
+      "signatures": [
+        "public static VerifiableRandom Create(BeaconPulse pulse, string context)"
+      ],
+      "summary": "Derives the stream of `pulse` for `context`. The draw is as trustworthy as the pulse: this method verifies nothing, so pass a pulse a beacon adapter returned, or use `IVerifiableRandomFactory.CreateAsync`.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "static NCode.Randomness.VerifiableRandom.Create(NCode.Randomness.BeaconPulse! pulse, string! context) -> NCode.Randomness.VerifiableRandom!"
+      ]
+    },
+    {
+      "id": "verifiablerandom-fill",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Fill",
+      "signatures": [
+        "public void Fill(Span<byte> destination)"
+      ],
+      "summary": "Fills `destination` with the next bytes of the stream, read as consecutive 64-byte blocks. Consume the stream from one thread, in a fixed order: values depend on the order in which they are drawn.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom.Fill(System.Span<byte> destination) -> void"
+      ]
+    },
+    {
+      "id": "verifiablerandom-dispose",
+      "group": "draws",
+      "package": "NCode.Randomness",
+      "type": "VerifiableRandom",
+      "member": "Dispose",
+      "signatures": [
+        "public void Dispose()"
+      ],
+      "summary": "Zeroes the stream's buffered bytes and releases its generator. The stream cannot be read afterwards.",
+      "page": "/guides/run-a-public-draw/",
+      "api": [
+        "NCode.Randomness.VerifiableRandom.Dispose() -> void"
+      ]
+    },
+    {
+      "id": "curbyrandomnessbuilderextensions",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyRandomnessBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class CurbyRandomnessBuilderExtensions",
+        "extension(IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers the CURBy beacons.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)"
+      ]
+    },
+    {
+      "id": "curbyrandomnessbuilderextensions-addcurbybeacon",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyRandomnessBuilderExtensions",
+      "member": "AddCurbyBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddCurbyBeacon(this IRandomnessBuilder builder)",
+        "public static IRandomnessBuilder AddCurbyBeacon(this IRandomnessBuilder builder, Action<CurbyBeaconOptions> configure)",
+        "public static IRandomnessBuilder AddCurbyBeacon(this IRandomnessBuilder builder, IConfiguration configuration)"
+      ],
+      "summary": "Registers the CURBy beacon, named `curby`, with its default options (the CURBy-RNG chain served by `CurbyDefaults.BaseAddress`), options set by `configure` or options bound from `configuration`, such as `configuration.GetSection(\"RandomnessBeacons:Curby\")`. An unknown configuration key fails the host at start.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyBeacon(System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "curbyrandomnessbuilderextensions-addcurbyquantumbeacon",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyRandomnessBuilderExtensions",
+      "member": "AddCurbyQuantumBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddCurbyQuantumBeacon(this IRandomnessBuilder builder)",
+        "public static IRandomnessBuilder AddCurbyQuantumBeacon(this IRandomnessBuilder builder, Action<CurbyBeaconOptions> configure)",
+        "public static IRandomnessBuilder AddCurbyQuantumBeacon(this IRandomnessBuilder builder, IConfiguration configuration)"
+      ],
+      "summary": "Registers the CURBy-Q beacon, named `curby-q`, with its default options (the CURBy-Q and Bell chains served by `CurbyDefaults.BaseAddress`), options set by `configure` or options bound from `configuration`. It allows `curby-q` pulses up to 30 minutes old, unless `Randomness:MaxPulseAgeByBeacon:curby-q` or a longer `Randomness:MaxPulseAge` is set.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyQuantumBeacon() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyQuantumBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddCurbyQuantumBeacon(System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyQuantumBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyQuantumBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Curby.CurbyBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Curby.CurbyRandomnessBuilderExtensions.AddCurbyQuantumBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "curbydefaults",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": null,
+      "signatures": [
+        "public static class CurbyDefaults"
+      ],
+      "summary": "The CURBy beacon's published identifiers.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyDefaults"
+      ]
+    },
+    {
+      "id": "curbydefaults-beaconname",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "BeaconName",
+      "signatures": [
+        "public const string BeaconName = \"curby\""
+      ],
+      "summary": "The name the CURBy beacon is registered under: `curby`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.BeaconName = \"curby\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-rngchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "RngChainId",
+      "signatures": [
+        "public const string RngChainId = \"bafyriqci…\""
+      ],
+      "summary": "The content identifier of the CURBy-RNG chain, the beacon's randomness chain, which publishes a pulse every minute. A content identifier is the hash of the chain's document, which holds the chain's signing key, so pinning it pins the key: no server, mirror or TLS certificate can substitute another.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.RngChainId = \"bafyriqci6f3st2mg7gq733ho4zvvth32zpy2mtiylixwmhoz6d627eo3jfpmbxepe54u2zdvymonq5sp3armtm4rodxsynsirr5g3xsbd3q4s\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-quantumbeaconname",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "QuantumBeaconName",
+      "signatures": [
+        "public const string QuantumBeaconName = \"curby-q\""
+      ],
+      "summary": "The name the CURBy-Q beacon is registered under: `curby-q`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.QuantumBeaconName = \"curby-q\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-quantumchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "QuantumChainId",
+      "signatures": [
+        "public const string QuantumChainId = \"bafyriqhi…\""
+      ],
+      "summary": "The content identifier of the CURBy-Q (DIRNG) chain, whose rounds publish randomness extracted from a loophole-free Bell test. A content identifier is the hash of the chain's document, which holds the chain's signing key, so pinning it pins the key.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.QuantumChainId = \"bafyriqhijw5soalbtppuwwjbskfiriqy6swa5qd5trgbzx4nypnu7mp7iyhx7m2iin2nxnglmngvjgirzb7bvlisxq3uygoik7ozbybxnftiw\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-bellchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "BellChainId",
+      "signatures": [
+        "public const string BellChainId = \"bafyriqe3…\""
+      ],
+      "summary": "The content identifier of the Bell chain, on which the Bell experiment answers each CURBy-Q request with the hash of its data. Pinning it pins its signing key.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.BellChainId = \"bafyriqe3zxf5g4ifgqhea5zozxpdcfi5qcpkfpogtxzbizmmuxdjuzuq44a2cifbr7xplo4kcfsdz2c5pxfxektavrqxxb3nvbmclxz7qiz6e\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-baseaddress",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "BaseAddress",
+      "signatures": [
+        "public const string BaseAddress = \"https://api.entwine.me/\""
+      ],
+      "summary": "The base address of the HTTP API that serves CURBy's Twine chains.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.BaseAddress = \"https://api.entwine.me/\" -> string!"
+      ]
+    },
+    {
+      "id": "curbydefaults-httpclientname",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyDefaults",
+      "member": "HttpClientName",
+      "signatures": [
+        "public const string HttpClientName = \"NCode.Randomness.Curby\""
+      ],
+      "summary": "The name of the `HttpClient` the beacon uses, for a host that adds its own handlers, such as a proxy, with `services.AddHttpClient(CurbyDefaults.HttpClientName)`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyDefaults.HttpClientName = \"NCode.Randomness.Curby\" -> string!"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": null,
+      "signatures": [
+        "public sealed class CurbyBeaconOptions",
+        "public CurbyBeaconOptions()"
+      ],
+      "summary": "Settings for the CURBy and CURBy-Q beacons, which share them, bound from the `RandomnessBeacons:Curby` configuration section, beside the `Randomness` section of the core options, whose strict binding refuses any key it does not know.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.CurbyBeaconOptions() -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-sectionname",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "SectionName",
+      "signatures": [
+        "public const string SectionName = \"RandomnessBeacons:Curby\""
+      ],
+      "summary": "The configuration section these options bind from by convention.",
+      "page": "/reference/configuration/",
+      "api": [
+        "const NCode.Randomness.Curby.CurbyBeaconOptions.SectionName = \"RandomnessBeacons:Curby\" -> string!"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-baseaddress",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "BaseAddress",
+      "signatures": [
+        "public Uri BaseAddress { get; set; }"
+      ],
+      "summary": "The base address of the Twine HTTP API, an absolute `https` URL ending in `/`, with no user info, query or fragment. The default is `CurbyDefaults.BaseAddress`. A mirror serves the same data: every document is verified against `ChainId`, so a mirror can withhold pulses but never forge one.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.get -> System.Uri!",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.BaseAddress.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-chainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "ChainId",
+      "signatures": [
+        "public string ChainId { get; set; }"
+      ],
+      "summary": "The content identifier of the chain to trust. The default is `CurbyDefaults.RngChainId`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.get -> string!",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.ChainId.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-quantumchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "QuantumChainId",
+      "signatures": [
+        "public string QuantumChainId { get; set; }"
+      ],
+      "summary": "The content identifier of the CURBy-Q chain to trust. The default is `CurbyDefaults.QuantumChainId`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.get -> string!",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.QuantumChainId.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-bellchainid",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "BellChainId",
+      "signatures": [
+        "public string BellChainId { get; set; }"
+      ],
+      "summary": "The content identifier of the Bell chain to trust, on which the Bell experiment answers each CURBy-Q request. The default is `CurbyDefaults.BellChainId`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.BellChainId.get -> string!",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.BellChainId.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-maxresponsebytes",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "MaxResponseBytes",
+      "signatures": [
+        "public int MaxResponseBytes { get; set; }"
+      ],
+      "summary": "The largest response body read, in bytes. The default is 256 KiB; a pulse is about 4 KiB.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.get -> int",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.MaxResponseBytes.set -> void"
+      ]
+    },
+    {
+      "id": "curbybeaconoptions-chainretrydelay",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyBeaconOptions",
+      "member": "ChainRetryDelay",
+      "signatures": [
+        "public TimeSpan ChainRetryDelay { get; set; }"
+      ],
+      "summary": "How long a failed chain fetch is remembered: until it passes, a pulse on that chain fails at once, without another request. The default is 1 minute; it must be from 1 second to 1 day.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyBeaconOptions.ChainRetryDelay.get -> System.TimeSpan",
+        "NCode.Randomness.Curby.CurbyBeaconOptions.ChainRetryDelay.set -> void"
+      ]
+    },
+    {
+      "id": "curbypulseverifier",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyPulseVerifier",
+      "member": null,
+      "signatures": [
+        "public sealed class CurbyPulseVerifier",
+        "public CurbyPulseVerifier()",
+        "public CurbyPulseVerifier(string chainId)"
+      ],
+      "summary": "Verifies CURBy-RNG pulse documents that a caller supplies, without the network, by every check the CURBy beacon makes: chain, pulse and predecessor each hash to their CIDs and are signed by the chain's key, the predecessor is one round earlier, and the pulse's salt matches its precommitment. An instance is immutable and thread-safe.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyPulseVerifier",
+        "NCode.Randomness.Curby.CurbyPulseVerifier.CurbyPulseVerifier() -> void",
+        "NCode.Randomness.Curby.CurbyPulseVerifier.CurbyPulseVerifier(string! chainId) -> void"
+      ]
+    },
+    {
+      "id": "curbypulseverifier-verify",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyPulseVerifier",
+      "member": "Verify",
+      "signatures": [
+        "public BeaconPulse Verify(ReadOnlySpan<byte> chain, ReadOnlySpan<byte> pulse, ReadOnlySpan<byte> predecessor)"
+      ],
+      "summary": "Verifies a pulse against the pinned chain and returns it as the CURBy beacon returns it. Each document is the UTF-8 JSON the Twine API serves; `predecessor` is the pulse one round before `pulse`. It throws `BeaconException` when a document is malformed or any check fails.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyPulseVerifier.Verify(System.ReadOnlySpan<byte> chain, System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor) -> NCode.Randomness.BeaconPulse!"
+      ]
+    },
+    {
+      "id": "curbyquantumroundverifier",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyQuantumRoundVerifier",
+      "member": null,
+      "signatures": [
+        "public sealed class CurbyQuantumRoundVerifier",
+        "public CurbyQuantumRoundVerifier()",
+        "public CurbyQuantumRoundVerifier(string quantumChainId, string bellChainId)"
+      ],
+      "summary": "Verifies a CURBy-Q round from documents that a caller supplies, without the network, by every check the CURBy-Q beacon makes. The Bell-test certificate and the extraction are not verified. An instance is immutable and thread-safe.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyQuantumRoundVerifier",
+        "NCode.Randomness.Curby.CurbyQuantumRoundVerifier.CurbyQuantumRoundVerifier() -> void",
+        "NCode.Randomness.Curby.CurbyQuantumRoundVerifier.CurbyQuantumRoundVerifier(string! quantumChainId, string! bellChainId) -> void"
+      ]
+    },
+    {
+      "id": "curbyquantumroundverifier-verify",
+      "group": "curby",
+      "package": "NCode.Randomness.Curby",
+      "type": "CurbyQuantumRoundVerifier",
+      "member": "Verify",
+      "signatures": [
+        "public BeaconPulse Verify(ReadOnlySpan<byte> round, ReadOnlySpan<byte> parameters, IReadOnlyCollection<ReadOnlyMemory<byte>> documents)"
+      ],
+      "summary": "Verifies a round against the pinned chains and returns its pulse as the CURBy-Q beacon returns it. `round` is the JSON array of its pulses, `parameters` the extractor's parameters, and `documents` the chain and pulse documents the round links to, in any order. It throws `BeaconException` when a document is malformed or missing, the round has no randomness, or any check fails.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Curby.CurbyQuantumRoundVerifier.Verify(System.ReadOnlySpan<byte> round, System.ReadOnlySpan<byte> parameters, System.Collections.Generic.IReadOnlyCollection<System.ReadOnlyMemory<byte>>! documents) -> NCode.Randomness.BeaconPulse!"
+      ]
+    },
+    {
+      "id": "nistrandomnessbuilderextensions",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistRandomnessBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class NistRandomnessBuilderExtensions",
+        "extension(IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers the NIST beacon.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions",
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)"
+      ]
+    },
+    {
+      "id": "nistrandomnessbuilderextensions-addnistbeacon",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistRandomnessBuilderExtensions",
+      "member": "AddNistBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddNistBeacon(this IRandomnessBuilder builder)",
+        "public static IRandomnessBuilder AddNistBeacon(this IRandomnessBuilder builder, Action<NistBeaconOptions> configure)",
+        "public static IRandomnessBuilder AddNistBeacon(this IRandomnessBuilder builder, IConfiguration configuration)"
+      ],
+      "summary": "Registers the NIST beacon, named `nist`, with its default options (chain 2 of the NIST Randomness Beacon 2.0 served by `NistDefaults.BaseAddress`, verified against the certificates of `NistDefaults.CertificateIds`), options set by `configure` or options bound from `configuration`, such as `configuration.GetSection(\"RandomnessBeacons:Nist\")`. An unknown configuration key fails the host at start.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddNistBeacon() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddNistBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Nist.NistRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddNistBeacon(System.Action<NCode.Randomness.Nist.NistBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Nist.NistRandomnessBuilderExtensions.AddNistBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Nist.NistRandomnessBuilderExtensions.AddNistBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Nist.NistBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Nist.NistRandomnessBuilderExtensions.AddNistBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "nistdefaults",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": null,
+      "signatures": [
+        "public static class NistDefaults"
+      ],
+      "summary": "The NIST Randomness Beacon's published identifiers.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Nist.NistDefaults"
+      ]
+    },
+    {
+      "id": "nistdefaults-beaconname",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "BeaconName",
+      "signatures": [
+        "public const string BeaconName = \"nist\""
+      ],
+      "summary": "The name the NIST beacon is registered under: `nist`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Nist.NistDefaults.BeaconName = \"nist\" -> string!"
+      ]
+    },
+    {
+      "id": "nistdefaults-baseaddress",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "BaseAddress",
+      "signatures": [
+        "public const string BaseAddress = \"https://beacon.nist.gov/beacon/2.0/\""
+      ],
+      "summary": "The base address of the NIST Randomness Beacon 2.0 HTTP API.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Nist.NistDefaults.BaseAddress = \"https://beacon.nist.gov/beacon/2.0/\" -> string!"
+      ]
+    },
+    {
+      "id": "nistdefaults-chainindex",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "ChainIndex",
+      "signatures": [
+        "public const long ChainIndex = 2"
+      ],
+      "summary": "The index of the chain the beacon trusts: chain 2, which publishes a pulse every minute.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Nist.NistDefaults.ChainIndex = 2 -> long"
+      ]
+    },
+    {
+      "id": "nistdefaults-httpclientname",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "HttpClientName",
+      "signatures": [
+        "public const string HttpClientName = \"NCode.Randomness.Nist\""
+      ],
+      "summary": "The name of the `HttpClient` the beacon uses, for a host that adds its own handlers, such as a proxy, with `services.AddHttpClient(NistDefaults.HttpClientName)`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Nist.NistDefaults.HttpClientName = \"NCode.Randomness.Nist\" -> string!"
+      ]
+    },
+    {
+      "id": "nistdefaults-certificateids",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistDefaults",
+      "member": "CertificateIds",
+      "signatures": [
+        "public static ImmutableArray<string> CertificateIds { get; }"
+      ],
+      "summary": "The identifiers, oldest first, of the certificates NIST signs chain 2 with. An identifier is the SHA-512 hash of a certificate's DER encoding in lowercase hex, so pinning it pins the certificate and its key: no server, mirror or TLS certificate can substitute another.",
+      "page": "/reference/beacons/",
+      "api": [
+        "static NCode.Randomness.Nist.NistDefaults.CertificateIds.get -> System.Collections.Immutable.ImmutableArray<string!>"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": null,
+      "signatures": [
+        "public sealed class NistBeaconOptions",
+        "public NistBeaconOptions()"
+      ],
+      "summary": "Settings for the NIST beacon, bound from the `RandomnessBeacons:Nist` configuration section, beside the `Randomness` section of the core options, whose strict binding refuses any key it does not know.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions",
+        "NCode.Randomness.Nist.NistBeaconOptions.NistBeaconOptions() -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-sectionname",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "SectionName",
+      "signatures": [
+        "public const string SectionName = \"RandomnessBeacons:Nist\""
+      ],
+      "summary": "The configuration section these options bind from by convention.",
+      "page": "/reference/configuration/",
+      "api": [
+        "const NCode.Randomness.Nist.NistBeaconOptions.SectionName = \"RandomnessBeacons:Nist\" -> string!"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-baseaddress",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "BaseAddress",
+      "signatures": [
+        "public Uri BaseAddress { get; set; }"
+      ],
+      "summary": "The base address of the NIST HTTP API, an absolute `https` URL ending in `/`, with no user info, query or fragment. The default is `NistDefaults.BaseAddress`. A mirror serves the same data: every pulse is verified against the pinned certificates, so a mirror can withhold pulses but never forge one.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.BaseAddress.get -> System.Uri!",
+        "NCode.Randomness.Nist.NistBeaconOptions.BaseAddress.set -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-chainindex",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "ChainIndex",
+      "signatures": [
+        "public long ChainIndex { get; set; }"
+      ],
+      "summary": "The index of the chain to trust. The default is `NistDefaults.ChainIndex`.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.ChainIndex.get -> long",
+        "NCode.Randomness.Nist.NistBeaconOptions.ChainIndex.set -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-certificateids",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "CertificateIds",
+      "signatures": [
+        "public List<string> CertificateIds { get; set; }"
+      ],
+      "summary": "The identifiers of the certificates to trust, each the SHA-512 hash of a certificate's DER encoding in hex. When empty, the default, `NistDefaults.CertificateIds` applies; a configured list replaces the defaults.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.CertificateIds.get -> System.Collections.Generic.List<string!>!",
+        "NCode.Randomness.Nist.NistBeaconOptions.CertificateIds.set -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-certificateretrydelay",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "CertificateRetryDelay",
+      "signatures": [
+        "public TimeSpan CertificateRetryDelay { get; set; }"
+      ],
+      "summary": "How long a failed certificate fetch is remembered: until it passes, a pulse that names the certificate fails at once, without another request. The default is 1 minute; it must be from 1 second to 1 day.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.CertificateRetryDelay.get -> System.TimeSpan",
+        "NCode.Randomness.Nist.NistBeaconOptions.CertificateRetryDelay.set -> void"
+      ]
+    },
+    {
+      "id": "nistbeaconoptions-maxresponsebytes",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistBeaconOptions",
+      "member": "MaxResponseBytes",
+      "signatures": [
+        "public int MaxResponseBytes { get; set; }"
+      ],
+      "summary": "The largest response body read, in bytes. The default is 64 KiB; a pulse is about 2 KiB.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Nist.NistBeaconOptions.MaxResponseBytes.get -> int",
+        "NCode.Randomness.Nist.NistBeaconOptions.MaxResponseBytes.set -> void"
+      ]
+    },
+    {
+      "id": "nistpulseverifier",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistPulseVerifier",
+      "member": null,
+      "signatures": [
+        "public sealed class NistPulseVerifier",
+        "public NistPulseVerifier()",
+        "public NistPulseVerifier(long chainIndex, IReadOnlyCollection<string> certificateIds)"
+      ],
+      "summary": "Verifies NIST Randomness Beacon 2.0 pulse documents that a caller supplies, without the network, by every check the NIST beacon makes: the pinned chain and certificate, the certificate's hash, key size and validity, the pulse's version, cipher suite, signature and output value, and the predecessor's index, time, hash link and precommitment. An instance is immutable and thread-safe.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Nist.NistPulseVerifier",
+        "NCode.Randomness.Nist.NistPulseVerifier.NistPulseVerifier() -> void",
+        "NCode.Randomness.Nist.NistPulseVerifier.NistPulseVerifier(long chainIndex, System.Collections.Generic.IReadOnlyCollection<string!>! certificateIds) -> void"
+      ]
+    },
+    {
+      "id": "nistpulseverifier-verify",
+      "group": "nist",
+      "package": "NCode.Randomness.Nist",
+      "type": "NistPulseVerifier",
+      "member": "Verify",
+      "signatures": [
+        "public BeaconPulse Verify(ReadOnlySpan<byte> pulse, ReadOnlySpan<byte> predecessor, ReadOnlySpan<byte> certificate)",
+        "public BeaconPulse Verify(ReadOnlySpan<byte> pulse, ReadOnlySpan<byte> predecessor, ReadOnlySpan<byte> certificate, ReadOnlySpan<byte> predecessorCertificate)"
+      ],
+      "summary": "Verifies a pulse and its predecessor and returns the pulse as the NIST beacon returns it. Each document is as the NIST API serves it: the pulses in UTF-8 JSON, the certificate as PEM. The first overload takes one `certificate`, for a predecessor that names the same certificate; the second takes a `predecessorCertificate` too, as across a certificate rotation. It throws `BeaconException` when a document is malformed or any check fails.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Nist.NistPulseVerifier.Verify(System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor, System.ReadOnlySpan<byte> certificate) -> NCode.Randomness.BeaconPulse!",
+        "NCode.Randomness.Nist.NistPulseVerifier.Verify(System.ReadOnlySpan<byte> pulse, System.ReadOnlySpan<byte> predecessor, System.ReadOnlySpan<byte> certificate, System.ReadOnlySpan<byte> predecessorCertificate) -> NCode.Randomness.BeaconPulse!"
+      ]
+    },
+    {
+      "id": "drandrandomnessbuilderextensions",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandRandomnessBuilderExtensions",
+      "member": null,
+      "signatures": [
+        "public static class DrandRandomnessBuilderExtensions",
+        "extension(IRandomnessBuilder builder)"
+      ],
+      "summary": "Registers the drand beacon.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions",
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!)"
+      ]
+    },
+    {
+      "id": "drandrandomnessbuilderextensions-adddrandbeacon",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandRandomnessBuilderExtensions",
+      "member": "AddDrandBeacon",
+      "signatures": [
+        "public static IRandomnessBuilder AddDrandBeacon(this IRandomnessBuilder builder)",
+        "public static IRandomnessBuilder AddDrandBeacon(this IRandomnessBuilder builder, Action<DrandBeaconOptions> configure)",
+        "public static IRandomnessBuilder AddDrandBeacon(this IRandomnessBuilder builder, IConfiguration configuration)"
+      ],
+      "summary": "Registers the drand beacon, named `drand`, with its default options (the quicknet chain served by `DrandDefaults.BaseAddress`, verified against the chain's pinned group public key), options set by `configure` or options bound from `configuration`, such as `configuration.GetSection(\"RandomnessBeacons:Drand\")`. An unknown configuration key fails the host at start.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddDrandBeacon() -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddDrandBeacon(Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.extension(NCode.Randomness.IRandomnessBuilder!).AddDrandBeacon(System.Action<NCode.Randomness.Drand.DrandBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.AddDrandBeacon(this NCode.Randomness.IRandomnessBuilder! builder, Microsoft.Extensions.Configuration.IConfiguration! configuration) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.AddDrandBeacon(this NCode.Randomness.IRandomnessBuilder! builder, System.Action<NCode.Randomness.Drand.DrandBeaconOptions!>! configure) -> NCode.Randomness.IRandomnessBuilder!",
+        "static NCode.Randomness.Drand.DrandRandomnessBuilderExtensions.AddDrandBeacon(this NCode.Randomness.IRandomnessBuilder! builder) -> NCode.Randomness.IRandomnessBuilder!"
+      ]
+    },
+    {
+      "id": "dranddefaults",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": null,
+      "signatures": [
+        "public static class DrandDefaults"
+      ],
+      "summary": "The drand quicknet chain's published constants.",
+      "page": "/reference/beacons/",
+      "api": [
+        "NCode.Randomness.Drand.DrandDefaults"
+      ]
+    },
+    {
+      "id": "dranddefaults-beaconname",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "BeaconName",
+      "signatures": [
+        "public const string BeaconName = \"drand\""
+      ],
+      "summary": "The name the drand beacon is registered under: `drand`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.BeaconName = \"drand\" -> string!"
+      ]
+    },
+    {
+      "id": "dranddefaults-baseaddress",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "BaseAddress",
+      "signatures": [
+        "public const string BaseAddress = \"https://api.drand.sh/\""
+      ],
+      "summary": "The base address of the drand HTTP API.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.BaseAddress = \"https://api.drand.sh/\" -> string!"
+      ]
+    },
+    {
+      "id": "dranddefaults-chainhash",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "ChainHash",
+      "signatures": [
+        "public const string ChainHash = \"52db9ba7…\""
+      ],
+      "summary": "The hash of the quicknet chain, in lowercase hex: its identifier in the HTTP API.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.ChainHash = \"52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971\" -> string!"
+      ]
+    },
+    {
+      "id": "dranddefaults-publickey",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "PublicKey",
+      "signatures": [
+        "public const string PublicKey = \"83cf0f28…\""
+      ],
+      "summary": "The quicknet chain's pinned group public key: a compressed G2 point in lowercase hex. Every round is verified against it, so no server or mirror can substitute another.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.PublicKey = \"83cf0f2896adee7eb8b5f01fcad3912212c437e0073e911fb90022d3e760183c8c4b450b6a0a6c3ac6a5776a2d1064510d1fec758c921cc22b0e17e63aaf4bcb5ed66304de9cf809bd274ca73bab4af5a6e9c76a4bc09e76eae8991ef5ece45a\" -> string!"
+      ]
+    },
+    {
+      "id": "dranddefaults-genesistime",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "GenesisTime",
+      "signatures": [
+        "public const long GenesisTime = 1692803367"
+      ],
+      "summary": "The time of round 1, in Unix seconds.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.GenesisTime = 1692803367 -> long"
+      ]
+    },
+    {
+      "id": "dranddefaults-period",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "Period",
+      "signatures": [
+        "public const int Period = 3"
+      ],
+      "summary": "The seconds between rounds.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.Period = 3 -> int"
+      ]
+    },
+    {
+      "id": "dranddefaults-httpclientname",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandDefaults",
+      "member": "HttpClientName",
+      "signatures": [
+        "public const string HttpClientName = \"NCode.Randomness.Drand\""
+      ],
+      "summary": "The name of the `HttpClient` the beacon uses, for a host that adds its own handlers, such as a proxy, with `services.AddHttpClient(DrandDefaults.HttpClientName)`.",
+      "page": "/reference/beacons/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandDefaults.HttpClientName = \"NCode.Randomness.Drand\" -> string!"
+      ]
+    },
+    {
+      "id": "drandbeaconoptions",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandBeaconOptions",
+      "member": null,
+      "signatures": [
+        "public sealed class DrandBeaconOptions",
+        "public DrandBeaconOptions()"
+      ],
+      "summary": "Settings for the drand beacon, bound from the `RandomnessBeacons:Drand` configuration section, beside the `Randomness` section of the core options, whose strict binding refuses any key it does not know.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Drand.DrandBeaconOptions",
+        "NCode.Randomness.Drand.DrandBeaconOptions.DrandBeaconOptions() -> void"
+      ]
+    },
+    {
+      "id": "drandbeaconoptions-sectionname",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandBeaconOptions",
+      "member": "SectionName",
+      "signatures": [
+        "public const string SectionName = \"RandomnessBeacons:Drand\""
+      ],
+      "summary": "The configuration section these options bind from by convention.",
+      "page": "/reference/configuration/",
+      "api": [
+        "const NCode.Randomness.Drand.DrandBeaconOptions.SectionName = \"RandomnessBeacons:Drand\" -> string!"
+      ]
+    },
+    {
+      "id": "drandbeaconoptions-baseaddress",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandBeaconOptions",
+      "member": "BaseAddress",
+      "signatures": [
+        "public Uri BaseAddress { get; set; }"
+      ],
+      "summary": "The base address of the drand HTTP API, an absolute `https` URL ending in `/`, with no user info, query or fragment. The default is `DrandDefaults.BaseAddress`. A mirror serves the same data: every round is verified against the pinned group key, so a mirror can withhold rounds but never forge one.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Drand.DrandBeaconOptions.BaseAddress.get -> System.Uri!",
+        "NCode.Randomness.Drand.DrandBeaconOptions.BaseAddress.set -> void"
+      ]
+    },
+    {
+      "id": "drandbeaconoptions-maxresponsebytes",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandBeaconOptions",
+      "member": "MaxResponseBytes",
+      "signatures": [
+        "public int MaxResponseBytes { get; set; }"
+      ],
+      "summary": "The largest response body read, in bytes. The default is 16 KiB; a round is about 200 bytes.",
+      "page": "/reference/configuration/",
+      "api": [
+        "NCode.Randomness.Drand.DrandBeaconOptions.MaxResponseBytes.get -> int",
+        "NCode.Randomness.Drand.DrandBeaconOptions.MaxResponseBytes.set -> void"
+      ]
+    },
+    {
+      "id": "drandroundverifier",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandRoundVerifier",
+      "member": null,
+      "signatures": [
+        "public sealed class DrandRoundVerifier",
+        "public DrandRoundVerifier()"
+      ],
+      "summary": "Verifies drand quicknet round documents that a caller supplies, without the network, by every check the drand beacon makes: the round's signature must be a point of G1 other than the identity and verify against the pinned group public key for the round number, and a `randomness` member, when present, must be the SHA-256 of the signature. An instance is immutable and thread-safe.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Drand.DrandRoundVerifier",
+        "NCode.Randomness.Drand.DrandRoundVerifier.DrandRoundVerifier() -> void"
+      ]
+    },
+    {
+      "id": "drandroundverifier-verify",
+      "group": "drand",
+      "package": "NCode.Randomness.Drand",
+      "type": "DrandRoundVerifier",
+      "member": "Verify",
+      "signatures": [
+        "public BeaconPulse Verify(ReadOnlySpan<byte> round)"
+      ],
+      "summary": "Verifies a round against the pinned chain and returns it as the drand beacon returns it. `round` is the round document, as the drand API serves it, in UTF-8 JSON. It throws `BeaconException` when the document is malformed or a check fails.",
+      "page": "/guides/check-a-draw/",
+      "api": [
+        "NCode.Randomness.Drand.DrandRoundVerifier.Verify(System.ReadOnlySpan<byte> round) -> NCode.Randomness.BeaconPulse!"
+      ]
+    }
+  ]
+}

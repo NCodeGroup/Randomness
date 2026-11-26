@@ -1,0 +1,94 @@
+---
+title: Check a draw offline
+description: Recompute a published draw from the documents its beacon served, without the network, and confirm they are the committed round.
+---
+
+import { Pitfalls } from '@ncodegroup/docs/components';
+import EntryCard from '@site/components/EntryCard.astro';
+import EntryField from '@site/components/EntryField.astro';
+
+A published draw is only worth trusting when anyone can check it, and the vendor that served the round may stop serving it long before someone wants to. The documents a beacon served for the round are enough: each beacon adapter has a verifier that makes every check its beacon makes, with no network, and returns the pulse the beacon returns for that round. This page shows how to save the documents, how to verify them for each beacon, how to compare the result with the commitment, and what to watch for.
+
+## Save the documents
+
+Save every document byte for byte, exactly as the vendor's API served it, and publish or archive them with the result.
+
+<EntryCard title="`curby`">
+<EntryField label="Verifier">`CurbyPulseVerifier`</EntryField>
+<EntryField label="Documents">the chain, the pulse and its predecessor</EntryField>
+</EntryCard>
+<EntryCard title="`curby-q`">
+<EntryField label="Verifier">`CurbyQuantumRoundVerifier`</EntryField>
+<EntryField label="Documents">the round, its parameters and the documents it links to</EntryField>
+</EntryCard>
+<EntryCard title="`nist`">
+<EntryField label="Verifier">`NistPulseVerifier`</EntryField>
+<EntryField label="Documents">the pulse, its predecessor and its certificate</EntryField>
+</EntryCard>
+<EntryCard title="`drand`">
+<EntryField label="Verifier">`DrandRoundVerifier`</EntryField>
+<EntryField label="Documents">the round</EntryField>
+</EntryCard>
+
+The CURBy chain is at `https://api.entwine.me/chains/<chain>`, its pulse at `.../chains/<chain>/pulses/<round>` and the predecessor at `.../chains/<chain>/pulses/<round - 1>`. A drand round is at `https://api.drand.sh/<chain hash>/public/<round>`. [Reproducible Draws](https://github.com/NCodeGroup/Randomness/blob/main/docs/draws.md) lists every URL, including the CURBy-Q and NIST documents.
+
+## CURBy
+
+`CurbyPulseVerifier`, in `NCode.Randomness.Curby`, takes the chain, the pulse and its predecessor.
+
+```cs snippet=CurbyVerify
+```
+
+## CURBy-Q
+
+`CurbyQuantumRoundVerifier`, in `NCode.Randomness.Curby`, takes the round, its parameters, and the chain and pulse documents the round links to, in any order. It checks the round as CURBy's client does, but it leaves the Bell-test certificate and the extraction to `curby_verify`, [as ADR-1007 records](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1007-curby-q-rounds-are-verified-as-curbys-client-verifies-them-and-their-extraction-is-left-to-curby-verify.md).
+
+```cs snippet=CurbyQuantumVerify
+```
+
+## NIST
+
+`NistPulseVerifier`, in `NCode.Randomness.Nist`, takes the pulse, its predecessor and the certificate the pulse names. When the predecessor names another certificate, as across a certificate rotation, pass the predecessor's certificate too.
+
+```cs snippet=NistVerify
+```
+
+## drand
+
+`DrandRoundVerifier`, in `NCode.Randomness.Drand`, takes the round. The quicknet chain's key is a constant, so it needs no chain document.
+
+```cs snippet=DrandVerify
+```
+
+## Compare with the commitment
+
+A verifier proves the documents are authentic, not that they are the round the draw committed to. Compare the pulse's beacon, `Round` and `Id` with the ones published before the round existed.
+
+```cs snippet=SiteCheckADrawCompare
+```
+
+Every verifier makes its beacon's checks against the same pinned anchor, and throws `BeaconException` with `InvalidPulse` when any check fails. No check depends on the clock: a NIST certificate must cover the pulse's timestamp, not today, so a draw stays checkable after its certificate expires. [Supplied beacon documents are verified offline by each beacon's own checks](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1013-supplied-beacon-documents-are-verified-offline-by-each-beacons-own-checks.md) records why.
+
+## Pitfalls
+
+<Pitfalls>
+
+- **Trusting a verified pulse of another round.**
+  - *You write* `VerifiableRandom.Create(pulse, context)` straight after a verifier returns.
+  - *What happens:* the pulse is authentic, but it may be another round than the draw committed to, so the draw is not the published one.
+  - *Write instead:* compare the pulse's `Beacon`, `Round` and `Id` with the commitment before you draw.
+- **Re-encoding a document.**
+  - *You write* a document parsed and saved again, such as pretty-printed JSON.
+  - *What happens:* its hash and signature no longer match, so the verifier throws `BeaconException` with `InvalidPulse`.
+  - *Write instead:* save each document byte for byte, as the vendor's API served it.
+- **Expecting the CURBy-Q check to cover the Bell test.**
+  - *You write* `CurbyQuantumRoundVerifier` and treat a returned pulse as a checked Bell test.
+  - *What happens:* it checks the round as CURBy's client does, so the Bell-test certificate and the extraction are not checked.
+  - *Write instead:* run `curby_verify` on the round when you need those checked.
+
+</Pitfalls>
+
+## Next steps
+
+- [Run a public draw](/guides/run-a-public-draw/) shows how to commit to a round and publish the result you check here.
+- [Add beacons](/guides/add-beacons/) shows how to register the beacons a draw reads.

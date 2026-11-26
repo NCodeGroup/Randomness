@@ -1,0 +1,42 @@
+---
+title: When a beacon is down
+description: "An outage degrades, never fails: how the collector retries, what it reports, and the one setting that makes the host wait."
+---
+
+import EntryCard from '@site/components/EntryCard.astro';
+import EntryField from '@site/components/EntryField.astro';
+
+A beacon can be slow, down for maintenance, or answer with data that fails verification. This page explains what the library does then, how it retries, and what it reports.
+
+## Degrade, never fail
+
+A beacon outage never stops an application. Random values stay secure from the operating system's generator alone, because a beacon's pulse is mixed into it and never used alone for secrets. The health check reports `Degraded`, never `Unhealthy`, since generation stays secure. [ADR-1002](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1002-beacons-are-adapters-collected-in-the-background-and-an-outage-degrades-never-fails.md) records the decision.
+
+## How the collector retries
+
+The collector runs one loop per beacon, so a slow beacon delays no other and no caller.
+
+- Each fetch has its own timeout, `FetchTimeout`, 30 seconds by default.
+- After a success the loop waits `RefreshInterval`, one minute by default.
+- Failures back off exponentially from `RefreshInterval` up to `MaxRetryDelay`, 15 minutes by default, and each wait is scaled by a random factor in [0.5, 1).
+- Each adapter's HTTP client adds its own layer: an attempt may take 10 seconds, a request 25 seconds in total, with 2 retries, and a circuit breaker samples failures over 60 seconds.
+
+The first success ends the back-off, and the loop returns to `RefreshInterval`.
+
+## What is reported
+
+An outage is logged once when it starts and once when it ends, not on every failed attempt. Every fetch is counted by `ncode.randomness.beacon.pulses`, tagged with the beacon and the outcome.
+
+A failure carries one of five `BeaconError` values, and `BeaconException` carries the `Error` and the `Beacon` that failed:
+
+<EntryCard>
+<EntryField label="`Unavailable`">The beacon could not be reached or did not answer in time.</EntryField>
+<EntryField label="`PulseNotFound`">The beacon has no pulse for the requested round.</EntryField>
+<EntryField label="`InvalidPulse`">The beacon's answer was malformed or failed verification, such as a bad signature or hash: it is never used.</EntryField>
+<EntryField label="`StalePulse`">The pulse is older than `MaxPulseAge` or the beacon's `MaxPulseAgeByBeacon` entry, or dated further ahead than `MaxClockSkew`.</EntryField>
+<EntryField label="`RolledBack`">The pulse's round is earlier than one already mixed in, as a replayed or rolled-back answer would be.</EntryField>
+</EntryCard>
+
+## Waiting for a first pulse
+
+By default the host does not wait for a beacon. Set `RequireInitialPulse` when a policy demands beacon input: the host then fails to start unless a pulse is mixed in within `InitialPulseTimeout`, 30 seconds by default. [Choose a mode](/guides/choose-a-mode/) says when that is right, and which modes fetch at all.

@@ -1,0 +1,70 @@
+---
+title: Draw unbiased values
+description: Integers in any range for every integer type, fractions, booleans, shuffles, choices, strings, and a System.Random for older APIs.
+---
+
+import { Pitfalls } from '@ncodegroup/docs/components';
+
+A die roll, a raffle winner or a shuffled deck is only fair if every outcome has the same chance, and the usual shortcuts, such as a modulo of a random number, quietly favor some outcomes. The draw methods of `NCode.Randomness` are unbiased: each takes its bytes from a random source and turns them into a value without favoring any. This page shows how to draw integers in a range, fractions and booleans, how to shuffle a list and pick from it, how to build text from an alphabet, how to pass a `System.Random` to code that needs one, and what to watch for.
+
+## Integers in a range
+
+`NextInteger` draws an integer from a range. The lower bound is inclusive and the upper bound is exclusive, so `NextInteger(1, 7)` is a die roll that returns 1 to 6, and `NextInteger(10)` returns 0 to 9. `NextInteger<T>()` with no bounds draws from every value of the type.
+
+```cs snippet=SiteDrawValuesRange
+```
+
+It is one generic method for every fixed-size integer type, from `byte` to `UInt128`, signed or unsigned. The range is sampled by rejection: the method draws just enough random bits for the range and tries again when the value falls outside it, so every number in the range has the same chance. It never reduces a random number with a modulo.
+
+## Fractions and booleans
+
+`NextDouble` returns a `double` in [0, 1) with all 53 bits of its mantissa random, `NextSingle` returns a `float` in [0, 1) with 24 random bits, and `NextBoolean` returns `true` or `false` with equal probability.
+
+```cs snippet=SiteDrawValuesFractions
+```
+
+## Shuffle and choose
+
+`Shuffle` reorders a span in place with the Fisher–Yates algorithm, so every order is equally likely. `GetItem` returns one of the values you give it, and `GetItems` fills a span with values chosen independently, so a value can repeat.
+
+```cs snippet=SiteDrawValuesShuffle
+```
+
+## Text from an alphabet
+
+`GetString` builds a string from an alphabet you choose, one unbiased choice per character. [Make a key, token or code](/guides/make-a-secret/) shows it making a recovery code.
+
+## Code that takes a System.Random
+
+Some APIs take a `System.Random`. `AsRandom` returns one that draws every value from your source, so the code that takes it gets values that are as secret, and as thread-safe, as the source.
+
+```cs snippet=SiteDrawValuesAsRandom
+```
+
+## Any source
+
+These methods are extension members of `IRandomSource`, so they work on every source: an `ISecureRandom` that you inject, `SystemRandomSource.Instance`, and a `VerifiableRandom` that draws from a public beacon round. A `VerifiableRandom` is deterministic, so the same round and context give the same values to everyone who checks the draw.
+
+## Pitfalls
+
+<Pitfalls>
+
+- **Treating the upper bound as inclusive.**
+  - *You write* `random.NextInteger(1, 6)` for a die roll.
+  - *What happens:* the upper bound is exclusive, so the roll is 1 to 5 and never 6.
+  - *Write instead:* `random.NextInteger(1, 7)`.
+- **Reducing a random number with `%` for a range.**
+  - *You write* `random.NextInteger<int>() % 6` for a number from 0 to 5.
+  - *What happens:* the result is biased, because the range does not divide the values evenly, so some numbers come up more often, and a negative value gives a negative remainder.
+  - *Write instead:* `random.NextInteger(0, 6)`, which samples by rejection and returns every number with the same chance.
+- **Using `GetBytes` for a key.**
+  - *You write* `var key = random.GetBytes(32);` and keep the array.
+  - *What happens:* the array is neither pinned nor cleared, so the garbage collector can leave copies of the key in memory.
+  - *Write instead:* `Fill` a span that you clear, as [Make a key, token or code](/guides/make-a-secret/) shows.
+
+</Pitfalls>
+
+## Next steps
+
+- [Make a key, token or code](/guides/make-a-secret/) shows how to fill a key and build a token from an alphabet.
+- [Which API?](/start/which-api/) helps you pick the API that fits the value you need.

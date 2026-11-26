@@ -1,0 +1,73 @@
+---
+title: Add beacons
+description: Register CURBy, CURBy-Q, NIST and drand, bind their settings, and shape their HTTP clients.
+---
+
+import { Pitfalls } from '@ncodegroup/docs/components';
+
+A public beacon publishes a signed random value on a schedule, and a service that mixes it into its generator or recomputes a draw from it needs the beacon's adapter registered first. Each adapter package registers one beacon, and `AddRandomness()` returns the builder you add them to. This page shows how to register the four beacons, how to bind their settings from configuration, how to shape their HTTP clients, how to add a beacon of your own, and what to watch for.
+
+## Register the beacons
+
+Register several beacons, so that no single operator is trusted alone: each pulse is verified against its own beacon's chain, and the generator mixes in whatever the beacons deliver. Building a service provider fetches nothing; the background collector starts only when the host starts.
+
+```cs snippet=SiteAddBeaconsAll
+```
+
+The beacons are named `curby`, `curby-q`, `nist` and `drand`. [Beacons](/reference/beacons/) lists what each one publishes and how its pulses are verified.
+
+## Bind settings from configuration
+
+Every adapter takes its own section under `RandomnessBeacons`, and the core takes `Randomness`. A setting such as a mirror's address then lives in configuration, not in code. A mirror can withhold pulses, but it can never forge one, because every pulse is verified against the beacon's own signature.
+
+```cs snippet=SiteAddBeaconsConfiguration
+```
+
+The same setting in `appsettings.json`:
+
+```json
+{
+  "RandomnessBeacons": {
+    "Curby": {
+      "BaseAddress": "https://twine-mirror.example/"
+    }
+  }
+}
+```
+
+The core binds the `Randomness` section strictly, so a key it does not know fails the host at start. Each adapter binds its own section under `RandomnessBeacons` the same way.
+
+## Shape the HTTP client
+
+Each adapter fetches through a named `HttpClient`, such as `CurbyDefaults.HttpClientName`. Add to that client with `AddHttpClient` and the name, for example to set a header that identifies your service. The adapter's client has retries, an attempt timeout and a total timeout, and a circuit breaker, so you add to them and need not rebuild them.
+
+```cs snippet=SiteAddBeaconsHttpClient
+```
+
+## A beacon of your own
+
+To add a beacon that no adapter covers, implement `IRandomnessBeacon` and register it with `AddBeacon<TBeacon>()` on the builder. Verify every pulse against a pinned anchor, as [Beacon adapters](https://github.com/NCodeGroup/Randomness/blob/main/docs/beacon-adapters.md) says, so that a pulse the beacon's operator did not sign is never accepted.
+
+## Pitfalls
+
+<Pitfalls>
+
+- **Putting an adapter's key under `Randomness`.**
+  - *You write* `"Randomness": { "Curby": { "BaseAddress": "https://twine-mirror.example/" } }`.
+  - *What happens:* the core binds `Randomness` strictly, so the unknown key fails the host at start.
+  - *Write instead:* put it under `RandomnessBeacons:Curby`, and pass that section to `AddCurbyBeacon`.
+- **Giving a beacon an address that is not a plain https address.**
+  - *You write* an `http://` address, or one with user info, a query or a fragment, such as `https://user:secret@twine-mirror.example/?key=1`.
+  - *What happens:* the options are refused when the host starts.
+  - *Write instead:* an absolute `https://` address that ends in `/`, with nothing else.
+- **Replacing an adapter's primary handler.**
+  - *You write* `ConfigurePrimaryHttpMessageHandler` on an adapter's client.
+  - *What happens:* it replaces the adapter's handler, which refuses redirects, so the client follows redirects again.
+  - *Write instead:* `ConfigureHttpClient` or `AddHttpMessageHandler`.
+
+</Pitfalls>
+
+## Next steps
+
+- [Beacons](/reference/beacons/) compares the four beacons and their pulses.
+- [Run a public draw](/guides/run-a-public-draw/) shows how to commit to a round and draw from it.

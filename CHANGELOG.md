@@ -52,7 +52,19 @@ product does.
 - The CURBy and NIST adapters fetch each chain or certificate once for every caller, under its own 30-second timeout,
   and remember a failed fetch for `RandomnessBeacons:Curby:ChainRetryDelay` or
   `RandomnessBeacons:Nist:CertificateRetryDelay` (default 1 minute) before they try it again.
-- The `NCode.Randomness` package's readme links each beacon adapter package on nuget.org.
+- Each package's readme shows samples that are compiled, passing tests copied in by MarkdownSnippets, links the
+  documentation site, and, for `NCode.Randomness`, links each beacon adapter package on nuget.org
+  ([ADR-1014](docs/decisions/1014-readme-samples-are-compiled-tests-that-markdownsnippets-copies-into-the-readmes.md)).
+- A documentation site, https://randomness.ncode.io/, which is each package's project page on nuget.org, built from
+  `docs/site/` by the shared NCodeGroup/docs toolchain and published from the default branch: a quick start, a guide
+  to choosing an API, guides to making secrets, drawing values, adding beacons, choosing a mode, running without a
+  host, running and checking public draws and monitoring the beacons, the concepts behind them, a reference of every
+  beacon and setting, the draw algorithm, and an API map of every public member that the gate checks against the
+  packages' public API; every C# sample on it is a compiled, passing test
+  ([ADR-1015](docs/decisions/1015-the-documentation-site-is-narrative-guides-built-by-a-shared-toolchain-outside-this-repository.md),
+  [ADR-1016](docs/decisions/1016-site-samples-are-compiled-tests-in-a-project-of-their-own-included-by-key-when-the-site-is-built.md),
+  [ADR-1018](docs/decisions/1018-the-documentation-site-is-published-to-github-pages-from-the-default-branch.md),
+  [ADR-1019](docs/decisions/1019-the-documentation-site-is-served-at-randomness-ncode-io.md)).
 
 ### Security
 

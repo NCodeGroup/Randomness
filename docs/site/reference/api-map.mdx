@@ -1,0 +1,51 @@
+---
+title: API map
+description: Every public type and member, with its signature, what it does and the page that explains it.
+---
+
+import ApiMap from '@site/components/ApiMap.astro';
+
+This page lists every public type and member of the four packages `NCode.Randomness`, `NCode.Randomness.Curby`, `NCode.Randomness.Nist` and `NCode.Randomness.Drand`. The gate fails when this map and the four packages' PublicAPI files differ, so every member that ships has an entry.
+
+## Secure random values
+
+<ApiMap group="secure" />
+
+## Registration and hosting
+
+<ApiMap group="registration" />
+
+## Beacons and their status
+
+<ApiMap group="beacons" />
+
+## Reproducible draws
+
+<ApiMap group="draws" />
+
+## NCode.Randomness.Curby
+
+<ApiMap group="curby" />
+
+## NCode.Randomness.Nist
+
+<ApiMap group="nist" />
+
+## NCode.Randomness.Drand
+
+<ApiMap group="drand" />
+
+## Extension members
+
+`RandomSourceExtensions`, `RandomnessServiceCollectionExtensions`, `RandomnessBuilderExtensions`, `RandomnessHealthChecksBuilderExtensions`, `CurbyRandomnessBuilderExtensions`, `NistRandomnessBuilderExtensions` and `DrandRandomnessBuilderExtensions` are C# 14 `extension` blocks compiled to ordinary static extension methods, so a project on an earlier C# version calls them the same way, or in their static form.
+
+## Packages
+
+```sh
+dotnet add package NCode.Randomness
+dotnet add package NCode.Randomness.Curby
+dotnet add package NCode.Randomness.Nist
+dotnet add package NCode.Randomness.Drand
+```
+
+Each package targets `net10.0`, and nuget.org lists its target framework on its Frameworks tab.

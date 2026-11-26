@@ -1,0 +1,71 @@
+---
+title: Monitor the beacons
+description: Report beacon health to a readiness probe, read each beacon's state, and chart the pulses and reseeds.
+---
+
+import { Pitfalls } from '@ncodegroup/docs/components';
+import EntryCard from '@site/components/EntryCard.astro';
+import EntryField from '@site/components/EntryField.astro';
+
+A beacon is an external service, so it can be down while your application is fine: the generator keeps drawing from the operating system's source, and mixes beacon pulses in when they arrive. You still want to know when a beacon stops answering. This page shows how to report beacon health to a readiness probe, how to read each beacon's state, how to chart the pulses and reseeds, and what to watch for.
+
+## Health check
+
+`AddRandomnessBeacons` registers one health check, named `randomness-beacons`, on the health checks builder. Tag it `ready` so a readiness probe runs it.
+
+```cs snippet=SiteMonitorBeaconsHealth
+```
+
+The check is Healthy while every beacon works, and Degraded while a beacon is unavailable. It is never Unhealthy, because the generator keeps working without a beacon. It is Healthy with the message "Beacons are offline by configuration." when the mode is `Offline`.
+
+## Each beacon's state
+
+`IBeaconStatus` lists every registered beacon's state. `RandomnessHost.BeaconStatus` returns it, and it resolves from dependency injection too.
+
+```cs snippet=SiteMonitorBeaconsStatus
+```
+
+`Health` is `Pending` until a fetch finishes, `Healthy` when the last fetch gave a verified, fresh or unchanged pulse, and `Unavailable` when it failed or its pulse was refused. `LastPulse`, `LastError` and `LastAttempt` say what the beacon last returned, what went wrong and when it tried. `WaitForPulseAsync` waits until a pulse is mixed in, for a policy that demands beacon entropy before it draws.
+
+## Metrics
+
+The generator publishes two counters from the meter `NCode.Randomness` (`RandomnessDiagnostics.MeterName`), created through `IMeterFactory`, so subscribe to it with OpenTelemetry or `MeterListener`.
+
+<EntryCard title="`ncode.randomness.beacon.pulses`">
+<EntryField label="Attributes">`ncode.randomness.beacon`, `ncode.randomness.outcome` (`accepted`, `unchanged`, `unavailable`, `not_found`, `invalid`, `stale`, `rolled_back`)</EntryField>
+<EntryField label="Counts">one per fetch</EntryField>
+</EntryCard>
+<EntryCard title="`ncode.randomness.generator.reseeds`">
+<EntryField label="Attributes">`ncode.randomness.reseed.reason` (`beacon`, `interval`, `volume`)</EntryField>
+<EntryField label="Counts">one per shard reseed</EntryField>
+</EntryCard>
+
+Outbound calls to a beacon are measured by `System.Net.Http`'s own instruments on each adapter's named client. [Metrics and Traces](https://github.com/NCodeGroup/Randomness/blob/main/docs/metrics.md) is the full catalog.
+
+## Logs
+
+An outage is logged once when it starts and once when it ends, so a log search finds each outage without a line for every failed fetch.
+
+## Pitfalls
+
+<Pitfalls>
+
+- **Putting the check in a liveness probe.**
+  - *You write* `AddRandomnessBeacons()` and map every check to the liveness endpoint.
+  - *What happens:* a beacon outage, which restarting the process does not fix, restarts or flags every instance.
+  - *Write instead:* tag the check `ready`, as `AddRandomnessBeacons("ready")` does, and run only that tag in the readiness probe, because a beacon is an external dependency.
+- **Failing readiness on `Degraded`.**
+  - *You write* a readiness policy that treats `Degraded` as not ready.
+  - *What happens:* every instance leaves service when a beacon is down, although the generator keeps working.
+  - *Write instead:* keep ASP.NET Core's default, which maps `Degraded` to 200, and alert on the metrics instead.
+- **Calling `WaitForPulseAsync` with no timeout.**
+  - *You write* `await status.WaitForPulseAsync(CancellationToken.None)`.
+  - *What happens:* the call never returns while every beacon is unavailable.
+  - *Write instead:* pass a token that cancels, such as one from a `CancellationTokenSource` with a timeout.
+
+</Pitfalls>
+
+## Next steps
+
+- [Add beacons](/guides/add-beacons/) shows how to register the beacons you monitor.
+- [Choose a mode](/guides/choose-a-mode/) shows how the mode changes what the check reports.

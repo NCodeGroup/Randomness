@@ -1,0 +1,73 @@
+---
+title: Configuration
+description: "Every setting of the generator and the beacons, its default and its limits."
+---
+
+import EntryCard from '@site/components/EntryCard.astro';
+import EntryField from '@site/components/EntryField.astro';
+
+Every setting is bound strictly and validated when the host starts, so a misspelled key stops it instead of being ignored. Every `BaseAddress` is an absolute `https` URL ending in `/`, with no user info, query or fragment.
+
+## Randomness
+
+The generator and the beacon collector, bound from the `Randomness` section.
+
+<EntryCard>
+<EntryField label="`Mode`">Default: `Continuous`. How the beacons are used: `Continuous`, `InitializeOnly` or `Offline`.</EntryField>
+<EntryField label="`RefreshInterval`">Default: `00:01:00`. How often each beacon is asked for its latest pulse. At least 1 second.</EntryField>
+<EntryField label="`MaxRetryDelay`">Default: `00:15:00`. The longest wait between attempts while a beacon fails. At least `RefreshInterval`.</EntryField>
+<EntryField label="`FetchTimeout`">Default: `00:00:30`. How long one attempt to fetch a pulse may take. At least 1 millisecond.</EntryField>
+<EntryField label="`MaxPulseAge`">Default: `00:10:00`. The oldest a pulse may be, by its own timestamp, to be mixed in. At least 1 second.</EntryField>
+<EntryField label="`MaxPulseAgeByBeacon:<name>`">Default: empty. The oldest a pulse may be for the beacon of that name, in place of `MaxPulseAge`. Each at least 1 second. A name no registered beacon has fails the host.</EntryField>
+<EntryField label="`MaxClockSkew`">Default: `00:02:00`. How far a pulse's timestamp may lie ahead of this machine's clock. Zero or more.</EntryField>
+<EntryField label="`RequireInitialPulse`">Default: `false`. Whether the host fails to start unless a pulse is mixed in within `InitialPulseTimeout`. Not with `Offline`.</EntryField>
+<EntryField label="`InitialPulseTimeout`">Default: `00:00:30`. How long the host waits at start for the first pulse. At least 1 millisecond.</EntryField>
+<EntryField label="`ReseedInterval`">Default: `00:01:00`. The longest a generator shard runs before it reseeds from the operating system. At least 1 millisecond.</EntryField>
+<EntryField label="`ReseedAfterBytes`">Default: `1048576`. The most bytes a shard produces before it reseeds. At least 1.</EntryField>
+</EntryCard>
+
+Every period is at most `uint.MaxValue - 1` milliseconds, about 49.7 days.
+
+## RandomnessBeacons:Curby
+
+Both CURBy beacons, CURBy-RNG and CURBy-Q, read the `RandomnessBeacons:Curby` section.
+
+<EntryCard>
+<EntryField label="`BaseAddress`">Default: `https://api.entwine.me/`. The Twine API's address.</EntryField>
+<EntryField label="`ChainId`">Default: `CurbyDefaults.RngChainId`. The content identifier of the CURBy-RNG chain, which fixes its key.</EntryField>
+<EntryField label="`QuantumChainId`">Default: `CurbyDefaults.QuantumChainId`. The content identifier of the CURBy-Q chain.</EntryField>
+<EntryField label="`BellChainId`">Default: `CurbyDefaults.BellChainId`. The content identifier of the Bell chain that CURBy-Q rounds link to.</EntryField>
+<EntryField label="`MaxResponseBytes`">Default: `262144`. The most bytes read from one response. At least 1024.</EntryField>
+<EntryField label="`ChainRetryDelay`">Default: `00:01:00`. How long a failed chain fetch is remembered, so a pulse on that chain fails at once meanwhile. From 1 second to 1 day.</EntryField>
+</EntryCard>
+
+Each chain identifier is a Twine content identifier.
+
+## RandomnessBeacons:Nist
+
+<EntryCard>
+<EntryField label="`BaseAddress`">Default: `https://beacon.nist.gov/beacon/2.0/`. The beacon's address.</EntryField>
+<EntryField label="`ChainIndex`">Default: `2`. The index of the chain to trust. At least 1.</EntryField>
+<EntryField label="`CertificateIds`">Default: empty. The certificates to trust. Empty means `NistDefaults.CertificateIds` apply; a list replaces them. Each is a SHA-512 hex identifier, with no duplicates.</EntryField>
+<EntryField label="`CertificateRetryDelay`">Default: `00:01:00`. How long a failed certificate fetch is remembered, so a pulse that names it fails at once meanwhile. From 1 second to 1 day.</EntryField>
+<EntryField label="`MaxResponseBytes`">Default: `65536`. The most bytes read from one response. At least 1024.</EntryField>
+</EntryCard>
+
+## RandomnessBeacons:Drand
+
+<EntryCard>
+<EntryField label="`BaseAddress`">Default: `https://api.drand.sh/`. The drand relay's address.</EntryField>
+<EntryField label="`MaxResponseBytes`">Default: `16384`. The most bytes read from one response. At least 1024.</EntryField>
+</EntryCard>
+
+## HTTP clients
+
+Each adapter fetches through a named `HttpClient`: `NCode.Randomness.Curby`, `NCode.Randomness.Nist` and `NCode.Randomness.Drand`. Each has a standard resilience handler with a 10-second timeout for each attempt, 25 seconds in total, 2 retries, and a circuit breaker sampled over 60 seconds. To route a beacon through a proxy or change the handler, configure the client of that name with `services.AddHttpClient`.
+
+## Options in code
+
+Every options class has setters, so a beacon registers with an `Action<TOptions>` callback as well as a configuration section: `RandomnessOptions`, `CurbyBeaconOptions`, `NistBeaconOptions` and `DrandBeaconOptions`. The callback's values are validated when the host starts, as the section's are. [ADR-1006](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1006-options-classes-have-setters-for-the-options-pattern.md) gives the reason.
+
+## Next steps
+
+[Every beacon](/reference/beacons/) compares the beacons, and [Add beacons](/guides/add-beacons/) registers them.

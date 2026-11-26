@@ -1,0 +1,65 @@
+{
+  "$comment": "The ways to get random values from NCode.Randomness, for the numbered decision list on /start/which-api/ (UseCard.astro). `anchor` is the card's anchor on /start/which-api/. Text fields take `code` and [links](/x/).",
+  "uses": [
+    {
+      "id": "secure-random",
+      "anchor": "inject-isecurerandom",
+      "kind": "For secrets",
+      "name": "`ISecureRandom` from `AddRandomness()`",
+      "use": "Keys, tokens, salts, nonces, passwords and any value an attacker must not predict, in an application with dependency injection.",
+      "secrets": true,
+      "reproducible": false,
+      "injection": true,
+      "watchFor": "Fill a key into a span you clear; never keep it in the `byte[]` `GetBytes` returns.",
+      "guide": "/guides/make-a-secret/"
+    },
+    {
+      "id": "randomness-host",
+      "anchor": "build-a-randomnesshost",
+      "kind": "For secrets",
+      "name": "`RandomnessHost`",
+      "use": "The same generator and beacons in a console tool or library with no dependency injection.",
+      "secrets": true,
+      "reproducible": false,
+      "injection": false,
+      "watchFor": "Dispose it: disposing stops the beacon loops and zeroes the generator's state.",
+      "guide": "/guides/run-without-a-host/"
+    },
+    {
+      "id": "system",
+      "anchor": "use-the-system-generator",
+      "kind": "For secrets",
+      "name": "`SystemRandomSource.Instance`",
+      "use": "The operating system's generator behind the same API, with no beacon and nothing to dispose.",
+      "secrets": true,
+      "reproducible": false,
+      "injection": false,
+      "watchFor": "No beacon input is mixed in; register beacons with `AddRandomness()` or `RandomnessHost` for that.",
+      "guide": "/guides/draw-values/"
+    },
+    {
+      "id": "draw",
+      "anchor": "run-a-public-draw",
+      "kind": "For draws others check",
+      "name": "`IVerifiableRandomFactory`",
+      "use": "A raffle, audit sample or jury selection that anyone can recompute from a committed beacon round.",
+      "secrets": false,
+      "reproducible": true,
+      "injection": true,
+      "watchFor": "Commit to the round and the context before the round is published, and never derive a secret from a draw.",
+      "guide": "/guides/run-a-public-draw/"
+    },
+    {
+      "id": "verify",
+      "anchor": "check-a-draw-offline",
+      "kind": "For draws others check",
+      "name": "A beacon's verifier and `VerifiableRandom.Create`",
+      "use": "Recompute a published draw from the documents its beacon served, without the network.",
+      "secrets": false,
+      "reproducible": true,
+      "injection": false,
+      "watchFor": "A verifier proves the documents are authentic, not that they are the committed round: compare `Round` and `Id`.",
+      "guide": "/guides/check-a-draw/"
+    }
+  ]
+}

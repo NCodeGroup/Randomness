@@ -1,0 +1,60 @@
+---
+title: Run without a host
+description: Build the generator and its beacons in a console tool or library with no dependency injection, and dispose them when you are done.
+---
+
+import { Pitfalls } from '@ncodegroup/docs/components';
+
+A console tool, or a library that does not use dependency injection, has no generic host to compose the generator and run the beacon collection, and `SystemRandomSource.Instance` alone takes no beacon input. `RandomnessHost` composes the same generator, beacons and validation without one. This page shows how to build it, how to set its options in code, how to see its logs, how to dispose it, and what to watch for.
+
+## Build it
+
+`RandomnessHost.CreateBuilder` returns a builder that takes the same beacon extensions as `AddRandomness()` does, such as `AddCurbyBeacon()`. `CreateBuilder` takes nothing, an `Action<RandomnessOptions>` or a configuration section, as `AddRandomness` does. `BuildAsync` validates every setting, starts the collection and returns the host, whose `SecureRandom` is the generator. [The generator is composed without a host by a builder over a private service container](https://github.com/NCodeGroup/Randomness/blob/main/docs/decisions/1011-the-generator-is-composed-without-a-host-by-a-builder-over-a-private-service-container.md) records why.
+
+```cs snippet=WithoutDependencyInjection
+```
+
+## Options in code
+
+Pass an `Action<RandomnessOptions>` to set the options without configuration.
+
+```cs snippet=SiteRunWithoutAHostOptions
+```
+
+## See its logs
+
+The beacon collection logs through `ILogger`, and a host without a logging provider writes nothing. The builder's `Services` stays open, so add a provider before `BuildAsync`.
+
+```cs snippet=SiteRunWithoutAHostLogging
+```
+
+## Dispose it
+
+`DisposeAsync` stops the beacon collection, waiting up to 30 seconds, and disposes the generator, zeroing its state. A second call does nothing. Keep one host for the life of the application and dispose it when the application ends.
+
+```cs snippet=SiteRunWithoutAHostDisposed
+```
+
+## Pitfalls
+
+<Pitfalls>
+
+- **Never disposing the host.**
+  - *You write* `await using` nowhere, and drop the host when `Main` returns.
+  - *What happens:* the beacon loops keep running until the process exits, and the generator's state is never zeroed.
+  - *Write instead:* `await using var randomness = await builder.BuildAsync(cancellationToken);`, or call `DisposeAsync` when the application ends.
+- **Building a host per call.**
+  - *You write* `await using var randomness = await RandomnessHost.CreateBuilder().BuildAsync(token);` inside the method that needs a value.
+  - *What happens:* each host has its own generator and its own beacon loops, so every call seeds and starts them again.
+  - *Write instead:* build one host at start and keep it for the process, passing `randomness.SecureRandom` to whatever needs it.
+- **Using the generator after disposal.**
+  - *You write* `random.NextGuid();` after `randomness.DisposeAsync()`.
+  - *What happens:* it throws `ObjectDisposedException`, because disposing zeroed the generator's state.
+  - *Write instead:* draw values only while the host lives, and dispose it last.
+
+</Pitfalls>
+
+## Next steps
+
+- [Add beacons](/guides/add-beacons/) shows how to register the beacons and bind their settings.
+- [Choose a mode](/guides/choose-a-mode/) shows how to keep fetching, fetch once or contact no beacon.

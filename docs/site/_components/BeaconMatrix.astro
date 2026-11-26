@@ -1,0 +1,137 @@
+---
+// Copyright © NCode Group
+// SPDX-License-Identifier: Apache-2.0
+
+// The matrix on /reference/beacons/: every beacon against what it publishes, what it is checked against and how it is
+// set up. It renders the `beacons` of beacons.json, in file order. Each row is a card, one per beacon, its yes-or-no
+// facts side by side where they fit, so no column is hidden at any width. Usage:
+// <BeaconMatrix />
+import { Status } from '@ncodegroup/docs/components';
+import beacons from '@site/components/data/beacons.json';
+import { inline } from '@site/components/lib/text';
+
+const rows = beacons.beacons.map((beacon) => {
+  const fields = beacon as Record<string, boolean | string | null>;
+  // A key missing from beacons.json, or misspelled there, is a mistake in the data: it stops the build instead of
+  // rendering as an empty cell.
+  const read = (key: string) => {
+    const value = fields[key];
+    if (value === undefined) {
+      throw new Error(`[beacon matrix] beacon "${beacon.id}" has no ${key} in docs/site/_components/data/beacons.json`);
+    }
+    return value;
+  };
+  const flag = (label: string, key: string) => ({ label, value: read(key) as boolean | null });
+  const text = (label: string, key: string) => ({ label, value: String(read(key)) });
+  return {
+    id: beacon.id,
+    title: String(read('title')),
+    name: String(read('name')),
+    flags: [
+      flag('Hash-chained', 'hashChained'),
+      flag('Precommitment checked', 'precommitment'),
+      flag('Verified fully in process', 'fullyInProcess'),
+    ],
+    texts: [
+      text('Package', 'package'),
+      text('Register with', 'register'),
+      text('Publishes', 'publishes'),
+      text('Randomness', 'randomness'),
+      text('Trust anchor', 'anchor'),
+      text('Checks', 'checks'),
+      text('Decision', 'adr'),
+      text('Offline verifier', 'verifier'),
+      text('Settings', 'settings'),
+      text('Pulse ID in a draw', 'pulseId'),
+      text('Oldest pulse mixed in', 'maxPulseAge'),
+    ],
+  };
+});
+const headings = [
+  'Beacon',
+  'Hash-chained',
+  'Precommitment checked',
+  'Verified fully in process',
+  'Package',
+  'Register with',
+  'Publishes',
+  'Randomness',
+  'Trust anchor',
+  'Checks',
+  'Decision',
+  'Offline verifier',
+  'Settings',
+  'Pulse ID in a draw',
+  'Oldest pulse mixed in',
+];
+---
+
+<div class="beacon-matrix not-content">
+  <table class="beacon-matrix__table" aria-label="Every beacon">
+    <thead>
+      <tr>
+        {headings.map((heading) => (
+          <th scope="col" set:html={inline(heading)} />
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((row) => (
+        <tr id={`beacon-${row.id}`} class="beacon-matrix__row">
+          <th scope="row" data-label="Beacon">
+            <span set:html={inline(row.title)} />
+            <code class="beacon-matrix__name">{row.name}</code>
+          </th>
+          {row.flags.map((flag) => (
+            <td data-label={flag.label}>
+              {flag.value === true && <Status state="success">Yes</Status>}
+              {flag.value === false && <Status state="off">No</Status>}
+              {flag.value === null && <span class="beacon-matrix__na">Does not apply</span>}
+            </td>
+          ))}
+          {row.texts.map((cell) => (
+            <td class="beacon-matrix__text" data-label={cell.label} set:html={inline(cell.value)} />
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .beacon-matrix { margin-block: var(--nc-space-5); color: var(--nc-color-text); }
+  .beacon-matrix__table { display: block; width: 100%; font-size: var(--sl-text-sm); line-height: 1.45; }
+  .beacon-matrix__table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .beacon-matrix__table tbody { display: grid; gap: var(--nc-space-4); }
+  .beacon-matrix__row {
+    scroll-margin-top: calc(var(--sl-nav-height) + var(--nc-space-5));
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: var(--nc-space-3) var(--nc-space-5);
+    padding: var(--nc-space-4) var(--nc-space-5);
+    border: var(--nc-border-hair) solid var(--nc-color-border);
+    border-radius: var(--nc-radius-panel);
+    background: var(--nc-color-surface);
+  }
+  .beacon-matrix__row:target { border-color: var(--nc-color-primary-text); box-shadow: 0 0 0 1px var(--nc-color-primary-text); }
+  .beacon-matrix__row > :is(th, td) { display: block; padding: 0; border: 0; text-align: start; }
+  .beacon-matrix__row > :is(th, .beacon-matrix__text) { grid-column: 1 / -1; }
+  .beacon-matrix__row > th { font-size: var(--sl-text-base); font-weight: 600; }
+  .beacon-matrix__name { display: block; margin-top: var(--nc-space-1); font-weight: 400; }
+  .beacon-matrix__row > td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: var(--nc-space-1);
+    font-size: 0.6875rem;
+    font-stretch: var(--nc-type-label-stretch);
+    font-weight: 600;
+    letter-spacing: var(--nc-type-label-tracking);
+    text-transform: uppercase;
+    color: var(--nc-color-text-muted);
+  }
+  .beacon-matrix__table a { color: var(--nc-color-text); text-decoration-color: var(--nc-color-border-strong); text-underline-offset: 0.2em; overflow-wrap: anywhere; }
+  .beacon-matrix__table a:hover { color: var(--nc-color-primary-text); }
+  .beacon-matrix__table a:focus-visible { outline: var(--nc-focus-width) solid var(--nc-color-focus); outline-offset: var(--nc-focus-gap); }
+  .beacon-matrix :global(code) { font-family: var(--nc-font-mono); font-stretch: var(--nc-type-code-stretch); font-size: 0.88em; overflow-wrap: break-word; }
+  .beacon-matrix__na { color: var(--nc-color-text-muted); }
+</style>
